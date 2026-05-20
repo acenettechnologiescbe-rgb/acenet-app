@@ -519,6 +519,10 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
   <div class="sec-grid">
     <div class="card"><div class="card-title"><i class="fas fa-chart-bar" style="color:var(--red)"></i>Top Customers — Outstanding</div><div id="mgmt-acc-chart"></div></div>
+    <div class="card"><div class="card-title"><i class="fas fa-car-side" style="color:var(--svc)"></i>Conveyance — Pending Claims</div><div id="mgmt-conv-panel"></div></div>
+  </div>
+  <div class="sec-grid">
+    <div class="card"><div class="card-title"><i class="fas fa-gift" style="color:#7c3aed"></i>Incentive Summary — By Engineer</div><div id="mgmt-inc-panel"></div></div>
   </div>
   <div class="sdiv" style="margin-top:0;">Aging Analysis</div>
   <div class="aging-row" id="mgmt-aging"></div>
@@ -1036,6 +1040,23 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="fg"><label>Call Reference</label><input type="text" id="caCallRef" list="dl-svc-calls" placeholder="Call ID…"><datalist id="dl-svc-calls"></datalist></div>
   </div>
   <button class="btn btn-svc btn-sm" onclick="saveConvAdvance()"><i class="fas fa-paper-plane"></i> Request Advance</button>
+</div>
+<!-- Generate Conveyance from Service Call Records -->
+<div class="card" style="border:2px solid var(--svc-l);margin-bottom:14px;background:linear-gradient(135deg,#f0fdfa,#fff);">
+  <div class="card-title" style="color:var(--svc);"><i class="fas fa-magic" style="color:var(--svc);margin-right:7px;"></i>Generate Conveyance from Service Calls</div>
+  <p style="font-size:.81em;color:var(--ink3);margin-bottom:12px;">Pick a date range to auto-load your completed service calls and generate a conveyance claim in one click.</p>
+  <div class="g4" style="margin-bottom:11px;">
+    <div class="fg"><label>From Date</label><input type="date" id="gcFromDate"></div>
+    <div class="fg"><label>To Date</label><input type="date" id="gcToDate"></div>
+    <div class="fg" id="gcEngWrap"><label>Engineer</label><select id="gcEngineer"><option value="">-- Select --</option></select></div>
+    <div class="fg" style="display:flex;align-items:flex-end;">
+      <button class="btn btn-svc btn-sm" onclick="findCallsForConv()" style="width:100%;"><i class="fas fa-search"></i> Find Calls</button>
+    </div>
+  </div>
+  <div id="gcCallsList"></div>
+  <div id="gcGenBtnWrap" style="display:none;margin-top:10px;">
+    <button class="btn btn-svc" onclick="generateConvFromCalls()"><i class="fas fa-file-invoice"></i> Generate Conveyance Claim</button>
+  </div>
 </div>
 <!-- Conveyance Claim Form -->
 <div class="form-panel fp-svc" id="convForm" style="display:none;">
@@ -1688,9 +1709,18 @@ function _initFirestore(){
         try{renderAccIncentives();}catch(e){}
         try{renderAccConveyance();}catch(e){}
         updateAccIncBadge();
+        updateConvBadge();
+        if(remote._lastNotify==='new_conv') showSuccessToast('📋 New conveyance claim received!','var(--svc)');
+        if(remote._lastNotify==='new_inc') showSuccessToast('🎁 New incentive entry received!','#7c3aed');
       }
       if(D.currentUser?.role === 'management'){
         try{updateMgmtIncBadge();}catch(e){}
+        try{renderMgmt();}catch(e){}
+      }
+      if(D.currentUser?.role === 'service'){
+        try{renderConveyance();}catch(e){}
+        try{renderSvcIncentives();}catch(e){}
+        updateConvBadge();
       }
     }, err => {
       // Listener error (e.g. permissions) — log silently
@@ -2862,7 +2892,58 @@ function renderMgmt(){
   const buckets=[{a:0,n:0},{a:0,n:0},{a:0,n:0},{a:0,n:0}];
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{const od=daysOD(i),out=getOut(i.id);const idx=od<=30?0:od<=60?1:od<=90?2:3;buckets[idx].a+=out;buckets[idx].n++;});
   g('mgmt-aging').innerHTML=['0-30 Days','31-60 Days','61-90 Days','90+ Days'].map((l,i)=>`<div class="ac ac${i}"><div class="ac-label">${l}</div><div class="ac-value">${fmt(buckets[i].a)}</div><div class="ac-cnt">${buckets[i].n} inv</div></div>`).join('');
-  updateSvcBadge();updateOutBadge();updateConvBadge();
+
+  // Conveyance pending panel
+  const convPanEl=g('mgmt-conv-panel');
+  if(convPanEl){
+    const pendConv=D.svc_conveyance.filter(c=>c.status==='pending').sort((a,b)=>b.createdAt?.localeCompare(a.createdAt||'')||0).slice(0,8);
+    const pendAdv=D.svc_conv_advances.filter(a=>a.status==='pending');
+    if(!pendConv.length&&!pendAdv.length){
+      convPanEl.innerHTML='<div class="empty" style="padding:14px"><i class="fas fa-check-circle" style="color:var(--green)"></i><p>No pending conveyance claims 🎉</p></div>';
+    } else {
+      let html='';
+      if(pendConv.length) html+=pendConv.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);gap:6px;flex-wrap:wrap;">
+        <div><span class="tag tag-svc">${esc(c.no)}</span> <span style="font-size:.83em;font-weight:700;">${esc(c.engineer)}</span>
+        <div style="font-size:.74em;color:var(--ink3);">${c.date} ${c.callRef?'· Call: '+esc(c.callRef):''}</div></div>
+        <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);">${fmt(c.totalAmt)}</div>
+      </div>`).join('');
+      if(pendAdv.length) html+=`<div style="font-size:.76em;font-weight:700;color:var(--amber);padding:7px 0 3px;">⚠ ${pendAdv.length} Advance Request(s) Pending</div>`;
+      convPanEl.innerHTML=html;
+    }
+  }
+
+  // Incentive summary panel
+  const incPanEl=g('mgmt-inc-panel');
+  if(incPanEl){
+    const incEntries=D.svc_incentives||[];
+    if(!incEntries.length){
+      incPanEl.innerHTML='<div class="empty" style="padding:14px"><i class="fas fa-gift" style="color:#c4b5fd"></i><p>No incentive entries yet</p></div>';
+    } else {
+      const engMap={};
+      incEntries.forEach(e=>{
+        if(!engMap[e.engineerName])engMap[e.engineerName]={name:e.engineerName,count:0,profit:0,incentive:0,pending:0,mgmtRev:0,approved:0};
+        const em=engMap[e.engineerName];
+        em.count++;em.profit+=e.profit||0;em.incentive+=(e.approvedAmt||0);
+        if(e.status==='pending')em.pending++;
+        if(e.status==='mgmt-review')em.mgmtRev++;
+        if(e.status==='approved')em.approved++;
+      });
+      incPanEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:9px;">
+        ${Object.values(engMap).map(em=>`<div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:11px;padding:10px 14px;min-width:160px;flex:1;">
+          <div style="font-weight:700;color:#6d28d9;font-size:.84em;margin-bottom:5px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(em.name)}</div>
+          <div style="font-size:.77em;color:var(--ink3);">${em.count} entries &nbsp;|&nbsp; P/L: <strong style="color:${em.profit>=0?'var(--green)':'var(--red)'};">${fmt(em.profit)}</strong></div>
+          <div style="font-size:.77em;margin-top:3px;">Incentive Paid: <strong style="color:#6d28d9;">${fmt(em.incentive)}</strong></div>
+          <div style="font-size:.73em;margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;">
+            ${em.pending?`<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;">${em.pending} pending</span>`:''}
+            ${em.mgmtRev?`<span style="background:#fff3cd;color:#856404;border-radius:6px;padding:1px 6px;">${em.mgmtRev} for review</span>`:''}
+            ${em.approved?`<span style="background:var(--green-l);color:#065f46;border-radius:6px;padding:1px 6px;">${em.approved} approved</span>`:''}
+          </div>
+        </div>`).join('')}
+      </div>`;
+    }
+  }
+
+  updateSvcBadge();updateOutBadge();updateConvBadge();updateMgmtIncBadge();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3269,7 +3350,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('#gSearch')&&!e.targe
 // EXPORT / IMPORT
 // ════════════════════════════════════════════════════════════════
 function exportFullBackup(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(D,null,2)],{type:'application/json'}));a.download=`acenet_suite_${today()}.json`;a.click();}
-function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();alert('✓ Imported!');}catch(err){alert('Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
+function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();alert('✓ Imported!');}catch(err){alert('Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
 function exportPLCSV(){let csv='Date,BillNo,Customer,Material,Purchase,Sales,Expense,Profit\n';D.pl_ledger.forEach(e=>{csv+=`${e.d},${e.billNo||''},${e.c},${e.m},${e.pb.toFixed(2)},${e.sb.toFixed(2)},${(e.expense||0).toFixed(2)},${e.profit.toFixed(2)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_pl_${today()}.csv`;a.click();}
 function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outstanding,Status\n';D.ac_invoices.forEach(i=>{csv+=`${i.no},${i.custName},${i.date},${i.dueDate||''},${i.total.toFixed(2)},${getPaid(i.id).toFixed(2)},${getOut(i.id).toFixed(2)},${getSt(i.id)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_acc_${today()}.csv`;a.click();}
 
@@ -3598,6 +3679,103 @@ function recalcConv(){
   if(g('cvTotal'))g('cvTotal').textContent=fmt(total);
 }
 
+// ════════════════════════════════════════════════════════════════
+// GENERATE CONVEYANCE FROM SERVICE CALLS — DATE RANGE
+// ════════════════════════════════════════════════════════════════
+function findCallsForConv(){
+  const from=g('gcFromDate').value,to=g('gcToDate').value;
+  const engName=(g('gcEngineer')?.value||'').trim()||(D.currentUser?.role==='service'?D.currentUser.name:'');
+  if(!from||!to){alert('Please select both From and To dates');return;}
+  if(!engName){alert('Please select an engineer');return;}
+  const calls=D.svc_calls.filter(c=>
+    c.engineer===engName &&
+    c.status==='completed' &&
+    c.date>=from &&
+    c.date<=to
+  ).sort((a,b)=>a.date.localeCompare(b.date));
+  const listEl=g('gcCallsList');
+  const genWrap=g('gcGenBtnWrap');
+  if(!calls.length){
+    listEl.innerHTML=`<div style="text-align:center;padding:16px;color:var(--ink3);font-size:.83em;background:var(--bg);border-radius:10px;"><i class="fas fa-search" style="display:block;font-size:1.8em;margin-bottom:7px;opacity:.4;"></i>No completed calls found for <strong>${esc(engName)}</strong> between <strong>${from}</strong> and <strong>${to}</strong>.<br><span style="font-size:.9em;">Only calls with status <em>Completed</em> are included.</span></div>`;
+    genWrap.style.display='none';return;
+  }
+  listEl.innerHTML=`
+    <div style="font-size:.79em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--svc);margin:10px 0 7px;">
+      Found ${calls.length} completed call(s) — select which to include:
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="itbl" style="font-size:.82em;">
+      <thead><tr>
+        <th><input type="checkbox" id="gcCheckAll" onchange="gcToggleAll(this)" title="Select All"></th>
+        <th>Call No</th><th>Date</th><th>Customer</th><th>Location</th><th>Product</th><th>Issue</th>
+      </tr></thead>
+      <tbody>
+        ${calls.map(c=>`<tr>
+          <td><input type="checkbox" class="gc-chk" value="${esc(c.id)}" checked></td>
+          <td><span class="tag tag-svc">${esc(c.no)}</span></td>
+          <td>${c.date}</td>
+          <td><strong>${esc(c.customer)}</strong></td>
+          <td style="font-size:.8em;">${esc(c.location||'—')}</td>
+          <td style="font-size:.8em;">${esc(c.product||'—')}</td>
+          <td style="font-size:.8em;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.issue||'—')}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+  genWrap.style.display='block';
+}
+
+function gcToggleAll(cb){
+  document.querySelectorAll('.gc-chk').forEach(c=>c.checked=cb.checked);
+}
+
+function generateConvFromCalls(){
+  const checked=[...document.querySelectorAll('.gc-chk:checked')].map(c=>c.value);
+  if(!checked.length){alert('Please select at least one call');return;}
+  const calls=checked.map(id=>D.svc_calls.find(c=>c.id===id)).filter(Boolean)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  const engName=g('gcEngineer')?.value||D.currentUser?.name||'';
+  // Build call refs string
+  const callRefs=calls.map(c=>c.no).join(', ');
+  const lastDate=calls[calls.length-1].date;
+  // Show the claim form pre-filled
+  showConvForm();
+  setTimeout(()=>{
+    g('cvDate').value=lastDate;
+    if(g('cvEngineer')) g('cvEngineer').value=engName;
+    g('cvCallRef').value=callRefs;
+    // Set location from first call that has one
+    const firstLoc=calls.find(c=>c.location);
+    g('cvLocation').value=firstLoc?firstLoc.location:'';
+    // Clear existing items, add one row per call
+    g('convItemsBody').innerHTML='';convRC=0;
+    calls.forEach(c=>{
+      addConvItem({
+        mode:'Auto/Taxi',
+        from:'Office',
+        to:c.location||c.customer||'',
+        km:0,
+        rate:0
+      });
+      // Update the last added row's placeholder text to show call info
+      const rows=g('convItemsBody').querySelectorAll('tr');
+      const lastRow=rows[rows.length-1];
+      if(lastRow){
+        const toInput=lastRow.querySelector('.cvto');
+        if(toInput) toInput.placeholder=c.no+' — '+c.customer;
+      }
+    });
+    // Add remarks with call references
+    g('cvRemarks').value='Calls: '+callRefs+' ('+calls[0].date+' to '+lastDate+')';
+    recalcConv();
+    // Reset the generator section
+    g('gcCallsList').innerHTML='';
+    g('gcGenBtnWrap').style.display='none';
+    const gcAll=g('gcCheckAll');if(gcAll)gcAll.checked=true;
+    showSuccessToast(`✓ ${calls.length} call(s) loaded — fill travel details and submit`,'var(--svc)');
+  },120);
+}
+
 function saveConvDraft(){
   const eng=g('cvEngineer').value,callRef=g('cvCallRef').value.trim(),loc=g('cvLocation').value.trim();
   if(!eng){alert('Please select an engineer');return;}
@@ -3653,7 +3831,7 @@ function submitConvDraft(id){
     btnLabel:'Submit Claim',btnColor:'var(--svc)',
     onOk:()=>{
       c.status='pending';c.submittedAt=new Date().toISOString();
-      saveData();renderConveyance();updateConvBadge();
+      saveData('new_conv');renderConveyance();updateConvBadge();
       showSuccessToast('✓ Conveyance claim submitted for Accounts approval!','var(--svc)');
     }
   });
@@ -3694,7 +3872,7 @@ function saveConvClaim(){
     onOk:()=>{
       if(g('cvEditId').value) D.svc_conveyance=D.svc_conveyance.map(c=>c.id===obj.id?obj:c);
       else D.svc_conveyance.push(obj);
-      closeEl('convForm');saveData();renderConveyance();updateConvBadge();
+      closeEl('convForm');saveData('new_conv');renderConveyance();updateConvBadge();
       showSuccessToast('✓ Conveyance claim submitted for Accounts approval!','var(--svc)');
     }
   });
@@ -3710,8 +3888,8 @@ function saveConvAdvance(){
   D.svc_conv_advances.push(obj);
   g('caDate').value=today();g('caAmt').value='';g('caPurpose').value='';g('caCallRef').value='';
   if(engEl&&D.currentUser?.role!=='service')engEl.value='';
-  saveData();renderConveyance();updateConvBadge();
-  alert('✓ Advance request submitted!');
+  saveData('new_conv');renderConveyance();updateConvBadge();
+  showSuccessToast('✓ Advance request submitted to Accounts!','var(--svc)');
 }
 
 function renderConveyance(){
@@ -3723,6 +3901,21 @@ function renderConveyance(){
   const myName=D.currentUser?.name||'';
   const caEng=g('caEngineer');
   if(caEng){caEng.disabled=isService;if(isService)caEng.value=myName;}
+
+  // Populate Generate-from-calls engineer dropdown
+  const gcEng=g('gcEngineer');
+  if(gcEng){
+    const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
+    const prev=gcEng.value;
+    gcEng.innerHTML='<option value="">-- Select --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+    if(isService){gcEng.value=myName;gcEng.disabled=true;}
+    else if(prev) gcEng.value=prev;
+  }
+  const gcEngWrap=g('gcEngWrap');
+  if(gcEngWrap) gcEngWrap.style.display=isService?'none':'';
+  const gcFrom=g('gcFromDate'),gcTo=g('gcToDate');
+  if(gcFrom&&!gcFrom.value){const d=new Date();gcFrom.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';}
+  if(gcTo&&!gcTo.value) gcTo.value=today();
 
   const allConvs=isService?D.svc_conveyance.filter(c=>c.engineer===myName):D.svc_conveyance;
   const advs=isService?D.svc_conv_advances.filter(a=>a.engineer===myName):D.svc_conv_advances;
@@ -4092,7 +4285,7 @@ function sendSvcIncToAccounts(){
       const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
       if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
       else D.svc_incentives.push(obj);
-      hideSvcIncForm();saveData();renderSvcIncentives();updateAccIncBadge();
+      hideSvcIncForm();saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
       showSuccessToast(`✓ Entry ${no} sent to Accounts!`,'var(--green)');
     }
   });
@@ -4108,7 +4301,7 @@ function sendDraftInc(id){
     btnLabel:'Send to Accounts',btnColor:'#7c3aed',
     onOk:()=>{
       e.status='pending';e.sentAt=new Date().toISOString();
-      saveData();renderSvcIncentives();updateAccIncBadge();
+      saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
       showSuccessToast(`✓ ${e.no} sent to Accounts!`,'var(--green)');
     }
   });
@@ -4146,7 +4339,7 @@ function sendAllDrafts(){
     btnLabel:`Send ${drafts.length} Entries`,btnColor:'var(--green)',
     onOk:()=>{
       drafts.forEach(e=>{e.status='pending';e.sentAt=new Date().toISOString();});
-      saveData();renderSvcIncentives();updateAccIncBadge();
+      saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
       showSuccessToast(`✓ ${drafts.length} entries sent to Accounts!`,'var(--green)');
     }
   });
@@ -4996,8 +5189,9 @@ function closeConfirm(){
 }
 
 function confirmOkAction(){
+  const cb=_confirmCallback;  // save callback BEFORE closeConfirm nulls it
   closeConfirm();
-  if(_confirmCallback) _confirmCallback();
+  if(cb) cb();
 }
 
 // Close confirm on overlay click
