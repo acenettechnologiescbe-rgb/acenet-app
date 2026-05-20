@@ -1841,6 +1841,9 @@ function refreshUI(){
 // ════════════════════════════════════════════════════════════════
 function doLogin(){
   const u=(g('lUser').value||'').trim(),p=(g('lPass').value||'').trim();
+  // Always merge DEF_USERS as fallback so default credentials always work
+  const allUsers=[...DEF_USERS,...(D.users||[]).filter(x=>!DEF_USERS.find(d=>d.username===x.username))];
+  D.users=allUsers;
   const user=D.users.find(x=>x.username===u&&x.password===p&&x.active!==false);
   if(!user){g('loginErr').classList.add('show');return;}
   g('loginErr').classList.remove('show');
