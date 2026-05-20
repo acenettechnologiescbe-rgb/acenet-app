@@ -1067,8 +1067,17 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="tb-item"><div class="tbl">Total Claim</div><div class="tbv big" id="cvTotal">₹0</div></div>
   </div>
   <input type="hidden" id="cvEditId">
-  <div class="btn-row"><button class="btn btn-svc" onclick="saveConvClaim()"><i class="fas fa-save"></i> Submit Claim</button><button class="btn btn-outline" onclick="closeEl('convForm')">Cancel</button></div>
+  <div class="btn-row">
+    <button class="btn" style="background:#0e7490;color:#fff;" onclick="saveConvDraft()"><i class="fas fa-save"></i> Save Draft</button>
+    <button class="btn btn-svc" onclick="saveConvClaim()"><i class="fas fa-paper-plane"></i> Submit Claim</button>
+    <button class="btn btn-outline" onclick="closeEl('convForm')">Cancel</button>
+  </div>
 </div>
+<!-- Draft claims -->
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+  <div class="sdiv" style="margin:0;">📝 Draft Claims <span id="convDraftBadge" style="background:#0e7490;color:#fff;border-radius:20px;padding:1px 9px;font-size:.75em;font-weight:700;margin-left:6px;"></span></div>
+</div>
+<div id="convDraftList"></div>
 <!-- Claims list -->
 <div class="sdiv">My Conveyance Claims</div>
 <div class="stats" id="convStats"></div>
@@ -1674,6 +1683,15 @@ function _initFirestore(){
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
       refreshUI();
       if(remote._lastNotify === 'new_order' && D.currentUser?.role === 'accounts') showOrderToast();
+      // Instantly update incentive views so pending entries appear without manual refresh
+      if(D.currentUser?.role === 'accounts'){
+        try{renderAccIncentives();}catch(e){}
+        try{renderAccConveyance();}catch(e){}
+        updateAccIncBadge();
+      }
+      if(D.currentUser?.role === 'management'){
+        try{updateMgmtIncBadge();}catch(e){}
+      }
     }, err => {
       // Listener error (e.g. permissions) — log silently
       console.warn('Firestore listener error:', err.message);
@@ -3580,6 +3598,74 @@ function recalcConv(){
   if(g('cvTotal'))g('cvTotal').textContent=fmt(total);
 }
 
+function saveConvDraft(){
+  const eng=g('cvEngineer').value,callRef=g('cvCallRef').value.trim(),loc=g('cvLocation').value.trim();
+  if(!eng){alert('Please select an engineer');return;}
+  const items=[];
+  document.querySelectorAll('#convItemsBody tr').forEach(r=>{
+    items.push({mode:r.querySelector('.cvmode')?.value,from:r.querySelector('.cvfrom')?.value,to:r.querySelector('.cvto')?.value,km:parseFloat(r.querySelector('.cvkm')?.value)||0,rate:parseFloat(r.querySelector('.cvrate')?.value)||0});
+  });
+  const trav=items.reduce((a,i)=>a+(i.km>0&&i.rate>0?i.km*i.rate:i.rate),0);
+  const food=parseFloat(g('cvFood')?.value)||0,other=parseFloat(g('cvOther')?.value)||0;
+  const total=trav+food+other;
+  const editId=g('cvEditId').value;
+  const obj={id:editId||uid(),no:g('cvNo').value,date:g('cvDate').value,engineer:eng,callRef,location:loc,items,travelAmt:trav,foodAmt:food,otherAmt:other,totalAmt:total,remarks:g('cvRemarks')?.value.trim(),status:'draft',createdAt:new Date().toISOString()};
+  if(editId) D.svc_conveyance=D.svc_conveyance.map(c=>c.id===editId?obj:c);
+  else D.svc_conveyance.push(obj);
+  closeEl('convForm');saveData();renderConveyance();
+  showSuccessToast(`✓ Conveyance draft saved — submit when ready`,'#0e7490');
+}
+
+function editConvDraft(id){
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  showConvForm();
+  setTimeout(()=>{
+    g('cvEditId').value=c.id;
+    g('cvNo').value=c.no;
+    g('cvDate').value=c.date;
+    if(g('cvEngineer'))g('cvEngineer').value=c.engineer;
+    if(g('cvCallRef'))g('cvCallRef').value=c.callRef||'';
+    if(g('cvLocation'))g('cvLocation').value=c.location||'';
+    if(g('cvFood'))g('cvFood').value=c.foodAmt||0;
+    if(g('cvOther'))g('cvOther').value=c.otherAmt||0;
+    if(g('cvRemarks'))g('cvRemarks').value=c.remarks||'';
+    // Reload items
+    g('convItemsBody').innerHTML='';convRC=0;
+    (c.items||[]).forEach(it=>addConvItem(it));
+    updateConvTotals();
+  },100);
+}
+
+function submitConvDraft(id){
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-car-side',
+    title:'Submit Conveyance Claim?',
+    msg:'This draft will be submitted to Accounts for approval.',
+    details:[
+      {k:'Engineer',v:c.engineer},{k:'Date',v:c.date},
+      {k:'Call Ref',v:c.callRef||'—'},
+      {k:'Travel Amount',v:fmt(c.travelAmt)},
+      {k:'Food Amount',v:fmt(c.foodAmt)},
+      {k:'Other Amount',v:fmt(c.otherAmt)},
+      {k:'Total Claim',v:fmt(c.totalAmt)}
+    ],
+    btnLabel:'Submit Claim',btnColor:'var(--svc)',
+    onOk:()=>{
+      c.status='pending';c.submittedAt=new Date().toISOString();
+      saveData();renderConveyance();updateConvBadge();
+      showSuccessToast('✓ Conveyance claim submitted for Accounts approval!','var(--svc)');
+    }
+  });
+}
+
+function delConvDraft(id){
+  if(!confirm('Delete this draft?'))return;
+  D.svc_conveyance=D.svc_conveyance.filter(x=>x.id!==id);
+  saveData();renderConveyance();
+  showSuccessToast('Draft deleted','var(--red)');
+}
+
 function saveConvClaim(){
   const eng=g('cvEngineer').value,callRef=g('cvCallRef').value.trim(),loc=g('cvLocation').value.trim();
   if(!eng){alert('Please select an engineer');return;}
@@ -3592,22 +3678,19 @@ function saveConvClaim(){
   const total=trav+food+other;
   if(total<=0){alert('Total claim must be greater than 0');return;}
   const obj={id:g('cvEditId').value||uid(),no:g('cvNo').value,date:g('cvDate').value,engineer:eng,callRef,location:loc,items,travelAmt:trav,foodAmt:food,otherAmt:other,totalAmt:total,remarks:g('cvRemarks')?.value.trim(),status:'pending',createdAt:new Date().toISOString()};
-  // Show confirmation dialog
   showConfirm({
     icon:'ci-send', iconClass:'fa-car-side',
     title:'Submit Conveyance Claim?',
     msg:'Please review the details before submitting to Accounts for approval.',
     details:[
-      {k:'Engineer', v:eng},
-      {k:'Date', v:obj.date},
+      {k:'Engineer', v:eng},{k:'Date', v:obj.date},
       {k:'Call Ref', v:callRef||'—'},
       {k:'Travel Amount', v:fmt(trav)},
       {k:'Food Amount', v:fmt(food)},
       {k:'Other Amount', v:fmt(other)},
       {k:'Total Claim', v:fmt(total)}
     ],
-    btnLabel:'Submit Claim',
-    btnColor:'var(--svc)',
+    btnLabel:'Submit Claim',btnColor:'var(--svc)',
     onOk:()=>{
       if(g('cvEditId').value) D.svc_conveyance=D.svc_conveyance.map(c=>c.id===obj.id?obj:c);
       else D.svc_conveyance.push(obj);
@@ -3632,38 +3715,70 @@ function saveConvAdvance(){
 }
 
 function renderConveyance(){
-  // Refresh engineer dropdowns first
   populateSvcEngineerDropdowns();
   const svOrdCustDl=g('dl-svc-ord-cust');if(svOrdCustDl)svOrdCustDl.innerHTML=cu;
   const incCustDl=g('dl-inc-cust');if(incCustDl)incCustDl.innerHTML=cu+D.ac_customers.map(c=>`<option value="${esc(c.name)}">`).join('');
   updateAccIncBadge();updateSvcIncBadge();
   const isService=D.currentUser?.role==='service';
   const myName=D.currentUser?.name||'';
-  // Lock caEngineer if current user is a service engineer
   const caEng=g('caEngineer');
-  if(caEng){
-    caEng.disabled=isService;
-    if(isService)caEng.value=myName;
-  }
-  const convs=isService?D.svc_conveyance.filter(c=>c.engineer===myName):D.svc_conveyance;
+  if(caEng){caEng.disabled=isService;if(isService)caEng.value=myName;}
+
+  const allConvs=isService?D.svc_conveyance.filter(c=>c.engineer===myName):D.svc_conveyance;
   const advs=isService?D.svc_conv_advances.filter(a=>a.engineer===myName):D.svc_conv_advances;
+
+  // Split drafts vs submitted
+  const drafts=allConvs.filter(c=>c.status==='draft');
+  const convs=allConvs.filter(c=>c.status!=='draft');
+
+  // Draft badge
+  const draftBadge=g('convDraftBadge');
+  if(draftBadge) draftBadge.textContent=drafts.length?`${drafts.length} draft${drafts.length>1?'s':''}`:'' ;
+
+  // Draft list
+  const draftEl=g('convDraftList');
+  if(draftEl){
+    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.83em;">No drafts — use "Save Draft" to save a claim and submit later</div>';
+    else draftEl.innerHTML=drafts.map(c=>`<div class="conv-card" style="border-left:3px solid #0e7490;">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <strong style="color:#0e7490;font-size:.9em;">${esc(c.no)}</strong>
+          <span style="background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 9px;font-size:.72em;font-weight:700;">DRAFT</span>
+        </div>
+        <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
+        <div style="font-size:.75em;margin-top:2px;">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0e7490;font-size:1.05em;margin-bottom:6px;">${fmt(c.totalAmt)}</div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-outline btn-sm" onclick="editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn btn-sm" style="background:var(--svc);color:#fff;" onclick="submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit</button>
+          <button class="btn btn-danger btn-sm" onclick="delConvDraft('${c.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`).join('');
+  }
+
+  // Stats (excluding drafts)
   const totClaim=convs.reduce((a,c)=>a+c.totalAmt,0),totApproved=convs.filter(c=>c.status==='approved').reduce((a,c)=>a+c.totalAmt,0),totPending=convs.filter(c=>c.status==='pending').reduce((a,c)=>a+c.totalAmt,0);
   g('convStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Claimed</div><div class="stat-value">${fmt(totClaim)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(totPending)}</div></div>`;
+
   const stBg={pending:'var(--amber-l)',approved:'var(--green-l)',rejected:'var(--red-l)'};
   const stClr={pending:'#92400e',approved:'#065f46',rejected:'#991b1b'};
-  g('convList').innerHTML=!convs.length?'<div class="empty"><i class="fas fa-car"></i><p>No claims yet. Submit one after completing a call.</p></div>':
+  g('convList').innerHTML=!convs.length?'<div class="empty"><i class="fas fa-car"></i><p>No submitted claims yet.</p></div>':
     [...convs].reverse().map(c=>`<div class="conv-card">
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status" style="background:${stBg[c.status]};color:${stClr[c.status]};">${c.status}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status" style="background:${stBg[c.status]||'var(--bg)'};color:${stClr[c.status]||'var(--ink)'};">${c.status}</span></div>
         <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
         ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
         ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.totalAmt)}</div><div style="font-size:.72em;color:var(--ink3);">Travel: ${fmt(c.travelAmt)} Food: ${fmt(c.foodAmt)}</div></div>
     </div>`).join('');
+
   g('convAdvList').innerHTML=!advs.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.84em;">No advance requests</div>':
     [...advs].reverse().map(a=>`<div class="conv-card" style="border-left:4px solid var(--svc);">
-      <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong><span class="conv-status" style="background:${stBg[a.status]};color:${stClr[a.status]};">${a.status}</span></div>
+      <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong><span class="conv-status" style="background:${stBg[a.status]||'var(--bg)'};color:${stClr[a.status]||'var(--ink)'};">${a.status}</span></div>
       <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div></div>
       <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1em;flex-shrink:0;">${fmt(a.amount)}</div>
     </div>`).join('');
