@@ -1085,15 +1085,56 @@ tbody tr:last-child td{border-bottom:none;}
   <button class="btn btn-outline btn-sm" onclick="exportConvReport()"><i class="fas fa-file-csv"></i> Export Report</button>
 </div>
 <div class="stats" id="accConvStats"></div>
+<!-- Filters -->
+<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+  <select id="convEngFilter" onchange="renderAccConveyance()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
+  <select id="convStatusFilter" onchange="renderAccConveyance()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+    <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+  </select>
+  <input type="date" id="convFromDate" onchange="renderAccConveyance()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  <input type="date" id="convToDate" onchange="renderAccConveyance()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  <div class="combo" style="max-width:200px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="convSearch" placeholder="Search…" oninput="renderAccConveyance()" style="padding-left:30px;"></div>
+</div>
+<!-- Per-engineer summary -->
+<div id="convEngSummary" style="margin-bottom:12px;"></div>
 <!-- Advance Requests from Service -->
-<div class="sdiv">Conveyance Advance Requests</div>
+<div class="sdiv">💰 Conveyance Advance Requests</div>
 <div id="accConvAdvList"></div>
 <!-- Pending Claims -->
-<div class="sdiv">Pending Claims — Awaiting Approval</div>
+<div class="sdiv">⏳ Pending Claims — Awaiting Approval</div>
 <div id="accConvPending"></div>
 <!-- Approved Claims -->
-<div class="sdiv">Approved Claims</div>
+<div class="sdiv">✅ Approved Claims</div>
 <div id="accConvApproved"></div>
+<!-- Rejected Claims -->
+<div class="sdiv">❌ Rejected Claims</div>
+<div id="accConvRejected"></div>
+</div>
+
+<!-- ════ MANAGEMENT: INCENTIVE REVIEW ════ -->
+<div class="page" id="page-mgmt-incentives">
+  <div class="ph">
+    <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Review</span></h2><p>Review, adjust incentive % and approve — sent back to Accounts for payment</p></div>
+    <button class="btn btn-outline btn-sm" onclick="exportIncReport()"><i class="fas fa-file-excel"></i> Export</button>
+  </div>
+  <div class="stats" id="mgmtIncStats"></div>
+  <!-- Filters -->
+  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+    <select id="mgmtIncEngFilter" onchange="renderMgmtIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
+    <select id="mgmtIncStatusFilter" onchange="renderMgmtIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+      <option value="">All Status</option><option value="mgmt-review">Awaiting My Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+    </select>
+    <input type="date" id="mgmtIncFrom" onchange="renderMgmtIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+    <input type="date" id="mgmtIncTo" onchange="renderMgmtIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  </div>
+  <!-- Per-engineer incentive summary -->
+  <div id="mgmtIncEngSummary" style="margin-bottom:14px;"></div>
+  <div class="sdiv">🔍 Awaiting Management Approval</div>
+  <div id="mgmtIncPending"></div>
+  <div class="sdiv">✅ Approved by Management</div>
+  <div id="mgmtIncApproved"></div>
+  <div class="sdiv">❌ Rejected by Management</div>
+  <div id="mgmtIncRejected"></div>
 </div>
 
 <!-- ════ MANAGEMENT: SERVICE OVERVIEW ════ -->
@@ -1118,6 +1159,11 @@ tbody tr:last-child td{border-bottom:none;}
         <div class="combo"><input type="text" id="svOrdCust" list="dl-svc-ord-cust" placeholder="Customer…" autocomplete="off"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-ord-cust"></datalist></div>
       </div>
     </div>
+    <div class="g3" style="margin-bottom:11px;">
+      <div class="fg"><label>Supplier Name</label><input type="text" id="svOrdSupplier" placeholder="Supplier / Vendor name"></div>
+      <div class="fg"><label>Purchase Value (₹) <span style="font-size:.76em;color:var(--ink3);">— Our cost</span></label><input type="number" id="svOrdPurchaseVal" placeholder="0.00" step="0.01" oninput="calcOrdMargin()"></div>
+      <div class="fg"><label>Margin / Profit <span style="font-size:.76em;color:var(--ink3);">— Auto calc</span></label><input type="text" id="svOrdMargin" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00"></div>
+    </div>
     <div class="fg" style="margin-bottom:11px;max-width:400px;"><label>Remarks / Service Call Ref</label><input type="text" id="svOrdNotes" placeholder="Service call reference, urgency, etc."></div>
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
     <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
@@ -1137,12 +1183,12 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ SERVICE: INCENTIVE ENTRIES ════ -->
 <div class="page" id="page-svc-incentives">
   <div class="ph">
-    <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Entries</span></h2><p>Log sales & purchase entries — profit/loss sent to Accounts</p></div>
+    <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Entries</span></h2><p>Log entries — save drafts across multiple calls, send to Accounts when ready</p></div>
     <button class="btn" style="background:#7c3aed;color:#fff;" onclick="showSvcIncForm()"><i class="fas fa-plus"></i> New Entry</button>
   </div>
   <div class="form-panel fp-incentive" id="svcIncForm" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <div class="sora" style="font-weight:700;color:#7c3aed;font-size:.93em;"><i class="fas fa-gift" style="margin-right:7px;"></i>New Incentive Entry</div>
+      <div class="sora" style="font-weight:700;color:#7c3aed;font-size:.93em;"><i class="fas fa-gift" style="margin-right:7px;"></i><span id="svcIncFormTitle">New Incentive Entry</span></div>
       <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
     </div>
     <div class="g3" style="margin-bottom:11px;">
@@ -1174,28 +1220,58 @@ tbody tr:last-child td{border-bottom:none;}
       </div>
     </div>
     <div class="fg" style="margin-bottom:12px;max-width:400px;"><label>Notes</label><input type="text" id="incNotes" placeholder="Optional notes"></div>
+    <input type="hidden" id="incEditId">
     <div class="btn-row">
-      <button class="btn" style="background:#7c3aed;color:#fff;" onclick="saveSvcInc()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
+      <button class="btn" style="background:#7c3aed;color:#fff;" onclick="saveSvcIncDraft()"><i class="fas fa-save"></i> Save Draft</button>
+      <button class="btn" style="background:var(--green);color:#fff;" onclick="sendSvcIncToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
       <button class="btn btn-outline" onclick="hideSvcIncForm()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
   <div class="stats" id="svcIncStats"></div>
-  <div class="sdiv">My Incentive Entries</div>
+
+  <!-- Draft entries -->
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+    <div class="sdiv" style="margin:0;">📝 Draft Entries <span id="incDraftCountBadge" style="background:#7c3aed;color:#fff;border-radius:20px;padding:1px 9px;font-size:.75em;font-weight:700;margin-left:6px;"></span></div>
+    <button class="btn btn-sm" id="sendAllDraftsBtn" style="background:var(--green);color:#fff;display:none;" onclick="sendAllDrafts()"><i class="fas fa-paper-plane"></i> Send All Drafts to Accounts</button>
+  </div>
+  <div id="svcIncDraftList"></div>
+
+  <!-- Sent entries with filters -->
+  <div class="sdiv" style="margin-top:14px;">📤 Sent to Accounts</div>
+  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+    <select id="svcIncEngFilter" onchange="renderSvcIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
+    <select id="svcIncStatusFilter" onchange="renderSvcIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+      <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Mgmt Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+    </select>
+    <input type="date" id="svcIncFrom" onchange="renderSvcIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+    <input type="date" id="svcIncTo" onchange="renderSvcIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  </div>
   <div id="svcIncList"></div>
 </div>
 
 <!-- ════ ACCOUNTS: INCENTIVES ════ -->
 <div class="page" id="page-acc-incentives">
   <div class="ph">
-    <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Management</span></h2><p>Review and approve service engineer incentive entries</p></div>
+    <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Management</span></h2><p>View, review and forward incentive entries to Management for approval</p></div>
     <button class="btn btn-outline btn-sm" onclick="exportIncReport()"><i class="fas fa-file-excel"></i> Export</button>
   </div>
   <div class="stats" id="accIncStats"></div>
-  <div class="sdiv">Pending Incentives — Awaiting Approval</div>
+  <!-- Filters -->
+  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+    <select id="accIncEngFilter" onchange="renderAccIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
+    <select id="accIncStatusFilter" onchange="renderAccIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+      <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Sent to Mgmt</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+    </select>
+    <input type="date" id="accIncFrom" onchange="renderAccIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+    <input type="date" id="accIncTo" onchange="renderAccIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  </div>
+  <div class="sdiv">⏳ Pending — Awaiting Review</div>
   <div id="accIncPending"></div>
-  <div class="sdiv">Approved Incentives</div>
+  <div class="sdiv">📋 Sent to Management</div>
+  <div id="accIncMgmtReview"></div>
+  <div class="sdiv">✅ Approved</div>
   <div id="accIncApproved"></div>
-  <div class="sdiv">Rejected</div>
+  <div class="sdiv">❌ Rejected</div>
   <div id="accIncRejected"></div>
 </div>
 
@@ -1830,7 +1906,7 @@ function refreshUI(){
   const r=D.currentUser?.role;
   if(!r) return;
   renderBills();renderLedger();renderInvoices();renderPayments();renderAdvances();renderAccCusts();renderMaterialTabs();renderUsers();renderOrders();renderAccOrders();
-  if(r==='management') renderMgmt();
+  if(r==='management'){renderMgmt();updateMgmtIncBadge();}
   if(r==='marketing'){renderMktReports();renderMktOutstanding();}
   if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccBillsList();renderAccIncentives();updateAccIncBadge();renderStock();}
   if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();}
@@ -1841,9 +1917,6 @@ function refreshUI(){
 // ════════════════════════════════════════════════════════════════
 function doLogin(){
   const u=(g('lUser').value||'').trim(),p=(g('lPass').value||'').trim();
-  // Always merge DEF_USERS as fallback so default credentials always work
-  const allUsers=[...DEF_USERS,...(D.users||[]).filter(x=>!DEF_USERS.find(d=>d.username===x.username))];
-  D.users=allUsers;
   const user=D.users.find(x=>x.username===u&&x.password===p&&x.active!==false);
   if(!user){g('loginErr').classList.add('show');return;}
   g('loginErr').classList.remove('show');
@@ -1883,6 +1956,7 @@ function checkSession(){
 const NAVS = {
   management:[
     {id:'overview',icon:'fa-eye',label:'Overview'},
+    {id:'mgmt-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'mgmt-inc-badge'},
     {id:'users',icon:'fa-users-gear',label:'Users'},
     {id:'setup',icon:'fa-server',label:'Setup'}
   ],
@@ -1949,6 +2023,7 @@ function goPage(p){
   if(p==='svc-orders') renderSvcOrders();
   if(p==='svc-incentives'){renderSvcIncentives();populateSvcIncEngDropdown();}
   if(p==='acc-incentives') renderAccIncentives();
+  if(p==='mgmt-incentives'){renderMgmtIncentives();clearMgmtIncBadge();}
   if(p==='acc-stock') renderStock();
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
 }
@@ -2087,14 +2162,35 @@ function saveBill(){
     items.push({m,pb:pu.base,pg:pu.gst,sb:su.base,sg:su.gst,expense:exp,expenseType:expT,profit:su.base-pu.base-exp,gstType:gT});
   });
   if(!items.length){alert('Add at least one item');return;}
-  if(!D.pl_customers.includes(cust)) D.pl_customers.push(cust);
-  items.forEach(it=>{if(!D.pl_materials.includes(it.m)) D.pl_materials.push(it.m);});
-  const bid=editBillId||uid();
-  if(editBillId){D.pl_bills=D.pl_bills.filter(b=>b.id!==editBillId);D.pl_ledger=D.pl_ledger.filter(e=>e.billId!==editBillId);}
   const tPb=items.reduce((a,x)=>a+x.pb,0),tSb=items.reduce((a,x)=>a+x.sb,0),tPro=items.reduce((a,x)=>a+x.profit,0);
-  D.pl_bills.push({id:bid,billNo,date,customer:cust,notes,items,totalPb:tPb,totalSb:tSb,totalProfit:tPro});
-  items.forEach(it=>D.pl_ledger.push({d:date,c:cust,m:it.m,pb:it.pb,pg:it.pg,sb:it.sb,sg:it.sg,expense:it.expense,expenseType:it.expenseType,profit:it.profit,billId:bid,billNo}));
-  hideBillForm();saveData();renderBills();renderLedger();
+  const isEdit=!!editBillId;
+  showConfirm({
+    icon: isEdit?'ci-warn':'ci-send',
+    iconClass: isEdit?'fa-pen':'fa-file-invoice-dollar',
+    title: isEdit?'Update Bill?':'Save Bill?',
+    msg: isEdit?'This will update the existing bill entry.':'Please confirm the bill details before saving.',
+    details:[
+      {k:'Bill No', v:billNo},
+      {k:'Date', v:date},
+      {k:'Customer', v:cust},
+      {k:'Items', v:items.length+' item(s)'},
+      {k:'Purchase Total', v:fmt(tPb)},
+      {k:'Sale Total', v:fmt(tSb)},
+      {k:'Profit/Loss', v:fmt(tPro)}
+    ],
+    btnLabel: isEdit?'Update Bill':'Save Bill',
+    btnColor:'var(--mkt)',
+    onOk:()=>{
+      if(!D.pl_customers.includes(cust)) D.pl_customers.push(cust);
+      items.forEach(it=>{if(!D.pl_materials.includes(it.m)) D.pl_materials.push(it.m);});
+      const bid=editBillId||uid();
+      if(editBillId){D.pl_bills=D.pl_bills.filter(b=>b.id!==editBillId);D.pl_ledger=D.pl_ledger.filter(e=>e.billId!==editBillId);}
+      D.pl_bills.push({id:bid,billNo,date,customer:cust,notes,items,totalPb:tPb,totalSb:tSb,totalProfit:tPro});
+      items.forEach(it=>D.pl_ledger.push({d:date,c:cust,m:it.m,pb:it.pb,pg:it.pg,sb:it.sb,sg:it.sg,expense:it.expense,expenseType:it.expenseType,profit:it.profit,billId:bid,billNo}));
+      hideBillForm();saveData();renderBills();renderLedger();
+      showSuccessToast(`✓ Bill ${billNo} saved!`,'var(--mkt)');
+    }
+  });
 }
 
 function renderBills(){
@@ -3577,13 +3673,52 @@ function renderConveyance(){
 // ACCOUNTS — CONVEYANCE APPROVALS
 // ════════════════════════════════════════════════════════════════
 function renderAccConveyance(){
-  const pending=D.svc_conveyance.filter(c=>c.status==='pending'),approved=D.svc_conveyance.filter(c=>c.status!=='pending');
-  const advPending=D.svc_conv_advances.filter(a=>a.status==='pending'),advDone=D.svc_conv_advances.filter(a=>a.status!=='pending');
-  const totPend=pending.reduce((a,c)=>a+c.totalAmt,0),totAppr=approved.filter(c=>c.status==='approved').reduce((a,c)=>a+c.totalAmt,0);
-  const totAdvPend=advPending.reduce((a,c)=>a+c.amount,0);
-  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(totPend)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(totAppr)}</div></div><div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Advance Requests</div><div class="stat-value">${advPending.length}</div></div>`;
+  // Populate engineer filter
+  const engSel=g('convEngFilter');
+  if(engSel){
+    const engs=[...new Set(D.svc_conveyance.map(c=>c.engineer))].filter(Boolean);
+    const cur=engSel.value;
+    engSel.innerHTML='<option value="">All Engineers</option>'+engs.map(e=>`<option ${cur===e?'selected':''}>${esc(e)}</option>`).join('');
+  }
+  const engF=g('convEngFilter')?.value||'';
+  const statF=g('convStatusFilter')?.value||'';
+  const from=g('convFromDate')?.value||'';
+  const to=g('convToDate')?.value||'';
+  const search=(g('convSearch')?.value||'').toLowerCase();
+
+  let convs=[...D.svc_conveyance];
+  if(engF) convs=convs.filter(c=>c.engineer===engF);
+  if(statF) convs=convs.filter(c=>c.status===statF);
+  if(from) convs=convs.filter(c=>c.date>=from);
+  if(to) convs=convs.filter(c=>c.date<=to);
+  if(search) convs=convs.filter(c=>c.engineer.toLowerCase().includes(search)||c.no.toLowerCase().includes(search)||(c.callRef||'').toLowerCase().includes(search));
+
+  const pending=convs.filter(c=>c.status==='pending');
+  const approved=convs.filter(c=>c.status==='approved');
+  const rejected=convs.filter(c=>c.status==='rejected');
+  const advPending=D.svc_conv_advances.filter(a=>a.status==='pending');
+  const advDone=D.svc_conv_advances.filter(a=>a.status!=='pending');
+
+  // Stats
+  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(pending.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Rejected</div><div class="stat-value">${rejected.length}</div></div><div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Advance Requests</div><div class="stat-value">${advPending.length}</div></div>`;
+
+  // Per-engineer summary
+  const engMap={};
+  D.svc_conveyance.forEach(c=>{if(!engMap[c.engineer])engMap[c.engineer]={name:c.engineer,total:0,approved:0,pending:0,rejected:0};engMap[c.engineer].total+=c.totalAmt;if(c.status==='approved')engMap[c.engineer].approved+=c.totalAmt;if(c.status==='pending')engMap[c.engineer].pending+=c.totalAmt;if(c.status==='rejected')engMap[c.engineer].rejected+=c.totalAmt;});
+  const sumEl=g('convEngSummary');
+  if(sumEl&&Object.keys(engMap).length){
+    sumEl.innerHTML=`<div style="display:flex;gap:9px;flex-wrap:wrap;">${Object.values(engMap).map(eng=>`
+      <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:12px;padding:10px 14px;min-width:155px;">
+        <div style="font-weight:700;font-size:.83em;color:var(--svc);margin-bottom:4px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(eng.name)}</div>
+        <div style="font-size:.76em;"><span style="color:var(--ink3);">Total: </span><strong>${fmt(eng.total)}</strong></div>
+        <div style="font-size:.76em;"><span style="color:var(--green);">Approved: ${fmt(eng.approved)}</span> &nbsp; <span style="color:var(--amber);">Pending: ${fmt(eng.pending)}</span></div>
+        ${eng.rejected>0?`<div style="font-size:.75em;color:var(--red);">Rejected: ${fmt(eng.rejected)}</div>`:''}
+      </div>`).join('')}
+    </div>`;
+  } else if(sumEl) sumEl.innerHTML='';
+
   // Advance requests
-  g('accConvAdvList').innerHTML=!advPending.length&&!advDone.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.84em;">No advance requests</div>':
+  g('accConvAdvList').innerHTML=!advPending.length&&!advDone.length?emptyMsg('No advance requests'):
     [...advPending,...advDone].map(a=>`<div class="conv-card" style="${a.status==='pending'?'border-left:3px solid var(--amber);':''}">
       <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong><span class="conv-status cs-${a.status}">${a.status}</span></div>
       <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div></div>
@@ -3591,24 +3726,24 @@ function renderAccConveyance(){
         <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);margin-bottom:5px;">${fmt(a.amount)}</div>
         ${a.status==='pending'?`<div style="display:flex;gap:5px;"><button class="btn btn-success btn-sm" onclick="approveConvAdv('${a.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvAdv('${a.id}')"><i class="fas fa-times"></i></button></div>`:''}
       </div></div>`).join('');
-  // Pending claims
-  g('accConvPending').innerHTML=!pending.length?'<div style="text-align:center;padding:18px;color:var(--ink3);font-size:.84em;"><i class="fas fa-check-circle" style="color:var(--green);margin-right:7px;"></i>No pending claims</div>':
-    pending.map(c=>convClaimCard(c,true)).join('');
-  // Approved/rejected
-  g('accConvApproved').innerHTML=!approved.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.84em;">No approved claims yet</div>':
-    [...approved].reverse().map(c=>convClaimCard(c,false)).join('');
+
+  g('accConvPending').innerHTML=!pending.length?emptyMsg('No pending claims'):pending.map(c=>convClaimCard(c,true)).join('');
+  g('accConvApproved').innerHTML=!approved.length?emptyMsg('No approved claims yet'):[...approved].reverse().map(c=>convClaimCard(c,false)).join('');
+  const rejEl=g('accConvRejected');
+  if(rejEl) rejEl.innerHTML=!rejected.length?emptyMsg('No rejected claims'):[...rejected].reverse().map(c=>convClaimCard(c,false)).join('');
   updateConvBadge();
 }
 
 function convClaimCard(c,showActions){
   const stMap={pending:'cs-pending',approved:'cs-approved',rejected:'cs-rejected'};
-  return `<div class="conv-card" style="${c.status==='pending'?'border-left:3px solid var(--amber);':''}">
+  return `<div class="conv-card" style="${c.status==='pending'?'border-left:3px solid var(--amber);':c.status==='rejected'?'border-left:3px solid var(--red);':''}">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status ${stMap[c.status]}">${c.status}</span></div>
       <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong> &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
       <div style="font-size:.75em;margin-top:3px;color:var(--ink2);">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
       ${c.remarks?`<div style="font-size:.74em;color:var(--ink3);margin-top:2px;font-style:italic;">"${esc(c.remarks)}"</div>`:''}
       ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
+      ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;text-align:right;">
       <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--svc);margin-bottom:6px;">${fmt(c.totalAmt)}</div>
@@ -3618,29 +3753,25 @@ function convClaimCard(c,showActions){
 }
 
 function approveConvClaim(id){
-  const c=D.svc_conveyance.find(x=>x.id===id);
-  if(!c)return;
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   c.status='approved';c.approvedBy=D.currentUser?.name||'Accounts';c.approvedAt=new Date().toISOString();
-  saveData();renderAccConveyance();alert('✓ Conveyance claim approved!');
+  saveData();renderAccConveyance();showSuccessToast('✓ Conveyance claim approved!','var(--green)');
 }
 function rejectConvClaim(id){
   const reason=prompt('Reason for rejection (optional):');
-  const c=D.svc_conveyance.find(x=>x.id===id);
-  if(!c)return;
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   c.status='rejected';c.rejectedReason=reason||'Rejected by Accounts';c.rejectedAt=new Date().toISOString();
-  saveData();renderAccConveyance();
+  saveData();renderAccConveyance();showSuccessToast('Claim rejected','var(--red)');
 }
 function approveConvAdv(id){
-  const a=D.svc_conv_advances.find(x=>x.id===id);
-  if(!a)return;
+  const a=D.svc_conv_advances.find(x=>x.id===id);if(!a)return;
   a.status='approved';a.approvedBy=D.currentUser?.name||'Accounts';
-  saveData();renderAccConveyance();alert('✓ Advance request approved!');
+  saveData();renderAccConveyance();showSuccessToast('✓ Advance request approved!','var(--green)');
 }
 function rejectConvAdv(id){
-  const a=D.svc_conv_advances.find(x=>x.id===id);
-  if(!a)return;
+  const a=D.svc_conv_advances.find(x=>x.id===id);if(!a)return;
   a.status='rejected';a.rejectedAt=new Date().toISOString();
-  saveData();renderAccConveyance();
+  saveData();renderAccConveyance();showSuccessToast('Advance rejected','var(--red)');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3658,11 +3789,25 @@ function showSvcOrderForm(){
   g('svOrdNo').value=genSvOrdNo();
   g('svOrdDate').value=today();
   g('svOrdCust').value='';g('svOrdNotes').value='';
+  if(g('svOrdSupplier'))g('svOrdSupplier').value='';
+  if(g('svOrdPurchaseVal'))g('svOrdPurchaseVal').value='';
+  if(g('svOrdMargin'))g('svOrdMargin').value='';
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
   addSvOrdItem();
   g('svcOrderForm').scrollIntoView({behavior:'smooth'});
 }
 function hideSvcOrderForm(){g('svcOrderForm').style.display='none';}
+
+function calcOrdMargin(){
+  const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
+  const saleTotal=parseFloat((g('svOrdTotal')?.textContent||'0').replace(/[^0-9.]/g,''))||0;
+  const margin=saleTotal-purchaseVal;
+  const el=g('svOrdMargin');
+  if(el){
+    el.value=(margin>=0?'+':'')+fmt(margin);
+    el.style.color=margin>=0?'var(--green)':'var(--red)';
+  }
+}
 
 function addSvOrdItem(data){
   svOrdRC++;const n=svOrdRC;
@@ -3682,10 +3827,13 @@ function recalcSvOrd(){
   let tot=0;
   document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{const q=parseFloat(r.querySelector('.soq')?.value)||0,rt=parseFloat(r.querySelector('.sor')?.value)||0,a=q*rt;tot+=a;const ac=r.querySelector('.soa');if(ac)ac.textContent='₹'+a.toFixed(2);});
   g('svOrdTotal').textContent=fmt(tot);
+  calcOrdMargin();
 }
 
 function sendSvcOrderToAccounts(){
   const ordNo=g('svOrdNo').value.trim(),date=g('svOrdDate').value,cust=g('svOrdCust').value.trim(),notes=g('svOrdNotes').value.trim();
+  const supplier=(g('svOrdSupplier')?.value||'').trim();
+  const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
   if(!date||!cust){alert('Fill date and customer');return;}
   const items=[];
   document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{
@@ -3695,21 +3843,31 @@ function sendSvcOrderToAccounts(){
   });
   if(!items.length){alert('Add at least one item');return;}
   const total=items.reduce((a,x)=>a+x.amount,0);
+  const margin=total-purchaseVal;
   showConfirm({
     icon:'ci-send', iconClass:'fa-clipboard-list',
     title:'Send Order to Accounts?',
-    msg:'This order will be sent to the Accounts team for billing. Please confirm the details.',
+    msg:'This order will be sent to the Accounts team for billing.',
     details:[
       {k:'Order No', v:ordNo},
       {k:'Date', v:date},
       {k:'Customer', v:cust},
+      {k:'Supplier', v:supplier||'—'},
       {k:'Items', v:items.length+' item(s)'},
-      {k:'Total Amount', v:fmt(total)}
+      {k:'Est. Sale Total', v:fmt(total)},
+      {k:'Purchase Value', v:purchaseVal?fmt(purchaseVal):'—'},
+      {k:'Margin', v:purchaseVal?fmt(margin):'—'}
     ],
     btnLabel:'Send to Accounts',
     btnColor:'var(--orange)',
     onOk:()=>{
-      D.orders.push({id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,status:'pending',invoiceNo:'',billedDate:'',createdAt:Date.now(),source:'service',createdBy:D.currentUser?.name||'Service'});
+      D.orders.push({
+        id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,
+        supplier,purchaseVal,margin,
+        status:'pending',invoiceNo:'',billedDate:'',
+        createdAt:Date.now(),source:'service',
+        createdBy:D.currentUser?.name||'Service'
+      });
       hideSvcOrderForm();saveData('new_order');renderSvcOrders();
       showSuccessToast(`✓ Order ${ordNo} sent to Accounts!`,'var(--orange)');
     }
@@ -3729,7 +3887,7 @@ function renderSvcOrders(){
       <div class="order-card-hdr" onclick="toggleSvcOrder('${o.id}')">
         <div>
           <div class="order-no"><span class="svc-order-source">SERVICE</span> <i class="fas fa-clipboard-list" style="opacity:.6;margin-right:4px;"></i>${esc(o.orderNo)}</div>
-          <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span><span><i class="fas fa-layer-group"></i>${o.items.length} item(s)</span></div>
+          <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span>${o.supplier?`<span><i class="fas fa-truck"></i>${esc(o.supplier)}</span>`:''}<span><i class="fas fa-layer-group"></i>${o.items.length} item(s)</span></div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           ${statusHtml}<div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
@@ -3738,6 +3896,7 @@ function renderSvcOrders(){
       <div class="order-body" id="soc-body-${o.id}" style="display:none;">
         <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
         <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
+        ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
       </div>
@@ -3782,7 +3941,23 @@ function calcIncProfit(){
   if(disp){disp.value=(profit>=0?'+':'')+fmt(profit).replace('₹','₹');disp.style.color=profit>=0?'var(--green)':'var(--red)';}
 }
 
-function saveSvcInc(){
+function saveSvcIncDraft(){
+  const no=g('incNo').value.trim(),date=g('incDate').value,eng=g('incEngineer').value,
+    cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
+    ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
+    purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
+  if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
+  const profit=sale-purchase;
+  const editId=g('incEditId').value;
+  if(!D.svc_incentives)D.svc_incentives=[];
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
+  else D.svc_incentives.push(obj);
+  hideSvcIncForm();saveData();renderSvcIncentives();
+  showSuccessToast(`✓ Entry ${no} saved as draft`,'#7c3aed');
+}
+
+function sendSvcIncToAccounts(){
   const no=g('incNo').value.trim(),date=g('incDate').value,eng=g('incEngineer').value,
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
@@ -3791,42 +3966,146 @@ function saveSvcInc(){
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
   const profit=sale-purchase;
   showConfirm({
-    icon:'ci-send', iconClass:'fa-gift',
+    icon:'ci-send',iconClass:'fa-gift',
     title:'Send Incentive to Accounts?',
-    msg:'This incentive entry will be sent to Accounts for review and approval.',
-    details:[
-      {k:'Entry No', v:no},
-      {k:'Date', v:date},
-      {k:'Engineer', v:eng},
-      {k:'Customer', v:cust},
-      {k:'Product', v:product||'—'},
-      {k:'Sale Amount', v:fmt(sale)},
-      {k:'Purchase Amount', v:fmt(purchase)},
-      {k:'Profit / Loss', v:fmt(profit)}
-    ],
-    btnLabel:'Send to Accounts',
-    btnColor:'#7c3aed',
+    msg:'This entry will be sent to Accounts for review.',
+    details:[{k:'Entry No',v:no},{k:'Date',v:date},{k:'Engineer',v:eng},{k:'Customer',v:cust},{k:'Product',v:product||'—'},{k:'Sale Amt',v:fmt(sale)},{k:'Purchase Amt',v:fmt(purchase)},{k:'Profit/Loss',v:fmt(profit)}],
+    btnLabel:'Send to Accounts',btnColor:'#7c3aed',
     onOk:()=>{
+      const editId=g('incEditId').value;
       if(!D.svc_incentives)D.svc_incentives=[];
-      D.svc_incentives.push({id:uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:''});
+      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+      if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
+      else D.svc_incentives.push(obj);
       hideSvcIncForm();saveData();renderSvcIncentives();updateAccIncBadge();
-      showSuccessToast(`✓ Incentive entry ${no} sent to Accounts!`,'#7c3aed');
+      showSuccessToast(`✓ Entry ${no} sent to Accounts!`,'var(--green)');
     }
   });
 }
 
+function sendDraftInc(id){
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-gift',
+    title:'Send Draft to Accounts?',
+    msg:'This draft incentive entry will be sent to Accounts for review.',
+    details:[{k:'Entry No',v:e.no},{k:'Engineer',v:e.engineerName},{k:'Customer',v:e.customer},{k:'Sale Amt',v:fmt(e.saleAmt)},{k:'Purchase Amt',v:fmt(e.purchaseAmt)},{k:'Profit/Loss',v:fmt(e.profit)}],
+    btnLabel:'Send to Accounts',btnColor:'#7c3aed',
+    onOk:()=>{
+      e.status='pending';e.sentAt=new Date().toISOString();
+      saveData();renderSvcIncentives();updateAccIncBadge();
+      showSuccessToast(`✓ ${e.no} sent to Accounts!`,'var(--green)');
+    }
+  });
+}
+
+function editDraftInc(id){
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  g('incNo').value=e.no;g('incDate').value=e.date;
+  populateSvcIncEngDropdown();g('incEngineer').value=e.engineerName;
+  g('incCust').value=e.customer;g('incProduct').value=e.product||'';
+  g('incRef').value=e.ref||'';g('incSaleAmt').value=e.saleAmt||'';
+  g('incPurchaseAmt').value=e.purchaseAmt||'';g('incNotes').value=e.notes||'';
+  g('incEditId').value=e.id;
+  g('svcIncFormTitle').textContent='Edit Draft Entry';
+  calcIncProfit();
+  g('svcIncForm').style.display='block';
+  g('svcIncForm').scrollIntoView({behavior:'smooth'});
+}
+
+function delDraftInc(id){
+  if(!confirm('Delete this draft entry?'))return;
+  D.svc_incentives=(D.svc_incentives||[]).filter(x=>x.id!==id);
+  saveData();renderSvcIncentives();
+  showSuccessToast('Draft deleted','var(--red)');
+}
+
+function sendAllDrafts(){
+  const drafts=(D.svc_incentives||[]).filter(e=>e.status==='draft'&&e.saleAmt>0);
+  if(!drafts.length){alert('No valid drafts to send');return;}
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-paper-plane',
+    title:`Send All ${drafts.length} Drafts to Accounts?`,
+    msg:'All saved draft entries will be sent to Accounts for review at once.',
+    details:drafts.map(e=>({k:e.no,v:`${esc(e.engineerName)} — ${fmt(e.profit)}`})),
+    btnLabel:`Send ${drafts.length} Entries`,btnColor:'var(--green)',
+    onOk:()=>{
+      drafts.forEach(e=>{e.status='pending';e.sentAt=new Date().toISOString();});
+      saveData();renderSvcIncentives();updateAccIncBadge();
+      showSuccessToast(`✓ ${drafts.length} entries sent to Accounts!`,'var(--green)');
+    }
+  });
+}
+
+function saveSvcInc(){ sendSvcIncToAccounts(); } // backward compat
+
 function renderSvcIncentives(){
-  const el=g('svcIncList');if(!el)return;
   const role=D.currentUser?.role,name=D.currentUser?.name;
-  let entries=[...(D.svc_incentives||[])].reverse();
-  if(role==='service') entries=entries.filter(e=>e.engineerName===name);
-  // Stats
-  const totSale=entries.reduce((a,e)=>a+e.saleAmt,0),totPur=entries.reduce((a,e)=>a+e.purchaseAmt,0),totProfit=entries.reduce((a,e)=>a+e.profit,0),totApproved=entries.filter(e=>e.status==='approved').reduce((a,e)=>a+(e.approvedAmt||0),0);
+  let all=[...(D.svc_incentives||[])];
+  if(role==='service') all=all.filter(e=>e.engineerName===name);
+
+  // Populate engineer filter
+  const engSel=g('svcIncEngFilter');
+  if(engSel&&role!=='service'){
+    const engs=[...new Set(all.map(e=>e.engineerName))].filter(Boolean);
+    const cur=engSel.value;
+    engSel.innerHTML='<option value="">All Engineers</option>'+engs.map(e=>`<option ${cur===e?'selected':''}>${esc(e)}</option>`).join('');
+  }
+
+  // Draft section
+  let drafts=all.filter(e=>e.status==='draft');
+  const draftBadge=g('incDraftCountBadge');
+  const sendAllBtn=g('sendAllDraftsBtn');
+  if(draftBadge) draftBadge.textContent=drafts.length?`${drafts.length} draft${drafts.length>1?'s':''}`:''
+  if(sendAllBtn) sendAllBtn.style.display=drafts.length?'inline-flex':'none';
+  const draftEl=g('svcIncDraftList');
+  if(draftEl){
+    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.83em;">No drafts — use "Save Draft" to collect entries before sending</div>';
+    else draftEl.innerHTML=drafts.map(e=>`<div class="inc-card" style="border-left:3px solid #c4b5fd;">
+      <div class="inc-card-hdr">
+        <div>
+          <div class="inc-no"><i class="fas fa-file-pen" style="opacity:.6;margin-right:6px;color:#7c3aed;"></i>${esc(e.no)} <span style="background:#ede9fe;color:#6d28d9;border-radius:8px;padding:1px 8px;font-size:.72em;font-weight:700;">DRAFT</span></div>
+          <div class="inc-meta"><span><i class="fas fa-calendar"></i>${e.date}</span><span><i class="fas fa-user-tie"></i>${esc(e.engineerName)}</span><span><i class="fas fa-building"></i>${esc(e.customer)}</span>${e.product?`<span><i class="fas fa-box"></i>${esc(e.product)}</span>`:''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.9em;color:${e.profit>=0?'var(--green)':'var(--red)'};">P/L: ${fmt(e.profit)}</div>
+          <div style="display:flex;gap:5px;">
+            <button class="btn btn-outline btn-sm" onclick="editDraftInc('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
+            <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="sendDraftInc('${e.id}')"><i class="fas fa-paper-plane"></i> Send</button>
+            <button class="btn btn-danger btn-sm" onclick="delDraftInc('${e.id}')"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+      <div style="padding:0 16px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
+        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Sale</div><div style="font-weight:700;font-size:.9em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
+        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Purchase</div><div style="font-weight:700;font-size:.9em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
+        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</div></div>
+      </div>
+    </div>`).join('');
+  }
+
+  // Sent entries with filters
+  let sent=all.filter(e=>e.status!=='draft');
+  const engF=g('svcIncEngFilter')?.value||'';
+  const statF=g('svcIncStatusFilter')?.value||'';
+  const from=g('svcIncFrom')?.value||'';
+  const to=g('svcIncTo')?.value||'';
+  if(engF) sent=sent.filter(e=>e.engineerName===engF);
+  if(statF) sent=sent.filter(e=>e.status===statF);
+  if(from) sent=sent.filter(e=>e.date>=from);
+  if(to) sent=sent.filter(e=>e.date<=to);
+  sent=[...sent].reverse();
+
+  // Stats for sent
+  const totSale=sent.reduce((a,e)=>a+e.saleAmt,0),totPur=sent.reduce((a,e)=>a+e.purchaseAmt,0),totProfit=sent.reduce((a,e)=>a+e.profit,0),totApproved=sent.filter(e=>e.status==='approved').reduce((a,e)=>a+(e.approvedAmt||0),0);
   const stats=g('svcIncStats');
-  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Purchase</div><div class="stat-value">${fmt(totPur)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div>`;
-  if(!entries.length){el.innerHTML='<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries yet. Click "New Entry" to create one.</p></div>';return;}
-  el.innerHTML=entries.map(e=>{
-    const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':'inc-status-pending';
+  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sent.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div>`;
+
+  const el=g('svcIncList');if(!el)return;
+  if(!sent.length){el.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>No sent entries match the filter.</p></div>';return;}
+  el.innerHTML=sent.map(e=>{
+    const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
+    const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status.charAt(0).toUpperCase()+e.status.slice(1);
     const profColor=e.profit>=0?'var(--green)':'var(--red)';
     return `<div class="inc-card">
       <div class="inc-card-hdr">
@@ -3834,17 +4113,17 @@ function renderSvcIncentives(){
           <div class="inc-no"><i class="fas fa-gift" style="opacity:.6;margin-right:6px;"></i>${esc(e.no)}</div>
           <div class="inc-meta"><span><i class="fas fa-calendar"></i>${e.date}</span><span><i class="fas fa-user-tie"></i>${esc(e.engineerName)}</span><span><i class="fas fa-building"></i>${esc(e.customer)}</span>${e.product?`<span><i class="fas fa-box"></i>${esc(e.product)}</span>`:''}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <span class="${stClass}">${e.status.charAt(0).toUpperCase()+e.status.slice(1)}</span>
-          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.93em;color:${profColor};">P/L: ${fmt(e.profit)}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+          <span class="${stClass}">${stLabel}</span>
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.9em;color:${profColor};">P/L: ${fmt(e.profit)}</div>
           ${e.status==='approved'&&e.approvedAmt?`<div style="font-size:.77em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt)}</div>`:''}
         </div>
       </div>
-      <div style="padding:0 16px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;">
-        <div style="background:var(--bg);border-radius:8px;padding:8px 11px;"><div style="font-size:.68em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:3px;">Sale Amt</div><div style="font-weight:700;font-size:.92em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
-        <div style="background:var(--bg);border-radius:8px;padding:8px 11px;"><div style="font-size:.68em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:3px;">Purchase</div><div style="font-weight:700;font-size:.92em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
-        <div style="background:var(--bg);border-radius:8px;padding:8px 11px;"><div style="font-size:.68em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:3px;">Profit/Loss</div><div style="font-weight:700;font-size:.92em;color:${profColor};">${fmt(e.profit)}</div></div>
-        ${e.approvedAmt?`<div style="background:var(--green-l);border-radius:8px;padding:8px 11px;"><div style="font-size:.68em;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:3px;">Incentive</div><div style="font-weight:700;font-size:.92em;color:var(--green);">${fmt(e.approvedAmt)}</div></div>`:''}
+      <div style="padding:0 16px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
+        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Sale</div><div style="font-weight:700;font-size:.9em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
+        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Purchase</div><div style="font-weight:700;font-size:.9em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
+        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${profColor};">${fmt(e.profit)}</div></div>
+        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:2px;">Incentive</div><div style="font-weight:700;font-size:.9em;color:var(--green);">${fmt(e.approvedAmt)}</div></div>`:''}
       </div>
       ${e.approvedBy?`<div style="font-size:.74em;color:var(--green);padding:0 16px 10px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.74em;color:var(--red);padding:0 16px 10px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
@@ -3866,68 +4145,220 @@ function updateSvcIncBadge(){
 // ════════════════════════════════════════════════════════════════
 // ACCOUNTS — INCENTIVE MANAGEMENT
 // ════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// ACCOUNTS — INCENTIVE MANAGEMENT
+// ════════════════════════════════════════════════════════════════
 function renderAccIncentives(){
   if(!D.svc_incentives)D.svc_incentives=[];
-  const pending=D.svc_incentives.filter(e=>e.status==='pending');
-  const approved=D.svc_incentives.filter(e=>e.status==='approved');
-  const rejected=D.svc_incentives.filter(e=>e.status==='rejected');
-  const totPendSale=pending.reduce((a,e)=>a+e.saleAmt,0);
-  const totApprInc=approved.reduce((a,e)=>a+(e.approvedAmt||0),0);
-  const totSale=D.svc_incentives.reduce((a,e)=>a+e.saleAmt,0);
-  const totPur=D.svc_incentives.reduce((a,e)=>a+e.purchaseAmt,0);
+  let entries=D.svc_incentives.filter(e=>e.status!=='draft');
+
+  // Populate engineer filter
+  const engSel=g('accIncEngFilter');
+  if(engSel){
+    const engs=[...new Set(entries.map(e=>e.engineerName))].filter(Boolean);
+    const cur=engSel.value;
+    engSel.innerHTML='<option value="">All Engineers</option>'+engs.map(e=>`<option ${cur===e?'selected':''}>${esc(e)}</option>`).join('');
+  }
+  const engF=g('accIncEngFilter')?.value||'';
+  const statF=g('accIncStatusFilter')?.value||'';
+  const from=g('accIncFrom')?.value||'';
+  const to=g('accIncTo')?.value||'';
+  if(engF) entries=entries.filter(e=>e.engineerName===engF);
+  if(statF) entries=entries.filter(e=>e.status===statF);
+  if(from) entries=entries.filter(e=>e.date>=from);
+  if(to) entries=entries.filter(e=>e.date<=to);
+
+  const pending=entries.filter(e=>e.status==='pending');
+  const mgmtReview=entries.filter(e=>e.status==='mgmt-review');
+  const approved=entries.filter(e=>e.status==='approved');
+  const rejected=entries.filter(e=>e.status==='rejected');
+
   const el=g('accIncStats');
-  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Sale Amt</div><div class="stat-value">${fmt(totPendSale)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Total Incentive Paid</div><div class="stat-value">${fmt(totApprInc)}</div></div>`;
-  const pendEl=g('accIncPending'),apprEl=g('accIncApproved'),rejEl=g('accIncRejected');
-  if(pendEl) pendEl.innerHTML=!pending.length?'<div style="text-align:center;padding:18px;color:var(--ink3);font-size:.84em;"><i class="fas fa-check-circle" style="color:var(--green);margin-right:7px;"></i>No pending incentives</div>':pending.map(e=>incAccCard(e,true)).join('');
-  if(apprEl) apprEl.innerHTML=!approved.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.84em;">No approved entries yet</div>':[...approved].reverse().map(e=>incAccCard(e,false)).join('');
-  if(rejEl) rejEl.innerHTML=!rejected.length?'<div style="text-align:center;padding:10px;color:var(--ink3);font-size:.82em;">None rejected</div>':[...rejected].reverse().map(e=>incAccCard(e,false)).join('');
+  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent to Mgmt</div><div class="stat-value">${mgmtReview.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Total Incentive Paid</div><div class="stat-value">${fmt(approved.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>`;
+
+  const pEl=g('accIncPending'),mEl=g('accIncMgmtReview'),aEl=g('accIncApproved'),rEl=g('accIncRejected');
+  if(pEl) pEl.innerHTML=!pending.length?emptyMsg('No pending incentives'):pending.map(e=>incAccCard(e,'pending')).join('');
+  if(mEl) mEl.innerHTML=!mgmtReview.length?emptyMsg('None sent to management yet'):[...mgmtReview].reverse().map(e=>incAccCard(e,'mgmt-review')).join('');
+  if(aEl) aEl.innerHTML=!approved.length?emptyMsg('No approved entries yet'):[...approved].reverse().map(e=>incAccCard(e,'approved')).join('');
+  if(rEl) rEl.innerHTML=!rejected.length?emptyMsg('None rejected'):[...rejected].reverse().map(e=>incAccCard(e,'rejected')).join('');
   updateAccIncBadge();
 }
 
-function incAccCard(e,showActions){
-  const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':'inc-status-pending';
+function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.83em;">${t}</div>`;}
+
+function incAccCard(e,context){
+  const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
+  const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
-  return `<div class="conv-card" style="${e.status==='pending'?'border-left:3px solid #7c3aed;':''}">
+  let actions='';
+  if(context==='pending'){
+    actions=`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+      <label style="font-size:.73em;color:var(--ink3);">Incentive % or ₹</label>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:70px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" oninput="calcIncAmt('${e.id}')" title="Enter %">
+        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="sendIncToMgmt('${e.id}')"><i class="fas fa-user-tie"></i> Send to Mgmt</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="conv-card" style="${e.status==='pending'?'border-left:3px solid #7c3aed;':e.status==='mgmt-review'?'border-left:3px solid var(--amber);':''}">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap;">
         <strong style="color:#7c3aed;font-size:.9em;">${esc(e.no)}</strong>
-        <span class="${stClass}">${e.status.charAt(0).toUpperCase()+e.status.slice(1)}</span>
+        <span class="${stClass}">${stLabel}</span>
       </div>
       <div style="font-size:.78em;color:var(--ink3);">${e.date} &nbsp;·&nbsp; <strong>${esc(e.engineerName)}</strong> &nbsp;·&nbsp; ${esc(e.customer)}${e.product?' — '+esc(e.product):''}</div>
       <div style="font-size:.75em;margin-top:4px;display:flex;gap:11px;flex-wrap:wrap;">
         <span>Sale: <strong style="color:var(--acc);">${fmt(e.saleAmt)}</strong></span>
         <span>Purchase: <strong style="color:var(--amber);">${fmt(e.purchaseAmt)}</strong></span>
         <span>P/L: <strong style="color:${profColor};">${fmt(e.profit)}</strong></span>
+        ${e.suggestedPct?`<span>Suggested: <strong style="color:#7c3aed;">${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
       </div>
       ${e.approvedBy?`<div style="font-size:.73em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.73em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
-    <div style="flex-shrink:0;text-align:right;">
-      ${showActions?`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-        <div style="display:flex;align-items:center;gap:5px;">
-          <input type="number" id="inc-amt-${e.id}" placeholder="Incentive ₹" step="0.01" style="width:110px;padding:6px 8px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.83em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
-        </div>
-        <div style="display:flex;gap:5px;">
-          <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="approveIncentive('${e.id}')"><i class="fas fa-check"></i> Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i> Reject</button>
-        </div>
-      </div>`:''}
-    </div>
+    <div style="flex-shrink:0;text-align:right;">${actions}</div>
   </div>`;
+}
+
+function calcIncAmt(id){
+  const pctEl=g('inc-pct-'+id),amtEl=g('inc-amt-'+id);
+  if(!pctEl||!amtEl)return;
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  const pct=parseFloat(pctEl.value)||0;
+  if(pct>0) amtEl.value=(e.profit*pct/100).toFixed(2);
+}
+
+function sendIncToMgmt(id){
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  const pct=parseFloat(g('inc-pct-'+id)?.value)||0;
+  const amt=parseFloat(g('inc-amt-'+id)?.value)||0;
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-user-tie',
+    title:'Send to Management for Approval?',
+    msg:'This incentive entry will be forwarded to Management for final approval.',
+    details:[{k:'Entry',v:e.no},{k:'Engineer',v:e.engineerName},{k:'Profit/Loss',v:fmt(e.profit)},{k:'Suggested %',v:pct?pct+'%':'—'},{k:'Suggested Amt',v:amt?fmt(amt):'—'}],
+    btnLabel:'Send to Management',btnColor:'var(--mgmt)',
+    onOk:()=>{
+      e.status='mgmt-review';e.suggestedPct=pct;e.suggestedAmt=amt;
+      e.sentToMgmtAt=new Date().toISOString();e.sentToMgmtBy=D.currentUser?.name||'Accounts';
+      saveData();renderAccIncentives();updateMgmtIncBadge();
+      showSuccessToast(`✓ ${e.no} sent to Management for approval`,'var(--mgmt)');
+    }
+  });
 }
 
 function approveIncentive(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
-  const inp=g('inc-amt-'+id);const amt=parseFloat(inp?.value)||0;
-  e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Accounts';e.approvedAt=new Date().toISOString();
-  saveData();renderAccIncentives();alert(`✓ Incentive entry ${e.no} approved! Incentive amount: ${fmt(amt)}`);
+  const inp=g('inc-amt-'+id);const amt=parseFloat(inp?.value)||e.suggestedAmt||0;
+  e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedAt=new Date().toISOString();
+  saveData();
+  if(D.currentUser?.role==='management') renderMgmtIncentives();
+  else renderAccIncentives();
+  showSuccessToast(`✓ ${e.no} approved — Incentive: ${fmt(amt)}`,'var(--green)');
 }
+
 function rejectIncentive(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const reason=prompt('Reason for rejection (optional):');
-  e.status='rejected';e.rejectedReason=reason||'Rejected by Accounts';e.rejectedAt=new Date().toISOString();
-  saveData();renderAccIncentives();
+  e.status='rejected';e.rejectedReason=reason||'Rejected';e.rejectedAt=new Date().toISOString();e.rejectedBy=D.currentUser?.name||'';
+  saveData();
+  if(D.currentUser?.role==='management') renderMgmtIncentives();
+  else renderAccIncentives();
 }
+
+// ════════════════════════════════════════════════════════════════
+// MANAGEMENT — INCENTIVE REVIEW
+// ════════════════════════════════════════════════════════════════
+function renderMgmtIncentives(){
+  if(!D.svc_incentives)D.svc_incentives=[];
+  let entries=D.svc_incentives.filter(e=>e.status!=='draft'&&e.status!=='pending');
+
+  // Populate engineer filter
+  const engSel=g('mgmtIncEngFilter');
+  if(engSel){
+    const engs=[...new Set(entries.map(e=>e.engineerName))].filter(Boolean);
+    const cur=engSel.value;
+    engSel.innerHTML='<option value="">All Engineers</option>'+engs.map(e=>`<option ${cur===e?'selected':''}>${esc(e)}</option>`).join('');
+  }
+  const engF=g('mgmtIncEngFilter')?.value||'';
+  const statF=g('mgmtIncStatusFilter')?.value||'';
+  const from=g('mgmtIncFrom')?.value||'';
+  const to=g('mgmtIncTo')?.value||'';
+  if(engF) entries=entries.filter(e=>e.engineerName===engF);
+  if(statF) entries=entries.filter(e=>e.status===statF);
+  if(from) entries=entries.filter(e=>e.date>=from);
+  if(to) entries=entries.filter(e=>e.date<=to);
+
+  // Per-engineer summary
+  const engMap={};
+  entries.forEach(e=>{if(!engMap[e.engineerName])engMap[e.engineerName]={name:e.engineerName,count:0,totalProfit:0,totalIncentive:0};engMap[e.engineerName].count++;engMap[e.engineerName].totalProfit+=e.profit;engMap[e.engineerName].totalIncentive+=(e.approvedAmt||0);});
+  const summaryEl=g('mgmtIncEngSummary');
+  if(summaryEl&&Object.keys(engMap).length){
+    summaryEl.innerHTML=`<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:4px;">${Object.values(engMap).map(eng=>`
+      <div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:12px;padding:11px 15px;min-width:160px;">
+        <div style="font-weight:700;font-size:.84em;color:#6d28d9;margin-bottom:5px;"><i class="fas fa-user-tie" style="margin-right:5px;"></i>${esc(eng.name)}</div>
+        <div style="font-size:.77em;color:var(--ink3);">${eng.count} entries &nbsp;|&nbsp; P/L: <strong style="color:${eng.totalProfit>=0?'var(--green)':'var(--red)'};">${fmt(eng.totalProfit)}</strong></div>
+        <div style="font-size:.77em;color:#6d28d9;margin-top:2px;">Incentive Paid: <strong>${fmt(eng.totalIncentive)}</strong></div>
+      </div>`).join('')}
+    </div>`;
+  } else if(summaryEl) summaryEl.innerHTML='';
+
+  const pending=entries.filter(e=>e.status==='mgmt-review');
+  const approved=entries.filter(e=>e.status==='approved');
+  const rejected=entries.filter(e=>e.status==='rejected');
+
+  const el=g('mgmtIncStats');
+  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Awaiting Review</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Rejected</div><div class="stat-value">${rejected.length}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Total Incentive Approved</div><div class="stat-value">${fmt(approved.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>`;
+
+  const pEl=g('mgmtIncPending'),aEl=g('mgmtIncApproved'),rEl=g('mgmtIncRejected');
+  if(pEl) pEl.innerHTML=!pending.length?emptyMsg('No entries awaiting review'):pending.map(e=>mgmtIncCard(e,true)).join('');
+  if(aEl) aEl.innerHTML=!approved.length?emptyMsg('No approved entries'):[...approved].reverse().map(e=>mgmtIncCard(e,false)).join('');
+  if(rEl) rEl.innerHTML=!rejected.length?emptyMsg('None rejected'):[...rejected].reverse().map(e=>mgmtIncCard(e,false)).join('');
+}
+
+function mgmtIncCard(e,showActions){
+  const profColor=e.profit>=0?'var(--green)':'var(--red)';
+  const actions=showActions?`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+    <label style="font-size:.73em;color:var(--ink3);">Adjust Incentive % or ₹</label>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:65px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" oninput="calcIncAmt('${e.id}')" title="% of profit">
+      <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" value="${e.suggestedAmt||(e.profit>0?(e.profit*0.2).toFixed(2):'')}">
+    </div>
+    <div style="display:flex;gap:5px;">
+      <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="approveIncentive('${e.id}')"><i class="fas fa-check"></i> Approve</button>
+      <button class="btn btn-danger btn-sm" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i> Reject</button>
+    </div>
+  </div>`:'';
+  return `<div class="conv-card" style="${e.status==='mgmt-review'?'border-left:3px solid var(--amber);':''}">
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap;">
+        <strong style="color:#7c3aed;font-size:.9em;">${esc(e.no)}</strong>
+        ${e.status==='approved'?`<span class="inc-status-approved">Approved</span>`:`<span class="inc-status-pending">${e.status==='mgmt-review'?'Awaiting Review':'—'}</span>`}
+      </div>
+      <div style="font-size:.78em;color:var(--ink3);">${e.date} &nbsp;·&nbsp; <strong>${esc(e.engineerName)}</strong> &nbsp;·&nbsp; ${esc(e.customer)}${e.product?' — '+esc(e.product):''}</div>
+      <div style="font-size:.75em;margin-top:4px;display:flex;gap:11px;flex-wrap:wrap;">
+        <span>Sale: <strong style="color:var(--acc);">${fmt(e.saleAmt)}</strong></span>
+        <span>Purchase: <strong style="color:var(--amber);">${fmt(e.purchaseAmt)}</strong></span>
+        <span>P/L: <strong style="color:${profColor};">${fmt(e.profit)}</strong></span>
+        ${e.suggestedPct?`<span style="color:#7c3aed;">Suggested: <strong>${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
+      </div>
+      ${e.sentToMgmtBy?`<div style="font-size:.73em;color:var(--amber);margin-top:3px;"><i class="fas fa-paper-plane"></i> Sent by ${esc(e.sentToMgmtBy)}</div>`:''}
+      ${e.approvedBy?`<div style="font-size:.73em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — ${fmt(e.approvedAmt)}</div>`:''}
+      ${e.rejectedReason?`<div style="font-size:.73em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+    </div>
+    <div style="flex-shrink:0;">${actions}</div>
+  </div>`;
+}
+
+function updateMgmtIncBadge(){
+  const cnt=(D.svc_incentives||[]).filter(e=>e.status==='mgmt-review').length;
+  const b=g('mgmt-inc-badge');if(!b)return;
+  if(cnt>0){b.style.display='inline';b.textContent=cnt;b.classList.add('alert');}else{b.style.display='none';}
+}
+function clearMgmtIncBadge(){ updateMgmtIncBadge(); }
 
 function exportIncReport(){
   const rows=(D.svc_incentives||[]).map(e=>({'Entry No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale Amount':e.saleAmt.toFixed(2),'Purchase Amount':e.purchaseAmt.toFixed(2),'Profit/Loss':e.profit.toFixed(2),'Status':e.status,'Incentive Approved':(e.approvedAmt||0).toFixed(2),'Approved By':e.approvedBy||''}));
