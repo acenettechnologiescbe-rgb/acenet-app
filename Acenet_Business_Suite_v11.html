@@ -3577,7 +3577,7 @@ function openPrintWindow(title, bodyHtml){
     <p class="sub">${esc(title)} &nbsp;·&nbsp; ${new Date().toLocaleString('en-IN')} &nbsp;·&nbsp; By: ${D.currentUser?.name||''}</p>
     ${bodyHtml}
     <div class="footer">Acenet Business Suite — Confidential</div>
-    <script>window.onload=function(){window.focus();window.print();}<\/script>
+    \x3cscript>window.onload=function(){window.focus();window.print();}\x3c/script>
     </body></html>`;
   const w=window.open('','_blank','width=950,height=750');
   if(w){w.document.write(html);w.document.close();}
