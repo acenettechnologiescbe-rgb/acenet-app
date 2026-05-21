@@ -1046,6 +1046,37 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="fg"><label>Expected Resolution</label><input type="date" id="scETA"></div>
   </div>
   <div class="fg" style="margin-bottom:11px;"><label>Resolution / Notes</label><textarea id="scResolution" rows="2" placeholder="Action taken or remarks…"></textarea></div>
+  <!-- ── Inline Conveyance ── -->
+  <div style="background:#f0fdfa;border:1.5px solid #5eead4;border-radius:10px;padding:13px 14px;margin-bottom:11px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;" onclick="toggleScConv()">
+      <i class="fas fa-car-side" style="color:var(--svc);"></i>
+      <span class="sora" style="font-weight:700;font-size:.85em;color:var(--svc);">Conveyance for this Call</span>
+      <span style="font-size:.73em;color:var(--ink3);margin-left:4px;">(optional — fill if travel was made)</span>
+      <i class="fas fa-chevron-down" id="scConvChevron" style="margin-left:auto;color:var(--svc);font-size:.8em;transition:.2s;"></i>
+    </div>
+    <div id="scConvPanel" style="display:none;">
+      <div class="g3" style="margin-bottom:9px;">
+        <div class="fg"><label>From Location</label><input type="text" id="scConvFrom" placeholder="Starting point"></div>
+        <div class="fg"><label>To Location</label><input type="text" id="scConvTo" placeholder="Destination"></div>
+        <div class="fg"><label>Mode of Transport</label>
+          <select id="scConvMode">
+            <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
+            <option>Train</option><option>Company Vehicle</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="g4" style="margin-bottom:9px;">
+        <div class="fg"><label>Distance (km)</label><input type="number" id="scConvKm" value="0" step="0.1" oninput="calcScConvAmt()"></div>
+        <div class="fg"><label>Rate ₹/km (or flat fare)</label><input type="number" id="scConvRate" value="0" step="0.01" oninput="calcScConvAmt()"></div>
+        <div class="fg"><label>Travel Amount (₹)</label><input type="text" id="scConvAmt" readonly style="background:#e0fdf4;font-weight:700;color:var(--svc);" placeholder="₹0"></div>
+        <div class="fg"><label>Food/Allow. (₹)</label><input type="number" id="scConvFood" value="0" step="0.01"></div>
+      </div>
+      <div class="g2" style="margin-bottom:3px;">
+        <div class="fg"><label>Other Expenses (₹)</label><input type="number" id="scConvOther" value="0" step="0.01"></div>
+        <div class="fg"><label>Remarks</label><input type="text" id="scConvRemarks" placeholder="Optional conveyance notes"></div>
+      </div>
+    </div>
+  </div>
   <input type="hidden" id="scEditId">
   <div class="btn-row"><button class="btn btn-svc" onclick="saveSvcCall()"><i class="fas fa-save"></i> Save Call</button><button class="btn btn-outline" onclick="hideSvcCallForm()">Cancel</button></div>
 </div>
@@ -1061,13 +1092,13 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ SERVICE DESK: CONVEYANCE ENTRY ════ -->
 <div class="page" id="page-svc-conveyance">
 <div class="ph">
-  <div><h2><span class="phi" style="background:var(--svc)"><i class="fas fa-car-side"></i></span><span class="sora">Conveyance Entry</span></h2><p>Submit travel expenses for completed calls</p></div>
+  <div><h2><span class="phi" style="background:var(--svc)"><i class="fas fa-car-side"></i></span><span class="sora">Conveyance</span></h2><p>Select completed service calls and generate conveyance claims</p></div>
   <div class="btn-row">
-    <button class="btn btn-outline btn-sm" onclick="printSection('convList','Conveyance Claims')"><i class="fas fa-print"></i> Print PDF</button>
+    <button class="btn btn-outline btn-sm" onclick="printSection('convList','Conveyance Claims')"><i class="fas fa-print"></i> Print</button>
     <button class="btn btn-outline btn-sm" onclick="exportConvReport()"><i class="fas fa-file-excel"></i> Excel</button>
-    <button class="btn btn-svc" onclick="showConvForm()"><i class="fas fa-plus"></i> New Claim</button>
   </div>
 </div>
+
 <!-- Advance Request -->
 <div class="card" style="border:2px solid var(--svc-l);margin-bottom:14px;">
   <div class="card-title"><i class="fas fa-hand-holding-dollar" style="color:var(--svc)"></i>Request Conveyance Advance</div>
@@ -1080,59 +1111,48 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
   <button class="btn btn-svc btn-sm" onclick="saveConvAdvance()"><i class="fas fa-paper-plane"></i> Request Advance</button>
 </div>
-<!-- Generate Conveyance from Service Call Records -->
+
+<!-- ── NEW: Select Calls & Generate Claim ── -->
 <div class="card" style="border:2px solid var(--svc-l);margin-bottom:14px;background:linear-gradient(135deg,#f0fdfa,#fff);">
-  <div class="card-title" style="color:var(--svc);"><i class="fas fa-magic" style="color:var(--svc);margin-right:7px;"></i>Generate Conveyance from Service Calls</div>
-  <p style="font-size:.81em;color:var(--ink3);margin-bottom:12px;">Pick a date range to auto-load your completed service calls and generate a conveyance claim in one click.</p>
-  <div class="g4" style="margin-bottom:11px;">
-    <div class="fg"><label>From Date</label><input type="date" id="gcFromDate"></div>
-    <div class="fg"><label>To Date</label><input type="date" id="gcToDate"></div>
-    <div class="fg" id="gcEngWrap"><label>Engineer</label><select id="gcEngineer"><option value="">-- Select --</option></select></div>
-    <div class="fg" style="display:flex;align-items:flex-end;">
-      <button class="btn btn-svc btn-sm" onclick="findCallsForConv()" style="width:100%;"><i class="fas fa-search"></i> Find Calls</button>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+    <div class="card-title" style="margin:0;color:var(--svc);"><i class="fas fa-list-check" style="margin-right:7px;"></i>Select Calls &amp; Generate Conveyance</div>
+    <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
+      <div class="fg" id="gcEngWrap2" style="margin:0;"><select id="gcEngineer2" onchange="renderConvCallTable()" style="padding:7px 10px;border-radius:var(--r);font-size:.82em;border:1.5px solid var(--line);"><option value="">-- All Engineers --</option></select></div>
+      <div style="display:flex;gap:6px;">
+        <input type="date" id="gcFromDate2" onchange="renderConvCallTable()" style="padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+        <input type="date" id="gcToDate2" onchange="renderConvCallTable()" style="padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+      </div>
     </div>
   </div>
-  <div id="gcCallsList"></div>
-  <div id="gcGenBtnWrap" style="display:none;margin-top:10px;">
-    <button class="btn btn-svc" onclick="generateConvFromCalls()"><i class="fas fa-file-invoice"></i> Generate Conveyance Claim</button>
+  <div style="overflow-x:auto;">
+    <table class="itbl" id="convCallTable" style="font-size:.82em;">
+      <thead><tr>
+        <th style="width:36px;"><input type="checkbox" id="convSelectAll" onchange="toggleAllConvCalls(this.checked)" style="cursor:pointer;"></th>
+        <th>Call No</th><th>Date</th><th>Customer</th>
+        <th>From</th><th>To</th><th>Mode</th><th>km</th><th>Travel ₹</th><th>Food ₹</th><th>Other ₹</th><th>Total ₹</th>
+      </tr></thead>
+      <tbody id="convCallTableBody"></tbody>
+    </table>
+  </div>
+  <div id="convCallTableEmpty" style="text-align:center;padding:18px;color:var(--ink3);font-size:.84em;display:none;">
+    <i class="fas fa-car-side" style="font-size:1.8em;opacity:.3;display:block;margin-bottom:6px;"></i>No service calls with conveyance data found. Add conveyance details when logging service calls.
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
+    <div id="convSelCount" style="font-size:.82em;color:var(--ink3);font-weight:600;">0 call(s) selected</div>
+    <div id="convSelTotal" style="font-size:.88em;font-weight:800;color:var(--svc);"></div>
+    <button class="btn btn-svc" id="btnGenConv" onclick="generateConvFromSelected()" style="margin-left:auto;" disabled>
+      <i class="fas fa-file-invoice"></i> Generate Conveyance Claim
+    </button>
   </div>
 </div>
-<!-- Conveyance Claim Form -->
-<div class="form-panel fp-svc" id="convForm" style="display:none;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-    <div class="sora" style="font-weight:700;color:var(--svc);font-size:.93em;"><i class="fas fa-car-side" style="margin-right:7px;"></i>Conveyance Claim</div>
-    <button class="btn btn-ghost btn-sm" onclick="closeEl('convForm')"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="g3" style="margin-bottom:11px;">
-    <div class="fg"><label>Claim ID</label><input type="text" id="cvNo" readonly style="background:var(--bg);"></div>
-    <div class="fg"><label>Date</label><input type="date" id="cvDate"></div>
-    <div class="fg"><label>Engineer</label><select id="cvEngineer"><option value="">-- Select Engineer --</option></select></div>
-  </div>
-  <div class="g2" style="margin-bottom:11px;">
-    <div class="fg"><label>Call Reference (Completed Call)</label><input type="text" id="cvCallRef" list="dl-svc-calls2" placeholder="Call ID…"><datalist id="dl-svc-calls2"></datalist></div>
-    <div class="fg"><label>Customer / Location</label><input type="text" id="cvLocation" placeholder="Customer name or location"></div>
-  </div>
-  <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Travel Details</div>
-  <div style="overflow-x:auto;margin-bottom:11px;"><table class="itbl"><thead><tr><th>#</th><th>Mode of Travel</th><th>From</th><th>To</th><th>Distance (km)</th><th>Rate/km or Fare (₹)</th><th>Amount (₹)</th><th></th></tr></thead><tbody id="convItemsBody"></tbody></table></div>
-  <button class="btn btn-outline btn-sm" onclick="addConvItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--svc)"></i> Add Row</button>
-  <div class="g2" style="margin-bottom:11px;">
-    <div class="fg"><label>Food / Allowance (₹)</label><input type="number" id="cvFood" value="0" step="0.01" oninput="recalcConv()"></div>
-    <div class="fg"><label>Other Expenses (₹)</label><input type="number" id="cvOther" value="0" step="0.01" oninput="recalcConv()"></div>
-  </div>
-  <div class="fg" style="margin-bottom:11px;"><label>Remarks</label><textarea id="cvRemarks" rows="2" placeholder="Any additional notes…"></textarea></div>
-  <div class="tot-bar" style="background:var(--svc);margin-bottom:11px;">
-    <div class="tb-item"><div class="tbl">Travel</div><div class="tbv" id="cvTravelAmt">₹0</div></div>
-    <div class="tb-item"><div class="tbl">Food/Allow.</div><div class="tbv" id="cvFoodAmt">₹0</div></div>
-    <div class="tb-item"><div class="tbl">Other</div><div class="tbv" id="cvOtherAmt">₹0</div></div>
-    <div class="tb-item"><div class="tbl">Total Claim</div><div class="tbv big" id="cvTotal">₹0</div></div>
-  </div>
-  <input type="hidden" id="cvEditId">
-  <div class="btn-row">
-    <button class="btn" style="background:#0e7490;color:#fff;" onclick="saveConvDraft()"><i class="fas fa-save"></i> Save Draft</button>
-    <button class="btn btn-svc" onclick="saveConvClaim()"><i class="fas fa-paper-plane"></i> Submit Claim</button>
-    <button class="btn btn-outline" onclick="closeEl('convForm')">Cancel</button>
-  </div>
-</div>
+
+<!-- Hidden fields used by old code (kept for compatibility) -->
+<datalist id="dl-svc-calls2"></datalist>
+<input type="hidden" id="cvNo"><input type="hidden" id="cvDate"><input type="hidden" id="cvEngineer">
+<input type="hidden" id="cvCallRef"><input type="hidden" id="cvLocation"><input type="hidden" id="convItemsBody">
+<input type="hidden" id="cvFood" value="0"><input type="hidden" id="cvOther" value="0">
+<input type="hidden" id="cvRemarks"><input type="hidden" id="cvEditId">
+
 <!-- Draft claims -->
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
   <div class="sdiv" style="margin:0;">📝 Draft Claims <span id="convDraftBadge" style="background:#0e7490;color:#fff;border-radius:20px;padding:1px 9px;font-size:.75em;font-weight:700;margin-left:6px;"></span></div>
@@ -1397,6 +1417,24 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg">
         <label>Purchase / Cost Amount (₹) <span style="font-size:.76em;color:var(--ink3);">— Your cost</span></label>
         <input type="number" id="incPurchaseAmt" placeholder="0.00" step="0.01" oninput="calcIncProfit()">
+      </div>
+      <div class="fg">
+        <label>GST Type <span style="font-size:.76em;color:var(--ink3);">— on sale</span></label>
+        <select id="incGST" onchange="calcIncProfit()">
+          <option value="none">No GST</option>
+          <option value="exclusive">Exclusive (add 18% on top)</option>
+          <option value="inclusive">Inclusive (18% in price)</option>
+        </select>
+      </div>
+    </div>
+    <div class="g3" style="margin-bottom:11px;">
+      <div class="fg">
+        <label>GST Amount (₹) <span style="font-size:.76em;color:var(--ink3);">— Auto</span></label>
+        <input type="text" id="incGSTAmt" readonly style="background:var(--bg);" placeholder="₹0.00">
+      </div>
+      <div class="fg">
+        <label>Net Sale (excl. GST) <span style="font-size:.76em;color:var(--ink3);">— Auto</span></label>
+        <input type="text" id="incNetSale" readonly style="background:var(--bg);" placeholder="₹0.00">
       </div>
       <div class="fg">
         <label>Profit / Loss <span style="font-size:.76em;color:var(--ink3);">— Auto calculated</span></label>
@@ -3550,7 +3588,7 @@ function getFY(){
   const d=new Date(),m=d.getMonth()+1,y=d.getFullYear();
   return m>=4?`${y}-${String(y+1).slice(2)}`:`${y-1}-${String(y).slice(2)}`;
 }
-function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();alert('✓ Imported!');}catch(err){alert('Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
+function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
 function exportPLCSV(){let csv='Date,BillNo,Customer,Material,Purchase,Sales,Expense,Profit\n';D.pl_ledger.forEach(e=>{csv+=`${e.d},${e.billNo||''},${e.c},${e.m},${e.pb.toFixed(2)},${e.sb.toFixed(2)},${(e.expense||0).toFixed(2)},${e.profit.toFixed(2)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_pl_${today()}.csv`;a.click();}
 function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outstanding,Status\n';D.ac_invoices.forEach(i=>{csv+=`${i.no},${i.custName},${i.date},${i.dueDate||''},${i.total.toFixed(2)},${getPaid(i.id).toFixed(2)},${getOut(i.id).toFixed(2)},${getSt(i.id)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_acc_${today()}.csv`;a.click();}
 
@@ -3764,12 +3802,32 @@ function showSvcCallForm(call){
     g('scEngineer').value=D.currentUser?.role==='service'?D.currentUser.name:'';
     g('scStatus').value='pending';g('scETA').value='';g('scResolution').value='';
     g('scEditId').value='';g('svcCallFormTitle').textContent='New Service Call';
+    // Clear conveyance panel on new call
+    const cp2=g('scConvPanel');if(cp2)cp2.style.display='none';
+    const cc2=g('scConvChevron');if(cc2)cc2.style.transform='';
+    ['scConvFrom','scConvTo','scConvRemarks'].forEach(id=>{const el=g(id);if(el)el.value='';});
+    ['scConvKm','scConvRate','scConvFood','scConvOther'].forEach(id=>{const el=g(id);if(el)el.value=0;});
+    const sca=g('scConvAmt');if(sca)sca.value='\u20b90';
+    const scm=g('scConvMode');if(scm)scm.value='Two-wheeler';
   } else {
     g('scNo').value=call.no;g('scDate').value=call.datetime;g('scCust').value=call.customer;
     g('scContact').value=call.contact||'';g('scPhone').value=call.phone||'';g('scLocation').value=call.location||'';
     g('scIssue').value=call.issue||'';g('scProduct').value=call.product||'';g('scPriority').value=call.priority||'normal';
     g('scEngineer').value=call.engineer||'';g('scStatus').value=call.status;g('scETA').value=call.eta||'';g('scResolution').value=call.resolution||'';
     g('scEditId').value=call.id;g('svcCallFormTitle').textContent='Edit — '+call.no;
+    // Restore conveyance
+    if(call.convFrom||call.convTo||call.convKm||call.convAmt){
+      const p=g('scConvPanel');if(p){p.style.display='block';const cv=g('scConvChevron');if(cv)cv.style.transform='rotate(180deg)';}
+    }
+    if(g('scConvFrom'))g('scConvFrom').value=call.convFrom||'';
+    if(g('scConvTo'))g('scConvTo').value=call.convTo||'';
+    if(g('scConvMode'))g('scConvMode').value=call.convMode||'Two-wheeler';
+    if(g('scConvKm'))g('scConvKm').value=call.convKm||0;
+    if(g('scConvRate'))g('scConvRate').value=call.convRate||0;
+    if(g('scConvFood'))g('scConvFood').value=call.convFood||0;
+    if(g('scConvOther'))g('scConvOther').value=call.convOther||0;
+    if(g('scConvRemarks'))g('scConvRemarks').value=call.convRemarks||'';
+    calcScConvAmt();
   }
 }
 function hideSvcCallForm(){g('svcCallForm').style.display='none';}
@@ -3777,7 +3835,27 @@ function hideSvcCallForm(){g('svcCallForm').style.display='none';}
 function saveSvcCall(){
   const no=g('scNo').value,dt=g('scDate').value,cust=g('scCust').value.trim(),issue=g('scIssue').value.trim();
   if(!cust||!issue){alert('Customer and issue are required');return;}
-  const obj={id:g('scEditId').value||uid(),no,datetime:dt,customer:cust,contact:g('scContact').value.trim(),phone:g('scPhone').value.trim(),location:g('scLocation').value.trim(),issue,product:g('scProduct').value.trim(),priority:g('scPriority').value,engineer:g('scEngineer').value,status:g('scStatus').value,eta:g('scETA').value,resolution:g('scResolution').value.trim(),createdBy:D.currentUser?.name||'',date:dt.slice(0,10)};
+  // Inline conveyance data
+  const convKm=parseFloat(g('scConvKm')?.value)||0;
+  const convRate=parseFloat(g('scConvRate')?.value)||0;
+  const convAmtRaw=convKm>0&&convRate>0?convKm*convRate:convRate;
+  const obj={
+    id:g('scEditId').value||uid(),no,datetime:dt,customer:cust,
+    contact:g('scContact').value.trim(),phone:g('scPhone').value.trim(),
+    location:g('scLocation').value.trim(),issue,
+    product:g('scProduct').value.trim(),priority:g('scPriority').value,
+    engineer:g('scEngineer').value,status:g('scStatus').value,
+    eta:g('scETA').value,resolution:g('scResolution').value.trim(),
+    createdBy:D.currentUser?.name||'',date:dt.slice(0,10),
+    // Conveyance
+    convFrom:g('scConvFrom')?.value.trim()||'',
+    convTo:g('scConvTo')?.value.trim()||'',
+    convMode:g('scConvMode')?.value||'Two-wheeler',
+    convKm,convRate,convAmt:convAmtRaw,
+    convFood:parseFloat(g('scConvFood')?.value)||0,
+    convOther:parseFloat(g('scConvOther')?.value)||0,
+    convRemarks:g('scConvRemarks')?.value.trim()||''
+  };
   if(g('scEditId').value) D.svc_calls=D.svc_calls.map(c=>c.id===obj.id?obj:c);
   else{if(!D.svc_calls.find(c=>c.no===no))D.svc_calls.push(obj);}
   hideSvcCallForm();saveData();renderSvcCalls();updateSvcBadge();
@@ -3818,7 +3896,7 @@ function renderSvcCalls(){
         ${c.phone?`<div style="font-size:.78em;margin-bottom:4px;"><i class="fas fa-phone" style="color:var(--svc)"></i> ${esc(c.contact||'')} ${c.phone?`— <a href="tel:${esc(c.phone)}" style="color:var(--svc);font-weight:700;">${esc(c.phone)}</a>`:''}</div>`:''}
         ${c.location?`<div style="font-size:.78em;color:var(--ink3);margin-bottom:4px;"><i class="fas fa-location-dot"></i> ${esc(c.location)}</div>`:''}
         ${c.resolution?`<div style="font-size:.79em;background:var(--green-l);padding:6px 9px;border-radius:7px;color:#065f46;margin-top:5px;"><i class="fas fa-check-circle"></i> ${esc(c.resolution)}</div>`:''}
-        ${c.status==='completed'?`<button class="btn btn-svc btn-sm" style="margin-top:8px;" onclick='goPage("svc-conveyance")'><i class="fas fa-car-side"></i> Add Conveyance</button>`:''}
+        ${c.convFrom||c.convAmt?`<div style="margin-top:6px;font-size:.75em;background:#f0fdfa;border-radius:6px;padding:4px 8px;color:var(--svc);"><i class='fas fa-car-side'></i> ${esc(c.convFrom||'')}${c.convTo?' → '+esc(c.convTo):''} · ${esc(c.convMode||'')}${c.convKm?' · '+c.convKm+'km':''} · ${fmt((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))}</div>`:''}
       </div>
     </div>`).join('');
   // Update datalists
@@ -4013,7 +4091,7 @@ function editConvDraft(id){
     // Reload items
     g('convItemsBody').innerHTML='';convRC=0;
     (c.items||[]).forEach(it=>addConvItem(it));
-    updateConvTotals();
+    recalcConv();
   },100);
 }
 
@@ -4097,6 +4175,7 @@ function saveConvAdvance(){
 
 function renderConveyance(){
   populateSvcEngineerDropdowns();
+  renderConvCallTable();
   const svOrdCustDl=g('dl-svc-ord-cust');if(svOrdCustDl)svOrdCustDl.innerHTML=cu;
   const incCustDl=g('dl-inc-cust');if(incCustDl)incCustDl.innerHTML=cu+D.ac_customers.map(c=>`<option value="${esc(c.name)}">`).join('');
   updateAccIncBadge();updateSvcIncBadge();
@@ -4141,7 +4220,7 @@ function renderConveyance(){
           <strong style="color:#0e7490;font-size:.9em;">${esc(c.no)}</strong>
           <span style="background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 9px;font-size:.72em;font-weight:700;">DRAFT</span>
         </div>
-        <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
+        <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRefs?'&nbsp;·&nbsp; Calls: '+esc(c.callRefs):c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
         <div style="font-size:.75em;margin-top:2px;">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
@@ -4468,10 +4547,14 @@ function saveSvcIncDraft(){
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
-  const profit=sale-purchase;
+  const gstType=g('incGST')?.value||'none';
+  let gstAmt=0,netSale=sale;
+  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);}
+  const profit=netSale-purchase;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
   if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
   else D.svc_incentives.push(obj);
   hideSvcIncForm();saveData();renderSvcIncentives();
@@ -4485,17 +4568,21 @@ function sendSvcIncToAccounts(){
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
-  const profit=sale-purchase;
+  const gstType2=g('incGST')?.value||'none';
+  let gstAmt2=0,netSale2=sale;
+  if(gstType2==='exclusive'){gstAmt2=sale*GST_R;netSale2=sale;}
+  else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale/(1+GST_R);}
+  const profit=netSale2-purchase;
   showConfirm({
     icon:'ci-send',iconClass:'fa-gift',
     title:'Send Incentive to Accounts?',
     msg:'This entry will be sent to Accounts for review.',
-    details:[{k:'Entry No',v:no},{k:'Date',v:date},{k:'Engineer',v:eng},{k:'Customer',v:cust},{k:'Product',v:product||'—'},{k:'Sale Amt',v:fmt(sale)},{k:'Purchase Amt',v:fmt(purchase)},{k:'Profit/Loss',v:fmt(profit)}],
+    details:[{k:'Entry No',v:no},{k:'Date',v:date},{k:'Engineer',v:eng},{k:'Customer',v:cust},{k:'Product',v:product||'—'},{k:'Sale Amt',v:fmt(sale)},{k:'GST',v:gstType2!=='none'?fmt(gstAmt2):'—'},{k:'Net Sale',v:fmt(netSale2)},{k:'Purchase Amt',v:fmt(purchase)},{k:'Profit/Loss',v:fmt(profit)}],
     btnLabel:'Send to Accounts',btnColor:'#7c3aed',
     onOk:()=>{
       const editId=g('incEditId').value;
       if(!D.svc_incentives)D.svc_incentives=[];
-      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
       if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
       else D.svc_incentives.push(obj);
       hideSvcIncForm();saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
@@ -4528,6 +4615,7 @@ function editDraftInc(id){
   g('incRef').value=e.ref||'';g('incSaleAmt').value=e.saleAmt||'';
   g('incPurchaseAmt').value=e.purchaseAmt||'';g('incNotes').value=e.notes||'';
   g('incEditId').value=e.id;
+  const gEl=g('incGST');if(gEl)gEl.value=e.gstType||'none';
   g('svcIncFormTitle').textContent='Edit Draft Entry';
   calcIncProfit();
   g('svcIncForm').style.display='block';
@@ -4602,6 +4690,7 @@ function renderSvcIncentives(){
       <div style="padding:0 16px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
         <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Sale</div><div style="font-weight:700;font-size:.9em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
         <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Purchase</div><div style="font-weight:700;font-size:.9em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
+        ${e.gstType&&e.gstType!=='none'?`<div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">GST @18%</div><div style="font-weight:700;font-size:.9em;color:#0e7490;">${fmt(e.gstAmt||0)}</div></div>`:''}
         <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</div></div>
       </div>
     </div>`).join('');
@@ -5981,6 +6070,201 @@ function openMsgWithRef(toRole,ref,type){
   if(type)g('msgType').value=type;
   g('msgText').focus();
 }
+
+// ═══════════════════════════════════════════════════════════════
+// INLINE CONVEYANCE IN SERVICE CALL FORM
+// ═══════════════════════════════════════════════════════════════
+function toggleScConv(){
+  const panel=g('scConvPanel'),chev=g('scConvChevron');
+  if(!panel)return;
+  const open=panel.style.display==='block';
+  panel.style.display=open?'none':'block';
+  if(chev)chev.style.transform=open?'':'rotate(180deg)';
+}
+
+function calcScConvAmt(){
+  const km=parseFloat(g('scConvKm')?.value)||0;
+  const rate=parseFloat(g('scConvRate')?.value)||0;
+  const amt=km>0&&rate>0?km*rate:rate;
+  const el=g('scConvAmt');
+  if(el) el.value=amt>0?fmt(amt):'₹0';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONVEYANCE TAB — CHECKBOX TABLE
+// ═══════════════════════════════════════════════════════════════
+function renderConvCallTable(){
+  const isService=D.currentUser?.role==='service';
+  const myName=D.currentUser?.name||'';
+  
+  // Populate engineer dropdown
+  const gcEng=g('gcEngineer2');
+  if(gcEng&&!isService){
+    const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
+    const prev=gcEng.value;
+    gcEng.innerHTML='<option value="">-- All Engineers --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+    if(prev) gcEng.value=prev;
+  }
+  const gcEngWrap2=g('gcEngWrap2');
+  if(gcEngWrap2) gcEngWrap2.style.display=isService?'none':'';
+  if(gcEng&&isService){gcEng.value=myName;gcEng.disabled=true;}
+
+  // Get filter values
+  const engFilter=isService?myName:(g('gcEngineer2')?.value||'');
+  const fromDate=g('gcFromDate2')?.value||'';
+  const toDate=g('gcToDate2')?.value||'';
+
+  // Filter calls that have conveyance data
+  let calls=D.svc_calls.filter(c=>{
+    if(!c.convFrom&&!c.convAmt&&!c.convKm) return false; // no conv data
+    if(engFilter&&c.engineer!==engFilter) return false;
+    if(fromDate&&c.date<fromDate) return false;
+    if(toDate&&c.date>toDate) return false;
+    // exclude calls already in a submitted conveyance claim
+    const alreadyClaimed=D.svc_conveyance.some(cv=>
+      cv.status!=='draft'&&Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)
+    );
+    if(alreadyClaimed) return false;
+    return true;
+  });
+  calls=[...calls].reverse();
+
+  const tbody=g('convCallTableBody');
+  const empty=g('convCallTableEmpty');
+  const tbl=g('convCallTable');
+  if(!tbody)return;
+
+  if(!calls.length){
+    tbl.style.display='none';
+    empty.style.display='block';
+    updateConvSelSummary();
+    return;
+  }
+  tbl.style.display='';
+  empty.style.display='none';
+
+  tbody.innerHTML=calls.map(c=>{
+    const convAmt=parseFloat(c.convAmt)||0;
+    const food=parseFloat(c.convFood)||0;
+    const other=parseFloat(c.convOther)||0;
+    const total=convAmt+food+other;
+    return `<tr>
+      <td><input type="checkbox" class="conv-call-chk" data-id="${c.id}" onchange="updateConvSelSummary()" style="cursor:pointer;"></td>
+      <td><span style="font-weight:700;color:var(--svc);">${esc(c.no)}</span></td>
+      <td style="color:var(--ink3);">${c.date||''}</td>
+      <td>${esc(c.customer||'')}</td>
+      <td>${esc(c.convFrom||'—')}</td>
+      <td>${esc(c.convTo||'—')}</td>
+      <td>${esc(c.convMode||'—')}</td>
+      <td style="text-align:right;">${c.convKm>0?c.convKm:c.convKm===0?'—':c.convKm||'—'}</td>
+      <td style="text-align:right;color:var(--svc);">${convAmt>0?fmt(convAmt):'—'}</td>
+      <td style="text-align:right;">${food>0?fmt(food):'—'}</td>
+      <td style="text-align:right;">${other>0?fmt(other):'—'}</td>
+      <td style="text-align:right;font-weight:700;color:var(--svc);">${total>0?fmt(total):'—'}</td>
+    </tr>`;
+  }).join('');
+  updateConvSelSummary();
+}
+
+function toggleAllConvCalls(checked){
+  document.querySelectorAll('.conv-call-chk').forEach(cb=>cb.checked=checked);
+  updateConvSelSummary();
+}
+
+function updateConvSelSummary(){
+  const checked=[...document.querySelectorAll('.conv-call-chk:checked')];
+  const btn=g('btnGenConv');
+  const selCount=g('convSelCount');
+  const selTotal=g('convSelTotal');
+  let total=0;
+  checked.forEach(cb=>{
+    const c=D.svc_calls.find(x=>x.id===cb.dataset.id);
+    if(c) total+=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
+  });
+  if(selCount) selCount.textContent=checked.length+' call(s) selected';
+  if(selTotal) selTotal.textContent=checked.length>0?'Total: '+fmt(total):'';
+  if(btn) btn.disabled=checked.length===0;
+}
+
+function generateConvFromSelected(){
+  const checked=[...document.querySelectorAll('.conv-call-chk:checked')];
+  if(!checked.length){alert('Select at least one call');return;}
+  const eng=D.currentUser?.role==='service'?D.currentUser.name:(g('gcEngineer2')?.value||'');
+  if(!eng){alert('Select an engineer');return;}
+
+  const callIds=checked.map(cb=>cb.dataset.id);
+  const calls=callIds.map(id=>D.svc_calls.find(c=>c.id===id)).filter(Boolean);
+
+  // Build consolidated items list
+  const items=calls.map(c=>({
+    callNo:c.no,customer:c.customer||'',
+    mode:c.convMode||'Two-wheeler',
+    from:c.convFrom||'',
+    to:c.convTo||'',
+    km:parseFloat(c.convKm)||0,
+    rate:parseFloat(c.convRate)||0,
+    amount:parseFloat(c.convAmt)||0
+  }));
+  const travelTotal=items.reduce((a,i)=>a+i.amount,0);
+  const foodTotal=calls.reduce((a,c)=>a+(parseFloat(c.convFood)||0),0);
+  const otherTotal=calls.reduce((a,c)=>a+(parseFloat(c.convOther)||0),0);
+  const grandTotal=travelTotal+foodTotal+otherTotal;
+  const dates=calls.map(c=>c.date).filter(Boolean).sort();
+  const dateLabel=dates.length?`${dates[0]}${dates.length>1?' to '+dates[dates.length-1]:''}`:today();
+
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-file-invoice',
+    title:'Generate Conveyance Claim?',
+    msg:'A draft conveyance claim will be created from the selected service calls.',
+    details:[
+      {k:'Engineer',v:eng},
+      {k:'Calls',v:calls.length+' call(s)'},
+      {k:'Period',v:dateLabel},
+      {k:'Travel Amount',v:fmt(travelTotal)},
+      {k:'Food/Allow.',v:fmt(foodTotal)},
+      {k:'Other',v:fmt(otherTotal)},
+      {k:'Total Claim',v:fmt(grandTotal)}
+    ],
+    btnLabel:'Generate & Save Draft',btnColor:'var(--svc)',
+    onOk:()=>{
+      const no=genConvNo();
+      const obj={
+        id:uid(),no,date:today(),engineer:eng,
+        callIds,callRefs:calls.map(c=>c.no).join(', '),
+        location:calls.map(c=>c.customer).join(', '),
+        items,travelAmt:travelTotal,foodAmt:foodTotal,
+        otherAmt:otherTotal,totalAmt:grandTotal,
+        remarks:'Generated from: '+calls.map(c=>c.no).join(', '),
+        status:'draft',createdAt:new Date().toISOString()
+      };
+      D.svc_conveyance.push(obj);
+      saveData();renderConveyance();renderConvCallTable();
+      // uncheck all
+      document.querySelectorAll('.conv-call-chk').forEach(cb=>cb.checked=false);
+      const sa=g('convSelectAll');if(sa)sa.checked=false;
+      updateConvSelSummary();
+      showSuccessToast('✓ Draft conveyance claim saved — review and submit when ready','var(--svc)');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UPDATED calcIncProfit WITH GST
+// ═══════════════════════════════════════════════════════════════
+function calcIncProfit(){
+  const s=parseFloat(g('incSaleAmt')?.value)||0;
+  const p=parseFloat(g('incPurchaseAmt')?.value)||0;
+  const gType=g('incGST')?.value||'none';
+  let netSale=s,gstAmt=0;
+  if(gType==='exclusive'){gstAmt=s*GST_R;netSale=s;}
+  else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s/(1+GST_R);}
+  const profit=netSale-p;
+  const gstEl=g('incGSTAmt');const netEl=g('incNetSale');const dispEl=g('incProfitDisplay');
+  if(gstEl) gstEl.value=gstAmt>0?fmt(gstAmt):'₹0.00';
+  if(netEl) netEl.value=netSale>0?fmt(netSale):'₹0.00';
+  if(dispEl){dispEl.value=(profit>=0?'+':'')+fmt(profit);dispEl.style.color=profit>=0?'var(--green)':'var(--red)';}
+}
+
 
 </script>
 </body>
