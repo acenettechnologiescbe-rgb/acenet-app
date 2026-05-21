@@ -5326,10 +5326,6 @@ function exportMgmtView(){
   xlsxExport([{name:'View All',rows}],`acenet_mgmt_${_mvTab}_${today()}`);
 }
 
-  const rows=(D.svc_incentives||[]).map(e=>({'Entry No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale Amount':e.saleAmt.toFixed(2),'Purchase Amount':e.purchaseAmt.toFixed(2),'Profit/Loss':e.profit.toFixed(2),'Status':e.status,'Incentive Approved':(e.approvedAmt||0).toFixed(2),'Approved By':e.approvedBy||''}));
-  xlsxExport([{name:'Incentives',rows}],'acenet_incentives_'+today());
-}
-
 // ════════════════════════════════════════════════════════════════
 // ACCOUNTS REPORTS HUB
 // ════════════════════════════════════════════════════════════════
