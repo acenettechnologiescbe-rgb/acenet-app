@@ -1153,11 +1153,30 @@ tbody tr:last-child td{border-bottom:none;}
 <input type="hidden" id="cvFood" value="0"><input type="hidden" id="cvOther" value="0">
 <input type="hidden" id="cvRemarks"><input type="hidden" id="cvEditId">
 
-<!-- Draft claims -->
+<!-- ── DRAFT CLAIMS — shown FIRST so user sees them immediately after generating ── -->
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-  <div class="sdiv" style="margin:0;">📝 Draft Claims <span id="convDraftBadge" style="background:#0e7490;color:#fff;border-radius:20px;padding:1px 9px;font-size:.75em;font-weight:700;margin-left:6px;"></span></div>
+  <div class="sdiv" style="margin:0;color:var(--svc);font-size:.95em;">
+    <i class="fas fa-file-pen" style="margin-right:6px;color:var(--svc);"></i>
+    📝 Draft Claims
+    <span id="convDraftBadge" style="background:#0e7490;color:#fff;border-radius:20px;padding:1px 9px;font-size:.75em;font-weight:700;margin-left:6px;"></span>
+  </div>
+  <div style="font-size:.78em;color:var(--ink3);font-style:italic;">
+    <i class="fas fa-info-circle" style="color:var(--svc);margin-right:4px;"></i>
+    After generating, your draft appears here — click <strong style="color:var(--svc);">Submit</strong> to send to Accounts
+  </div>
+</div>
+<!-- Info tip shown when no drafts -->
+<div id="convDraftTip" style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border:1.5px solid #99f6e4;border-radius:12px;padding:13px 16px;margin-bottom:10px;display:none;">
+  <div style="font-weight:700;color:var(--svc);font-size:.88em;margin-bottom:5px;"><i class="fas fa-lightbulb" style="margin-right:6px;"></i>How it works:</div>
+  <div style="font-size:.81em;color:var(--ink2);line-height:1.75;">
+    1. Select service calls below &nbsp;→&nbsp; Click <strong>Generate Conveyance Claim</strong><br>
+    2. Draft appears here &nbsp;→&nbsp; Review it<br>
+    3. Click <strong style="color:var(--svc);">Submit to Accounts</strong> to send for approval<br>
+    4. Accounts approves &nbsp;→&nbsp; Claim moves to <em>My Conveyance Claims</em>
+  </div>
 </div>
 <div id="convDraftList"></div>
+
 <!-- Claims list -->
 <div class="sdiv">My Conveyance Claims</div>
 <div class="stats" id="convStats"></div>
@@ -3588,7 +3607,7 @@ function getFY(){
   const d=new Date(),m=d.getMonth()+1,y=d.getFullYear();
   return m>=4?`${y}-${String(y+1).slice(2)}`:`${y-1}-${String(y).slice(2)}`;
 }
-function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
+function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();alert('✓ Imported!');}catch(err){alert('Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
 function exportPLCSV(){let csv='Date,BillNo,Customer,Material,Purchase,Sales,Expense,Profit\n';D.pl_ledger.forEach(e=>{csv+=`${e.d},${e.billNo||''},${e.c},${e.m},${e.pb.toFixed(2)},${e.sb.toFixed(2)},${(e.expense||0).toFixed(2)},${e.profit.toFixed(2)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_pl_${today()}.csv`;a.click();}
 function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outstanding,Status\n';D.ac_invoices.forEach(i=>{csv+=`${i.no},${i.custName},${i.date},${i.dueDate||''},${i.total.toFixed(2)},${getPaid(i.id).toFixed(2)},${getOut(i.id).toFixed(2)},${getSt(i.id)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_acc_${today()}.csv`;a.click();}
 
@@ -4072,7 +4091,16 @@ function saveConvDraft(){
   if(editId) D.svc_conveyance=D.svc_conveyance.map(c=>c.id===editId?obj:c);
   else D.svc_conveyance.push(obj);
   closeEl('convForm');saveData();renderConveyance();
-  showSuccessToast(`✓ Conveyance draft saved — submit when ready`,'#0e7490');
+  showSuccessToast(`✓ Conveyance draft saved — see Draft Claims section below, click Submit to send to Accounts`,'#0e7490');
+  setTimeout(()=>{
+    const draftSection=g('convDraftList');
+    if(draftSection){
+      draftSection.scrollIntoView({behavior:'smooth',block:'start'});
+      draftSection.style.transition='background 0.3s';
+      draftSection.style.background='#cffafe';
+      setTimeout(()=>{draftSection.style.background='';},1800);
+    }
+  },300);
 }
 
 function editConvDraft(id){
@@ -4210,11 +4238,15 @@ function renderConveyance(){
   const draftBadge=g('convDraftBadge');
   if(draftBadge) draftBadge.textContent=drafts.length?`${drafts.length} draft${drafts.length>1?'s':''}`:'' ;
 
+  // Show how-it-works tip when no drafts exist
+  const tip=g('convDraftTip');
+  if(tip) tip.style.display=drafts.length?'none':'block';
+
   // Draft list
   const draftEl=g('convDraftList');
   if(draftEl){
-    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.83em;">No drafts — use "Save Draft" to save a claim and submit later</div>';
-    else draftEl.innerHTML=drafts.map(c=>`<div class="conv-card" style="border-left:3px solid #0e7490;">
+    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.83em;background:var(--bg);border-radius:8px;margin-bottom:10px;">No drafts yet — generate a claim from the service calls below</div>';
+    else draftEl.innerHTML=drafts.map(c=>`<div class="conv-card" style="border-left:4px solid var(--svc);background:linear-gradient(135deg,#f0fdfa,#fff);">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <strong style="color:#0e7490;font-size:.9em;">${esc(c.no)}</strong>
@@ -4222,13 +4254,14 @@ function renderConveyance(){
         </div>
         <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRefs?'&nbsp;·&nbsp; Calls: '+esc(c.callRefs):c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
         <div style="font-size:.75em;margin-top:2px;">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
+        <div style="font-size:.74em;color:var(--svc);margin-top:4px;font-style:italic;"><i class="fas fa-arrow-right" style="margin-right:3px;"></i>Click <strong>Submit to Accounts</strong> to send this for approval</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0e7490;font-size:1.05em;margin-bottom:6px;">${fmt(c.totalAmt)}</div>
-        <div style="display:flex;gap:5px;">
+        <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0e7490;font-size:1.05em;margin-bottom:8px;">${fmt(c.totalAmt)}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
           <button class="btn btn-outline btn-sm" onclick="editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn btn-sm" style="background:var(--svc);color:#fff;" onclick="submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit</button>
-          <button class="btn btn-danger btn-sm" onclick="delConvDraft('${c.id}')"><i class="fas fa-trash"></i></button>
+          <button class="btn btn-sm" style="background:var(--svc);color:#fff;font-weight:700;" onclick="submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit to Accounts</button>
+          <button class="btn btn-danger btn-sm" onclick="delConvDraft('${c.id}')" title="Delete draft"><i class="fas fa-trash"></i></button>
         </div>
       </div>
     </div>`).join('');
@@ -6243,7 +6276,18 @@ function generateConvFromSelected(){
       document.querySelectorAll('.conv-call-chk').forEach(cb=>cb.checked=false);
       const sa=g('convSelectAll');if(sa)sa.checked=false;
       updateConvSelSummary();
-      showSuccessToast('✓ Draft conveyance claim saved — review and submit when ready','var(--svc)');
+      showSuccessToast('✓ Draft conveyance claim saved — scroll down to view Draft Claims, then click Submit to send to Accounts','var(--svc)');
+      // Scroll to the draft section so user sees it immediately
+      setTimeout(()=>{
+        const draftSection=g('convDraftList');
+        if(draftSection){
+          draftSection.scrollIntoView({behavior:'smooth',block:'start'});
+          // Flash highlight so user knows exactly where draft landed
+          draftSection.style.transition='background 0.3s';
+          draftSection.style.background='#cffafe';
+          setTimeout(()=>{draftSection.style.background='';},1800);
+        }
+      },350);
     }
   });
 }
