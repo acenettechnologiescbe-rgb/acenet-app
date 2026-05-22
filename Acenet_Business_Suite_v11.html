@@ -498,12 +498,8 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="renderMgmt();"><i class="fas fa-sync"></i> Refresh</button><button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button></div></div>
   <!-- Combined hero module cards -->
   <div class="mgmt-hero">
-    <div class="mgmt-module-card mmc-mkt">
-      <div class="mmc-label"><i class="fas fa-chart-line"></i> Marketing — P&amp;L</div>
-      <div class="mmc-row" id="mgmt-mkt-row"></div>
-    </div>
     <div class="mgmt-module-card mmc-acc">
-      <div class="mmc-label"><i class="fas fa-file-invoice-dollar"></i> Accounts — Outstanding</div>
+      <div class="mmc-label"><i class="fas fa-file-invoice-dollar"></i> Accounts — Outstanding &amp; Collection</div>
       <div class="mmc-row" id="mgmt-acc-row"></div>
     </div>
   </div>
@@ -515,11 +511,7 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
   <div class="sec-grid">
     <div class="card"><div class="card-title"><i class="fas fa-headset" style="color:var(--svc)"></i>Pending / Escalated Service Calls</div><div id="mgmt-svc-calls"></div></div>
-    <div class="card"><div class="card-title"><i class="fas fa-chart-bar" style="color:var(--green)"></i>Top Customers — Marketing Profit</div><div id="mgmt-mkt-chart"></div></div>
-  </div>
-  <div class="sec-grid">
     <div class="card"><div class="card-title"><i class="fas fa-chart-bar" style="color:var(--red)"></i>Top Customers — Outstanding</div><div id="mgmt-acc-chart"></div></div>
-    <div class="card"><div class="card-title"><i class="fas fa-car-side" style="color:var(--svc)"></i>Conveyance — Pending Claims</div><div id="mgmt-conv-panel"></div></div>
   </div>
   <div class="sec-grid">
     <div class="card"><div class="card-title"><i class="fas fa-gift" style="color:#7c3aed"></i>Incentive Summary — By Engineer</div><div id="mgmt-inc-panel"></div></div>
@@ -922,7 +914,7 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg" style="margin-bottom:9px;"><label>Full Name</label><input type="text" id="uName" placeholder="Full name"></div>
       <div class="fg" style="margin-bottom:9px;"><label>Username *</label><input type="text" id="uUser" placeholder="Login username"></div>
       <div class="fg" style="margin-bottom:9px;"><label>Password</label><input type="password" id="uPass" placeholder="Leave blank to keep existing"></div>
-      <div class="fg" style="margin-bottom:12px;"><label>Role *</label><select id="uRole"><option value="management">Management</option><option value="marketing">Marketing</option><option value="accounts">Accounts</option><option value="service">Service</option></select></div>
+      <div class="fg" style="margin-bottom:12px;"><label>Role *</label><select id="uRole"><option value="management">Management</option><option value="accounts">Accounts</option><option value="service">Service</option></select></div>
       <input type="hidden" id="uEditId">
       <div class="btn-row"><button class="btn btn-mgmt" onclick="saveUser()"><i class="fas fa-save"></i> <span id="uSaveTxt">Add User</span></button><button class="btn btn-outline" onclick="cancelUserEdit()" id="uCancelBtn" style="display:none;"><i class="fas fa-times"></i> Cancel</button></div>
     </div>
@@ -1187,10 +1179,10 @@ tbody tr:last-child td{border-bottom:none;}
 </div>
 
 <!-- ════ ACCOUNTS: PENDING INBOX ════ -->
-<div class="page" id="page-acc-pending">
+<div class="page" id="page-acc-dashboard">
 <div class="ph">
-  <div><h2><span class="phi" style="background:var(--acc)"><i class="fas fa-inbox"></i></span><span class="sora">Pending Inbox</span></h2><p>All items sent by Service &amp; Marketing awaiting your action</p></div>
-  <button class="btn btn-outline btn-sm" onclick="renderAccPending()"><i class="fas fa-sync"></i> Refresh</button>
+  <div><h2><span class="phi" style="background:var(--acc)"><i class="fas fa-gauge-high"></i></span><span class="sora">Accounts Dashboard</span></h2><p>All items sent by Service awaiting your action</p></div>
+  <button class="btn btn-outline btn-sm" onclick="renderAccDashboard()"><i class="fas fa-sync"></i> Refresh</button>
 </div>
 <div class="stats" id="pendingStats"></div>
 <!-- Service Conveyance Claims -->
@@ -1491,6 +1483,25 @@ tbody tr:last-child td{border-bottom:none;}
 </div>
 
 <!-- ════ ACCOUNTS: INCENTIVES ════ -->
+<!-- ════ SERVICE: OUTSTANDING COLLECTION ════ -->
+<div class="page" id="page-svc-outstanding">
+<div class="ph">
+  <div><h2><span class="phi" style="background:var(--red)"><i class="fas fa-phone-volume"></i></span><span class="sora">Outstanding Collection</span></h2><p>Customers with pending payments — call &amp; collect</p></div>
+  <div class="btn-row">
+    <select id="svcOutSort" onchange="renderSvcOutstanding()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);">
+      <option value="days">Sort: Most Overdue</option>
+      <option value="amount">Sort: Highest Amount</option>
+      <option value="name">Sort: Customer Name</option>
+    </select>
+    <button class="btn btn-outline btn-sm" onclick="renderSvcOutstanding()"><i class="fas fa-sync"></i> Refresh</button>
+  </div>
+</div>
+<div class="stats" id="svcOutStats"></div>
+<div class="sdiv">🔴 Urgent — 90+ Days Overdue</div><div id="svcOutUrgent"></div>
+<div class="sdiv">🟠 High — 60–90 Days</div><div id="svcOutHigh"></div>
+<div class="sdiv">🟡 Medium — 30–60 Days</div><div id="svcOutMedium"></div>
+<div class="sdiv">📋 New — Under 30 Days</div><div id="svcOutNew"></div>
+</div>
 <div class="page" id="page-acc-incentives">
   <div class="ph">
     <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Management</span></h2><p>View, review and forward incentive entries to Management for approval</p></div>
@@ -1825,7 +1836,7 @@ tbody tr:last-child td{border-bottom:none;}
         <option value="">-- Select recipient --</option>
         <option value="management">👑 Management</option>
         <option value="accounts">💼 Accounts Team</option>
-        <option value="marketing">📊 Marketing Team</option>
+        
         <option value="service">🔧 Service Team</option>
       </select>
     </div>
@@ -1856,7 +1867,6 @@ tbody tr:last-child td{border-bottom:none;}
 const GST_R = 0.18;
 const DEF_USERS = [
   {id:'u1',name:'Administrator',username:'admin',password:'Admin@123',role:'management',active:true},
-  {id:'u2',name:'Marketing Team',username:'marketing',password:'Mkt@123',role:'marketing',active:true},
   {id:'u3',name:'Accounts Team',username:'accounts',password:'Acc@123',role:'accounts',active:true},
   {id:'u4',name:'Service Engineer',username:'service',password:'Svc@123',role:'service',active:true}
 ];
@@ -2173,11 +2183,10 @@ function refreshUI(){
   refreshDataLists(); updateOrderBadge(); updateMsgBadge();
   const r=D.currentUser?.role;
   if(!r) return;
-  renderBills();renderLedger();renderInvoices();renderPayments();renderAdvances();renderAccCusts();renderMaterialTabs();renderUsers();renderOrders();renderAccOrders();
+  renderInvoices();renderPayments();renderAdvances();renderAccCusts();renderUsers();renderAccOrders();
   if(r==='management'){renderMgmt();updateMgmtIncBadge();updateMgmtViewBadge();}
-  if(r==='marketing'){renderMktReports();renderMktOutstanding();}
-  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccBillsList();renderAccIncentives();updateAccIncBadge();renderStock();updatePendInboxBadge();}
-  if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();}
+  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccDashboard();updatePendInboxBadge();}
+  if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();renderSvcOutstanding();}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2200,14 +2209,14 @@ function bootApp(){
   const u=D.currentUser;
   setRoleCSS(u.role);
   g('userName').textContent=u.name;
-  const rc={management:'rb-mgmt',marketing:'rb-mkt',accounts:'rb-acc',service:'rb-svc'};
-  const ri={management:'fa-crown',marketing:'fa-chart-line',accounts:'fa-file-invoice-dollar',service:'fa-tools'};
-  const rl={management:'Management',marketing:'Marketing',accounts:'Accounts',service:'Service'};
-  g('roleBadge').className='role-badge '+rc[u.role];
-  g('roleBadge').innerHTML=`<i class="fas ${ri[u.role]}"></i> ${rl[u.role]}`;
+  const rc={management:'rb-mgmt',accounts:'rb-acc',service:'rb-svc'};
+  const ri={management:'fa-crown',accounts:'fa-file-invoice-dollar',service:'fa-tools'};
+  const rl={management:'Management',accounts:'Accounts',service:'Service'};
+  g('roleBadge').className='role-badge '+(rc[u.role]||'rb-mgmt');
+  g('roleBadge').innerHTML=`<i class="fas ${ri[u.role]||'fa-user'}"></i> ${rl[u.role]||u.role}`;
   buildNav(u.role);
   refreshUI();
-  const def={management:'overview',marketing:'bill-entry',accounts:'invoices',service:'svc-calls'};
+  const def={management:'overview',accounts:'acc-dashboard',service:'svc-calls'};
   goPage(def[u.role]||'overview');
 }
 
@@ -2229,22 +2238,13 @@ const NAVS = {
     {id:'users',icon:'fa-users-gear',label:'Users'},
     {id:'setup',icon:'fa-server',label:'Setup'}
   ],
-  marketing:[
-    {id:'bill-entry',icon:'fa-file-invoice-dollar',label:'Bill Entry'},
-    {id:'orders',icon:'fa-clipboard-list',label:'Order Checklist',color:'var(--orange)'},
-    {id:'mkt-outstanding',icon:'fa-phone-volume',label:'Outstanding',color:'var(--red)',hasBadge:true,badgeId:'out-badge'},
-    {id:'ledger',icon:'fa-table',label:'Ledger'},
-    {id:'materials',icon:'fa-boxes',label:'Materials'},
-    {id:'mkt-reports',icon:'fa-chart-bar',label:'Reports'}
-  ],
   accounts:[
+    {id:'acc-dashboard',icon:'fa-gauge-high',label:'Dashboard',color:'var(--svc)',hasBadge:true,badgeId:'pend-inbox-badge'},
     {id:'invoices',icon:'fa-file-invoice',label:'Invoices'},
-    {id:'acc-pending',icon:'fa-inbox',label:'Pending',color:'var(--svc)',hasBadge:true,badgeId:'pend-inbox-badge'},
     {id:'acc-orders',icon:'fa-clipboard-list',label:'Orders',color:'var(--orange)',hasBadge:true,badgeId:'order-badge'},
     {id:'payments',icon:'fa-money-bill-wave',label:'Payments'},
     {id:'advances',icon:'fa-hand-holding-dollar',label:'Advances'},
     {id:'salary-advances',icon:'fa-user-tie',label:'Salary Adv.',color:'#1d4ed8'},
-    {id:'acc-bills',icon:'fa-file-invoice-dollar',label:'Bill Entry',color:'var(--mkt)'},
     {id:'acc-conveyance',icon:'fa-car-side',label:'Conveyance',color:'var(--svc)',hasBadge:true,badgeId:'conv-badge'},
     {id:'acc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'acc-inc-badge'},
     {id:'acc-cust',icon:'fa-users',label:'Customers'},
@@ -2255,6 +2255,7 @@ const NAVS = {
     {id:'svc-calls',icon:'fa-headset',label:'Service Calls',hasBadge:true,badgeId:'svc-pending-badge'},
     {id:'svc-conveyance',icon:'fa-car-side',label:'Conveyance'},
     {id:'svc-orders',icon:'fa-clipboard-list',label:'Order Checklist',color:'var(--orange)'},
+    {id:'svc-outstanding',icon:'fa-phone-volume',label:'Outstanding',color:'var(--red)'},
     {id:'svc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'svc-inc-badge'}
   ]
 };
@@ -2279,28 +2280,26 @@ function goPage(p){
   const nb=g('nb-'+p);if(nb)nb.classList.add('on');
   document.querySelectorAll('.split-drop').forEach(x=>x.classList.remove('open'));
   if(p==='overview') renderMgmt();
-  if(p==='mkt-reports') renderMktReports();
-  if(p==='acc-reports'){renderAccReports();renderAdvStats();}
   if(p==='materials') renderMaterialTabs();
   if(p==='users') renderUsers();
   if(p==='advances'){renderAdvances();renderAdvStats();populateAdvanceFilters();}
-  if(p==='orders') renderOrders();
+  if(p==='acc-dashboard'){renderAccDashboard();updatePendInboxBadge();}
+  if(p==='invoices') renderInvoices();
+  if(p==='payments') renderPayments();
   if(p==='acc-orders'){renderAccOrders();clearOrderBadge();}
-  if(p==='acc-bills'){renderAccBillsList();populateAccBillCustDropdown();}
-  if(p==='mkt-outstanding') renderMktOutstanding();
   if(p==='svc-calls'){renderSvcCalls();updateSvcBadge();}
   if(p==='svc-conveyance') renderConveyance();
-  if(p==='acc-pending'){renderAccPending();updatePendInboxBadge();}
-  if(p==='salary-advances'){renderSalAdv();populateSalEmpDropdown();}
   if(p==='acc-conveyance') renderAccConveyance();
   if(p==='svc-orders') renderSvcOrders();
+  if(p==='svc-outstanding') renderSvcOutstanding();
   if(p==='svc-incentives'){renderSvcIncentives();populateSvcIncEngDropdown();}
   if(p==='acc-incentives') renderAccIncentives();
-  if(p==='mgmt-view'){renderMgmtView();}
+  if(p==='mgmt-view') renderMgmtView();
   if(p==='mgmt-incentives'){renderMgmtIncentives();clearMgmtIncBadge();}
   if(p==='acc-stock') renderStock();
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
-  if(p==='setup')renderSetupPage();
+  if(p==='salary-advances'){renderSalAdv();populateSalEmpDropdown();}
+  if(p==='setup') renderSetupPage();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3097,10 +3096,6 @@ function copyReminder(){const t=g('remText');t.select();try{document.execCommand
 // MANAGEMENT OVERVIEW
 // ════════════════════════════════════════════════════════════════
 function renderMgmt(){
-  // Marketing
-  let tp=0,ts=0,gp=0,te=0;D.pl_ledger.forEach(e=>{tp+=e.pb;ts+=e.sb;gp+=(e.sb-e.pb);te+=e.expense||0;});
-  const net=gp-te;
-  g('mgmt-mkt-row').innerHTML=`<div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('mkt-sales')" title="Click for details"><div class="mmc-stat-label">Total Sales</div><div class="mmc-stat-value">${fmt(ts)}</div></div><div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('mkt-profit')" title="Click for details"><div class="mmc-stat-label">Net Profit</div><div class="mmc-stat-value">${fmt(net)}</div></div><div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('mkt-bills')" title="Click for details"><div class="mmc-stat-label">Total Bills</div><div class="mmc-stat-value">${D.pl_bills.length}</div></div><div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('mkt-expenses')" title="Click for details"><div class="mmc-stat-label">Expenses</div><div class="mmc-stat-value">${fmt(te)}</div></div>`;
   // Accounts
   const tOut=D.ac_invoices.reduce((a,i)=>a+getOut(i.id),0);
   const tPaid=D.ac_payments.filter(p=>p.mode!=='Advance Applied').reduce((a,p)=>a+p.amount,0);
@@ -3125,11 +3120,9 @@ function renderMgmt(){
     const pendingCalls=D.svc_calls.filter(c=>c.status==='pending'||c.status==='escalated').sort((a,b)=>b.priority==='urgent'?1:-1).slice(0,6);
     mgmtSvcEl.innerHTML=!pendingCalls.length?'<div class="empty" style="padding:14px"><i class="fas fa-headset"></i><p>No pending calls 🎉</p></div>':pendingCalls.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;"><div><div style="font-size:.85em;font-weight:700;">${esc(c.no)} <span style="color:${svcStatusColor(c.status)};font-size:.82em;">● ${c.status.replace('-',' ')}</span></div><div style="font-size:.74em;color:var(--ink3);">${esc(c.customer)} — ${c.engineer?'Eng: '+esc(c.engineer):'Unassigned'}</div></div>${svcPriorityBadge(c.priority)}</div>`).join('');
   }
-  // Charts
-  const mktC=D.pl_customers.map(c=>({name:c,val:D.pl_ledger.filter(e=>e.c===c).reduce((a,e)=>a+e.profit,0)})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val).slice(0,6);
-  g('mgmt-mkt-chart').innerHTML=barChart(mktC,'var(--green)');
+  // Charts — Top Outstanding Customers
   const accC=D.ac_customers.map(c=>({name:c.name,val:D.ac_invoices.filter(i=>i.custName===c.name).reduce((a,i)=>a+getOut(i.id),0)})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val).slice(0,6);
-  g('mgmt-acc-chart').innerHTML=barChart(accC,'var(--red)');
+  const accChartEl=g('mgmt-acc-chart');if(accChartEl)accChartEl.innerHTML=barChart(accC,'var(--red)');
   // Aging
   const buckets=[{a:0,n:0},{a:0,n:0},{a:0,n:0},{a:0,n:0}];
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{const od=daysOD(i),out=getOut(i.id);const idx=od<=30?0:od<=60?1:od<=90?2:3;buckets[idx].a+=out;buckets[idx].n++;});
@@ -3526,7 +3519,7 @@ function renderAccReports(){
 // USER MANAGEMENT
 // ════════════════════════════════════════════════════════════════
 function saveUser(){const name=g('uName').value.trim(),uname=g('uUser').value.trim(),pass=g('uPass').value.trim(),role=g('uRole').value;if(!uname||!role){alert('Username and role required');return;}const obj={id:g('uEditId').value||uid(),name:name||uname,username:uname,password:pass||'Change@123',role,active:true};if(g('uEditId').value){const idx=D.users.findIndex(u=>u.id===obj.id);if(idx>=0)D.users[idx]={...D.users[idx],...obj,password:pass||D.users[idx].password};}else{if(D.users.find(u=>u.username===uname)){alert('Username exists');return;}D.users.push(obj);}cancelUserEdit();saveData();renderUsers();}
-function cancelUserEdit(){g('uName').value='';g('uUser').value='';g('uPass').value='';g('uRole').value='marketing';g('uEditId').value='';g('uSaveTxt').textContent='Add User';g('uCancelBtn').style.display='none';}
+function cancelUserEdit(){g('uName').value='';g('uUser').value='';g('uPass').value='';g('uRole').value='accounts';g('uEditId').value='';g('uSaveTxt').textContent='Add User';g('uCancelBtn').style.display='none';}
 function editUser(uid_){const u=D.users.find(x=>x.id===uid_);if(!u)return;g('uName').value=u.name;g('uUser').value=u.username;g('uRole').value=u.role;g('uEditId').value=u.id;g('uSaveTxt').textContent='Update';g('uCancelBtn').style.display='inline-flex';}
 function delUser(uid_){if(uid_==='u1'){alert('Cannot delete main admin');return;}if(!confirm('Delete user?'))return;D.users=D.users.filter(u=>u.id!==uid_);saveData();renderUsers();}
 function renderUsers(){
@@ -3607,7 +3600,7 @@ function getFY(){
   const d=new Date(),m=d.getMonth()+1,y=d.getFullYear();
   return m>=4?`${y}-${String(y+1).slice(2)}`:`${y-1}-${String(y).slice(2)}`;
 }
-function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();alert('✓ Imported!');}catch(err){alert('Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
+function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
 function exportPLCSV(){let csv='Date,BillNo,Customer,Material,Purchase,Sales,Expense,Profit\n';D.pl_ledger.forEach(e=>{csv+=`${e.d},${e.billNo||''},${e.c},${e.m},${e.pb.toFixed(2)},${e.sb.toFixed(2)},${(e.expense||0).toFixed(2)},${e.profit.toFixed(2)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_pl_${today()}.csv`;a.click();}
 function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outstanding,Status\n';D.ac_invoices.forEach(i=>{csv+=`${i.no},${i.custName},${i.date},${i.dueDate||''},${i.total.toFixed(2)},${getPaid(i.id).toFixed(2)},${getOut(i.id).toFixed(2)},${getSt(i.id)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_acc_${today()}.csv`;a.click();}
 
@@ -3792,6 +3785,48 @@ function renderMktOutstanding(){
   };
   render(urgent,'outUrgent');render(high,'outHigh');render(medium,'outMedium');render(fresh,'outNew');
   updateOutBadge();
+}
+
+function renderSvcOutstanding(){
+  const sortBy=g('svcOutSort')?.value||'days';
+  const custMap={};
+  D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{
+    const out=getOut(i.id);if(!out)return;
+    const od=daysOD(i);
+    const cust=D.ac_customers.find(c=>c.name===i.custName);
+    if(!custMap[i.custName])custMap[i.custName]={name:i.custName,phone:cust?.phone||'',total:0,maxDays:0,invoices:[]};
+    custMap[i.custName].total+=out;
+    custMap[i.custName].maxDays=Math.max(custMap[i.custName].maxDays,od);
+    custMap[i.custName].invoices.push({no:i.no,out,od});
+  });
+  let custs=Object.values(custMap);
+  if(sortBy==='days')custs.sort((a,b)=>b.maxDays-a.maxDays);
+  else if(sortBy==='amount')custs.sort((a,b)=>b.total-a.total);
+  else custs.sort((a,b)=>a.name.localeCompare(b.name));
+  const total=custs.reduce((s,c)=>s+c.total,0);
+  const urgent=custs.filter(c=>c.maxDays>90),high=custs.filter(c=>c.maxDays>60&&c.maxDays<=90),medium=custs.filter(c=>c.maxDays>30&&c.maxDays<=60),fresh=custs.filter(c=>c.maxDays<=30);
+  const ss=g('svcOutStats');
+  if(ss)ss.innerHTML=`<div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Total Outstanding</div><div class="stat-value">${fmt(total)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Customers</div><div class="stat-value">${custs.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Urgent 90+d</div><div class="stat-value">${urgent.length}</div></div><div class="stat s-orange"><div class="stat-bar"></div><div class="stat-label">High 60-90d</div><div class="stat-value">${high.length}</div></div>`;
+  const renderGrp=(arr,elId)=>{
+    const el=g(elId);if(!el)return;
+    if(!arr.length){el.innerHTML='<div style="text-align:center;padding:15px;color:var(--ink3);font-size:.84em;">No customers in this range ✓</div>';return;}
+    el.innerHTML=arr.map(c=>{
+      const invList=c.invoices.map(i=>`<span class="tag tag-red" style="margin-right:4px;">${esc(i.no)} — ${fmt(i.out)}</span>`).join('');
+      return `<div class="out-highlight-card${c.maxDays>90?' urgent':''}">
+        <div class="ohc-days"><span>${c.maxDays}</span>days</div>
+        <div class="ohc-info">
+          <div class="ohc-name">${esc(c.name)}</div>
+          <div class="ohc-detail">${c.phone?`📞 ${esc(c.phone)} &nbsp;·&nbsp; `:''}${c.invoices.length} invoice(s): ${invList}</div>
+        </div>
+        <div class="ohc-amt">${fmt(c.total)}</div>
+        <div class="ohc-actions">
+          ${c.phone?`<a href="tel:${esc(c.phone)}" class="btn btn-danger btn-sm"><i class="fas fa-phone"></i> Call</a>`:''}
+          <button class="btn btn-outline btn-sm" onclick="openReminder('${esc(c.name)}','${esc(c.phone)}',${c.total.toFixed(2)})"><i class="fas fa-bell"></i> Remind</button>
+        </div>
+      </div>`;
+    }).join('');
+  };
+  renderGrp(urgent,'svcOutUrgent');renderGrp(high,'svcOutHigh');renderGrp(medium,'svcOutMedium');renderGrp(fresh,'svcOutNew');
 }
 
 function openReminder(name,phone,amt){
@@ -4204,6 +4239,7 @@ function saveConvAdvance(){
 function renderConveyance(){
   populateSvcEngineerDropdowns();
   renderConvCallTable();
+  const cu=D.pl_customers.map(c=>`<option value="${esc(c)}">`).join('');
   const svOrdCustDl=g('dl-svc-ord-cust');if(svOrdCustDl)svOrdCustDl.innerHTML=cu;
   const incCustDl=g('dl-inc-cust');if(incCustDl)incCustDl.innerHTML=cu+D.ac_customers.map(c=>`<option value="${esc(c.name)}">`).join('');
   updateAccIncBadge();updateSvcIncBadge();
@@ -5017,7 +5053,7 @@ function updatePendInboxBadge(){
   if(cnt>0){b.style.display='inline';b.textContent=cnt;b.classList.add('alert');}else{b.style.display='none';}
 }
 
-function renderAccPending(){
+function renderAccDashboard(){
   const convs=D.svc_conveyance.filter(c=>c.status==='pending').sort((a,b)=>b.createdAt?.localeCompare(a.createdAt||'')||0);
   const advs=D.svc_conv_advances.filter(a=>a.status==='pending');
   const incs=(D.svc_incentives||[]).filter(e=>e.status==='pending');
@@ -5047,8 +5083,8 @@ function renderAccPending(){
       <div style="flex-shrink:0;text-align:right;">
         <div style="font-weight:800;color:var(--svc);margin-bottom:6px;">${fmt(c.totalAmt)}</div>
         <div style="display:flex;gap:5px;">
-          <button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}');renderAccPending();"><i class="fas fa-check"></i> Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}');renderAccPending();"><i class="fas fa-times"></i></button>
+          <button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}');renderAccDashboard();"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}');renderAccDashboard();"><i class="fas fa-times"></i></button>
         </div>
       </div></div>`).join('');
 
@@ -5062,8 +5098,8 @@ function renderAccPending(){
       <div style="flex-shrink:0;text-align:right;">
         <div style="font-weight:800;color:var(--amber);margin-bottom:6px;">${fmt(a.amount)}</div>
         <div style="display:flex;gap:5px;">
-          <button class="btn btn-success btn-sm" onclick="approveConvAdv('${a.id}');renderAccPending();"><i class="fas fa-check"></i> Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="rejectConvAdv('${a.id}');renderAccPending();"><i class="fas fa-times"></i></button>
+          <button class="btn btn-success btn-sm" onclick="approveConvAdv('${a.id}');renderAccDashboard();"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectConvAdv('${a.id}');renderAccDashboard();"><i class="fas fa-times"></i></button>
         </div>
       </div></div>`).join('');
 
@@ -5100,7 +5136,7 @@ function pendSendIncToMgmt(id){
   const amt=parseFloat(g('pi-amt-'+id)?.value)||0;
   e.status='mgmt-review';e.suggestedPct=pct;e.suggestedAmt=amt;
   e.sentToMgmtAt=new Date().toISOString();e.sentToMgmtBy=D.currentUser?.name||'Accounts';
-  saveData('new_inc');renderAccPending();updateMgmtIncBadge();
+  saveData('new_inc');renderAccDashboard();updateMgmtIncBadge();
   showSuccessToast(`✓ ${e.no} sent to Management`,'var(--mgmt)');
 }
 
@@ -6276,7 +6312,8 @@ function generateConvFromSelected(){
       document.querySelectorAll('.conv-call-chk').forEach(cb=>cb.checked=false);
       const sa=g('convSelectAll');if(sa)sa.checked=false;
       updateConvSelSummary();
-      showSuccessToast('✓ Draft conveyance claim saved — scroll down to view Draft Claims, then click Submit to send to Accounts','var(--svc)');
+      showSuccessToast('✓ Draft saved — see Draft Claims below, click Submit to send to Accounts','var(--svc)');
+      setTimeout(()=>{const ds=g('convDraftList');if(ds){ds.scrollIntoView({behavior:'smooth',block:'start'});ds.style.transition='background .4s';ds.style.background='#cffafe';setTimeout(()=>{ds.style.background='';},1800);}},350);
       // Scroll to the draft section so user sees it immediately
       setTimeout(()=>{
         const draftSection=g('convDraftList');
