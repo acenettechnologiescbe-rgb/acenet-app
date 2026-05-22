@@ -444,6 +444,14 @@ tbody tr:last-child td{border-bottom:none;}
 .print-header h1{font-size:1.1em;font-weight:800;color:var(--navy);}
 .print-header p{font-size:.78em;color:var(--ink3);margin-top:3px;}
 
+/* ── COMPACT FILTER ROW ── */
+.filt-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.filt-row select,.filt-row input[type=date],.filt-row input[type=text]{padding:5px 9px;font-size:.79em;border-radius:7px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-family:'Inter',sans-serif;height:32px;min-width:0;}
+.filt-row select{cursor:pointer;}
+.filt-row .combo{max-width:180px;}
+.filt-row .combo input{padding:5px 9px 5px 28px;font-size:.79em;height:32px;}
+.filt-row .combo .carr{font-size:.7em;top:50%;transform:translateY(-50%);}
+
 /* ── RESPONSIVE ── */
 @media(max-width:800px){.main{padding:13px;}.topbar,.navbar{padding-left:12px;padding-right:12px;}.g2,.g3{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}.mgmt-hero{grid-template-columns:1fr;}}
 @media(max-width:470px){.stats{grid-template-columns:1fr;}}
@@ -513,9 +521,6 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="card"><div class="card-title"><i class="fas fa-headset" style="color:var(--svc)"></i>Pending / Escalated Service Calls</div><div id="mgmt-svc-calls"></div></div>
     <div class="card"><div class="card-title"><i class="fas fa-chart-bar" style="color:var(--red)"></i>Top Customers — Outstanding</div><div id="mgmt-acc-chart"></div></div>
   </div>
-  <div class="sec-grid">
-    <div class="card"><div class="card-title"><i class="fas fa-gift" style="color:#7c3aed"></i>Incentive Summary — By Engineer</div><div id="mgmt-inc-panel"></div></div>
-  </div>
   <div class="sdiv" style="margin-top:0;">Aging Analysis</div>
   <div class="aging-row" id="mgmt-aging"></div>
 </div>
@@ -560,7 +565,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="btn-row"><button class="btn btn-mkt" onclick="saveBill()"><i class="fas fa-save"></i> <span id="bSaveTxt">Save Bill</span></button><button class="btn btn-outline" onclick="hideBillForm()"><i class="fas fa-times"></i> Cancel</button></div>
   </div>
   <div class="sdiv">Saved Bills</div>
-  <div style="display:flex;gap:9px;margin-bottom:11px;align-items:center;flex-wrap:wrap;">
+  <div class="filt-row">
     <div class="combo" style="max-width:240px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="billSearch" placeholder="Search…" oninput="renderBills()" style="padding-left:30px;"></div>
     <span id="billCount" style="font-size:.78em;color:var(--ink3);font-weight:700;margin-left:auto;"></span>
   </div>
@@ -615,7 +620,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="ph"><div><h2><span class="phi" style="background:var(--ink)"><i class="fas fa-table"></i></span><span class="sora">Ledger</span></h2><p>All marketing transactions</p></div>
   <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="printSection('ledgerBody','Ledger')"><i class="fas fa-print"></i> Print PDF</button><button class="btn btn-outline btn-sm" onclick="exportLedgerExcel()"><i class="fas fa-file-excel"></i> Excel</button></div></div>
   <div class="stats" id="ledgerStats"></div>
-  <div style="display:flex;gap:9px;margin-bottom:11px;align-items:center;flex-wrap:wrap;">
+  <div class="filt-row">
     <div class="combo" style="max-width:240px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="ledgerSearch" placeholder="Filter…" oninput="renderLedger()" style="padding-left:30px;"></div>
     <span id="ledgerCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
@@ -699,7 +704,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="sdiv">Invoice List</div>
   <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px;align-items:center;">
     <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="invSearch" placeholder="Search…" oninput="renderInvoices()" style="padding-left:30px;"></div>
-    <select id="invSF" onchange="renderInvoices()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="overdue">Overdue</option><option value="paid">Paid</option></select>
+    <select id="invSF" onchange="renderInvoices()" ><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="overdue">Overdue</option><option value="paid">Paid</option></select>
     <span id="invCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
   <div class="tw"><table><thead><tr><th>Invoice No</th><th>Customer</th><th>Date</th><th>Due Date</th><th>Amount</th><th>Paid</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead><tbody id="invBody"></tbody></table></div>
@@ -743,7 +748,7 @@ tbody tr:last-child td{border-bottom:none;}
     <button class="btn btn-success" onclick="savePayment()"><i class="fas fa-check-circle"></i> Record Payment</button>
   </div>
   <div class="sdiv">Payment History</div>
-  <div style="display:flex;gap:9px;margin-bottom:11px;align-items:center;">
+  <div class="filt-row">
     <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="paySearch" placeholder="Search…" oninput="renderPayments()" style="padding-left:30px;"></div>
     <span id="payCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
@@ -784,8 +789,8 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
     <button class="btn btn-acc" onclick="saveCustomerAdvance()"><i class="fas fa-check-circle"></i> Save Customer Advance</button>
   </div>
-  <div style="display:flex;gap:9px;margin-bottom:9px;align-items:center;flex-wrap:wrap;">
-    <select id="advCustFilter" onchange="renderAdvances()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);"><option value="">All Customers</option></select>
+  <div class="filt-row">
+    <select id="advCustFilter" onchange="renderAdvances()" ><option value="">All Customers</option></select>
     <span id="advCustCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
   <div class="tw"><table><thead><tr><th>Date</th><th>Customer</th><th>Received</th><th>Applied</th><th>Balance</th><th>Mode</th><th>Reference</th><th>Notes</th><th></th></tr></thead><tbody id="advBody"></tbody></table></div>
@@ -810,8 +815,8 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
     <button class="btn btn-svc" onclick="saveSvcAdvFromAcc()"><i class="fas fa-check-circle"></i> Save Service Advance</button>
   </div>
-  <div style="display:flex;gap:9px;margin-bottom:9px;align-items:center;flex-wrap:wrap;">
-    <select id="advEngFilter" onchange="renderAdvances()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);"><option value="">All Engineers</option></select>
+  <div class="filt-row">
+    <select id="advEngFilter" onchange="renderAdvances()" ><option value="">All Engineers</option></select>
     <span id="advEngCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
   <div class="tw"><table><thead><tr><th>Date</th><th>Engineer</th><th>Amount</th><th>Purpose</th><th>Call Ref</th><th>Mode</th><th>Status</th><th></th></tr></thead><tbody id="svcAdvAccBody"></tbody></table></div>
@@ -857,7 +862,7 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
   </div>
   <div class="sdiv">Bills (shared with Marketing P&amp;L)</div>
-  <div style="display:flex;gap:9px;margin-bottom:11px;align-items:center;">
+  <div class="filt-row">
     <div class="combo" style="max-width:240px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="accBillSearch" placeholder="Search…" oninput="renderAccBillsList()" style="padding-left:30px;"></div>
     <span id="accBillCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
@@ -984,7 +989,7 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="ph">
   <div><h2><span class="phi" style="background:var(--red)"><i class="fas fa-phone-volume"></i></span><span class="sora">Outstanding Follow-Up</span></h2><p>Call customers to collect pending payments</p></div>
   <div class="btn-row">
-    <select id="outSortBy" onchange="renderMktOutstanding()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);">
+    <select id="outSortBy" onchange="renderMktOutstanding()" >
       <option value="days">Sort: Most Overdue</option>
       <option value="amount">Sort: Highest Amount</option>
       <option value="name">Sort: Customer Name</option>
@@ -1073,9 +1078,9 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="btn-row"><button class="btn btn-svc" onclick="saveSvcCall()"><i class="fas fa-save"></i> Save Call</button><button class="btn btn-outline" onclick="hideSvcCallForm()">Cancel</button></div>
 </div>
 <div class="stats" id="svcCallStats"></div>
-<div style="display:flex;gap:9px;margin-bottom:11px;align-items:center;flex-wrap:wrap;">
+<div class="filt-row">
   <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="svcCallSearch" placeholder="Search…" oninput="renderSvcCalls()" style="padding-left:30px;"></div>
-  <select id="svcCallFilter" onchange="renderSvcCalls()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Status</option><option value="pending">Pending</option><option value="in-progress">In Progress</option><option value="completed">Completed</option><option value="escalated">Escalated</option></select>
+  <select id="svcCallFilter" onchange="renderSvcCalls()" ><option value="">All Status</option><option value="pending">Pending</option><option value="in-progress">In Progress</option><option value="completed">Completed</option><option value="escalated">Escalated</option></select>
   <span id="svcCallCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
 </div>
 <div id="svcCallsList"></div>
@@ -1109,10 +1114,10 @@ tbody tr:last-child td{border-bottom:none;}
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
     <div class="card-title" style="margin:0;color:var(--svc);"><i class="fas fa-list-check" style="margin-right:7px;"></i>Select Calls &amp; Generate Conveyance</div>
     <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
-      <div class="fg" id="gcEngWrap2" style="margin:0;"><select id="gcEngineer2" onchange="renderConvCallTable()" style="padding:7px 10px;border-radius:var(--r);font-size:.82em;border:1.5px solid var(--line);"><option value="">-- All Engineers --</option></select></div>
+      <div class="fg" id="gcEngWrap2" style="margin:0;"><select id="gcEngineer2" onchange="renderConvCallTable()" style="padding:5px 9px;border-radius:7px;font-size:.79em;border:1.5px solid var(--line);height:32px;"><option value="">-- All Engineers --</option></select></div>
       <div style="display:flex;gap:6px;">
-        <input type="date" id="gcFromDate2" onchange="renderConvCallTable()" style="padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-        <input type="date" id="gcToDate2" onchange="renderConvCallTable()" style="padding:7px 10px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+        <input type="date" id="gcFromDate2" onchange="renderConvCallTable()" style="padding:5px 9px;border-radius:7px;border:1.5px solid var(--line);font-size:.79em;height:32px;">
+        <input type="date" id="gcToDate2" onchange="renderConvCallTable()" style="padding:5px 9px;border-radius:7px;border:1.5px solid var(--line);font-size:.79em;height:32px;">
       </div>
     </div>
   </div>
@@ -1211,56 +1216,6 @@ tbody tr:last-child td{border-bottom:none;}
 <div id="pend-ord-list"></div>
 </div>
 
-<!-- ════ ACCOUNTS: SALARY ADVANCES ════ -->
-<div class="page" id="page-salary-advances">
-<div class="ph">
-  <div><h2><span class="phi" style="background:linear-gradient(135deg,#0e7490,#1d4ed8)"><i class="fas fa-user-tie"></i></span><span class="sora">Salary Advances</span></h2><p>Employee salary advance tracking &amp; recovery</p></div>
-  <div class="btn-row">
-    <button class="btn btn-outline btn-sm" onclick="exportSalAdvExcel()"><i class="fas fa-file-excel"></i> Excel</button>
-    <button class="btn btn-acc" onclick="toggleEl('salAdvForm')"><i class="fas fa-plus"></i> New Advance</button>
-  </div>
-</div>
-<div class="stats" id="salAdvStats"></div>
-
-<!-- Form -->
-<div class="form-panel" style="background:linear-gradient(135deg,#eff6ff,#fff);border:2px solid #93c5fd;display:none;" id="salAdvForm">
-  <div style="display:flex;justify-content:space-between;margin-bottom:13px;flex-wrap:wrap;gap:8px;">
-    <div class="sora" style="font-weight:700;color:#1d4ed8;font-size:.93em;"><i class="fas fa-user-tie" style="margin-right:7px;"></i>Record Salary Advance</div>
-    <button class="btn btn-ghost btn-sm" onclick="closeEl('salAdvForm')"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="g4" style="margin-bottom:11px;">
-    <div class="fg"><label>Employee *</label><select id="salEmp"><option value="">-- Select Employee --</option></select></div>
-    <div class="fg"><label>Date *</label><input type="date" id="salDate"></div>
-    <div class="fg"><label>Advance Amount (₹) *</label><input type="number" id="salAmt" placeholder="0.00" step="0.01"></div>
-    <div class="fg"><label>Purpose / Reason *</label><input type="text" id="salPurpose" placeholder="Medical / Emergency / Personal…"></div>
-    <div class="fg"><label>Monthly Recovery (₹)</label><input type="number" id="salRecovery" placeholder="0.00 = no auto plan" step="0.01"></div>
-    <div class="fg"><label>Mode</label><select id="salMode"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select></div>
-    <div class="fg"><label>Approved By</label><input type="text" id="salApprovedBy" placeholder="Manager name"></div>
-    <div class="fg"><label>Notes</label><input type="text" id="salNotes" placeholder="Optional"></div>
-  </div>
-  <input type="hidden" id="salEditId">
-  <div class="btn-row">
-    <button class="btn" style="background:#1d4ed8;color:#fff;" onclick="saveSalAdv()"><i class="fas fa-check-circle"></i> Save Advance</button>
-    <button class="btn btn-outline" onclick="closeEl('salAdvForm')">Cancel</button>
-  </div>
-</div>
-
-<!-- Filters -->
-<div style="display:flex;gap:9px;margin-bottom:9px;align-items:center;flex-wrap:wrap;">
-  <select id="salEmpFilter" onchange="renderSalAdv()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);"><option value="">All Employees</option></select>
-  <select id="salStatusFilter" onchange="renderSalAdv()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);">
-    <option value="">All Status</option><option value="active">Active</option><option value="fully_recovered">Fully Recovered</option><option value="written_off">Written Off</option>
-  </select>
-</div>
-
-<!-- Active advances -->
-<div class="sdiv"><i class="fas fa-clock" style="color:var(--amber);margin-right:5px;"></i>Active Advances</div>
-<div id="salAdvActive"></div>
-<!-- Recovery history -->
-<div class="sdiv"><i class="fas fa-check-circle" style="color:var(--green);margin-right:5px;"></i>Fully Recovered</div>
-<div id="salAdvDone"></div>
-</div>
-
 <!-- ════ ACCOUNTS: CONVEYANCE APPROVAL ════ -->
 <div class="page" id="page-acc-conveyance">
 <div class="ph">
@@ -1269,13 +1224,13 @@ tbody tr:last-child td{border-bottom:none;}
 </div>
 <div class="stats" id="accConvStats"></div>
 <!-- Filters -->
-<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-  <select id="convEngFilter" onchange="renderAccConveyance()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
-  <select id="convStatusFilter" onchange="renderAccConveyance()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+<div class="filt-row">
+  <select id="convEngFilter" onchange="renderAccConveyance()" ><option value="">All Engineers</option></select>
+  <select id="convStatusFilter" onchange="renderAccConveyance()" >
     <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
   </select>
-  <input type="date" id="convFromDate" onchange="renderAccConveyance()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-  <input type="date" id="convToDate" onchange="renderAccConveyance()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  <input type="date" id="convFromDate" onchange="renderAccConveyance()" >
+  <input type="date" id="convToDate" onchange="renderAccConveyance()" >
   <div class="combo" style="max-width:200px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="convSearch" placeholder="Search…" oninput="renderAccConveyance()" style="padding-left:30px;"></div>
 </div>
 <!-- Per-engineer summary -->
@@ -1298,7 +1253,7 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ MGMT: VIEW ALL (Conveyance, Incentives, Advances) ════ -->
 <div class="page" id="page-mgmt-view">
 <div class="ph">
-  <div><h2><span class="phi" style="background:var(--mgmt)"><i class="fas fa-table-list"></i></span><span class="sora">View All — Service Activity</span></h2><p>Conveyance claims, incentives, advances and salary advances across all engineers</p></div>
+  <div><h2><span class="phi" style="background:var(--mgmt)"><i class="fas fa-table-list"></i></span><span class="sora">Detail Info — Service Activity</span></h2><p>Conveyance claims, incentives and advances across all engineers</p></div>
   <button class="btn btn-outline btn-sm" onclick="renderMgmtView()"><i class="fas fa-sync"></i> Refresh</button>
 </div>
 <!-- Stats -->
@@ -1310,41 +1265,16 @@ tbody tr:last-child td{border-bottom:none;}
   <button class="btn btn-ghost" id="mvt-inc" onclick="mgmtViewTab('inc')" style="border-radius:0;border-bottom:3px solid transparent;padding:10px 18px;"><i class="fas fa-gift"></i> Incentives</button>
 </div>
 <!-- Filters -->
-<div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;" id="mgmtViewFilters">
-  <select id="mvEng" onchange="renderMgmtView()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);"><option value="">All Engineers</option></select>
-  <select id="mvStat" onchange="renderMgmtView()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);">
+<div class="filt-row" id="mgmtViewFilters">
+  <select id="mvEng" onchange="renderMgmtView()" ><option value="">All Engineers</option></select>
+  <select id="mvStat" onchange="renderMgmtView()" >
     <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="mgmt-review">Mgmt Review</option>
   </select>
-  <input type="date" id="mvFrom" onchange="renderMgmtView()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-  <input type="date" id="mvTo" onchange="renderMgmtView()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+  <input type="date" id="mvFrom" onchange="renderMgmtView()" >
+  <input type="date" id="mvTo" onchange="renderMgmtView()" >
   <button class="btn btn-outline btn-sm" onclick="exportMgmtView()"><i class="fas fa-file-excel"></i> Export</button>
 </div>
 <div id="mgmtViewBody"></div>
-</div>
-
-<div class="page" id="page-mgmt-incentives">
-  <div class="ph">
-    <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Review</span></h2><p>Review, adjust incentive % and approve — sent back to Accounts for payment</p></div>
-    <button class="btn btn-outline btn-sm" onclick="exportIncReport()"><i class="fas fa-file-excel"></i> Export</button>
-  </div>
-  <div class="stats" id="mgmtIncStats"></div>
-  <!-- Filters -->
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-    <select id="mgmtIncEngFilter" onchange="renderMgmtIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
-    <select id="mgmtIncStatusFilter" onchange="renderMgmtIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
-      <option value="">All Status</option><option value="mgmt-review">Awaiting My Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
-    </select>
-    <input type="date" id="mgmtIncFrom" onchange="renderMgmtIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-    <input type="date" id="mgmtIncTo" onchange="renderMgmtIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-  </div>
-  <!-- Per-engineer incentive summary -->
-  <div id="mgmtIncEngSummary" style="margin-bottom:14px;"></div>
-  <div class="sdiv">🔍 Awaiting Management Approval</div>
-  <div id="mgmtIncPending"></div>
-  <div class="sdiv">✅ Approved by Management</div>
-  <div id="mgmtIncApproved"></div>
-  <div class="sdiv">❌ Rejected by Management</div>
-  <div id="mgmtIncRejected"></div>
 </div>
 
 <!-- ════ MANAGEMENT: SERVICE OVERVIEW ════ -->
@@ -1471,12 +1401,12 @@ tbody tr:last-child td{border-bottom:none;}
   <!-- Sent entries with filters -->
   <div class="sdiv" style="margin-top:14px;">📤 Sent to Accounts</div>
   <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
-    <span id="svcIncEngWrap"><select id="svcIncEngFilter" onchange="renderSvcIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select></span>
-    <select id="svcIncStatusFilter" onchange="renderSvcIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+    <span id="svcIncEngWrap"><select id="svcIncEngFilter" onchange="renderSvcIncentives()" ><option value="">All Engineers</option></select></span>
+    <select id="svcIncStatusFilter" onchange="renderSvcIncentives()" >
       <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Mgmt Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
     </select>
-    <input type="date" id="svcIncFrom" onchange="renderSvcIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-    <input type="date" id="svcIncTo" onchange="renderSvcIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+    <input type="date" id="svcIncFrom" onchange="renderSvcIncentives()" >
+    <input type="date" id="svcIncTo" onchange="renderSvcIncentives()" >
   </div>
   <div id="svcIncList"></div>
 </div>
@@ -1487,7 +1417,7 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="ph">
   <div><h2><span class="phi" style="background:var(--red)"><i class="fas fa-phone-volume"></i></span><span class="sora">Outstanding Collection</span></h2><p>Customers with pending payments — call &amp; collect</p></div>
   <div class="btn-row">
-    <select id="svcOutSort" onchange="renderSvcOutstanding()" style="font-size:.82em;padding:8px 11px;border-radius:var(--r);">
+    <select id="svcOutSort" onchange="renderSvcOutstanding()" >
       <option value="days">Sort: Most Overdue</option>
       <option value="amount">Sort: Highest Amount</option>
       <option value="name">Sort: Customer Name</option>
@@ -1508,13 +1438,13 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
   <div class="stats" id="accIncStats"></div>
   <!-- Filters -->
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-    <select id="accIncEngFilter" onchange="renderAccIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
-    <select id="accIncStatusFilter" onchange="renderAccIncentives()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+  <div class="filt-row">
+    <select id="accIncEngFilter" onchange="renderAccIncentives()" ><option value="">All Engineers</option></select>
+    <select id="accIncStatusFilter" onchange="renderAccIncentives()" >
       <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Sent to Mgmt</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
     </select>
-    <input type="date" id="accIncFrom" onchange="renderAccIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-    <input type="date" id="accIncTo" onchange="renderAccIncentives()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+    <input type="date" id="accIncFrom" onchange="renderAccIncentives()" >
+    <input type="date" id="accIncTo" onchange="renderAccIncentives()" >
   </div>
   <div class="sdiv">⏳ Pending — Awaiting Review</div>
   <div id="accIncPending"></div>
@@ -1607,12 +1537,12 @@ tbody tr:last-child td{border-bottom:none;}
   <!-- Category Filter + Search -->
   <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
     <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="stockSearch" placeholder="Search item…" oninput="renderStock()" style="padding-left:30px;"></div>
-    <select id="stockCatFilter" onchange="renderStock()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+    <select id="stockCatFilter" onchange="renderStock()" >
       <option value="">All Categories</option>
       <option>General</option><option>Electrical</option><option>Mechanical</option>
       <option>Consumables</option><option>Spare Parts</option><option>Tools</option><option>Other</option>
     </select>
-    <select id="stockStatusFilter" onchange="renderStock()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;">
+    <select id="stockStatusFilter" onchange="renderStock()" >
       <option value="">All Items</option>
       <option value="low">⚠️ Low Stock Only</option>
       <option value="ok">✅ In Stock Only</option>
@@ -1632,8 +1562,8 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="sdiv" style="margin-top:18px;">Transaction History</div>
   <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
     <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="stockTxnSearch" placeholder="Search txn…" oninput="renderStockTxns()" style="padding-left:30px;"></div>
-    <input type="date" id="stockTxnFrom" onchange="renderStockTxns()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
-    <input type="date" id="stockTxnTo" onchange="renderStockTxns()" style="padding:8px 11px;border-radius:var(--r);border:1.5px solid var(--line);font-size:.82em;">
+    <input type="date" id="stockTxnFrom" onchange="renderStockTxns()" >
+    <input type="date" id="stockTxnTo" onchange="renderStockTxns()" >
   </div>
   <div class="tw"><table>
     <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead>
@@ -1681,8 +1611,8 @@ tbody tr:last-child td{border-bottom:none;}
   <!-- SUB: Incentive by Engineer -->
   <div class="rpt-panel" id="rpt-incentive">
     <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <select id="incEngFilter" onchange="renderRptIncentive()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Engineers</option></select>
-      <select id="incStatusFilter" onchange="renderRptIncentive()" style="width:auto;padding:8px 11px;border-radius:var(--r);font-size:.82em;"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+      <select id="incEngFilter" onchange="renderRptIncentive()" ><option value="">All Engineers</option></select>
+      <select id="incStatusFilter" onchange="renderRptIncentive()" ><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
       <button class="btn btn-outline btn-sm" onclick="printSection('incRptBody','Incentive by Engineer')"><i class="fas fa-print"></i> Print</button>
       <button class="btn btn-outline btn-sm" onclick="exportIncentiveExcel()"><i class="fas fa-file-excel"></i> Excel</button>
     </div>
@@ -2232,7 +2162,7 @@ function checkSession(){
 const NAVS = {
   management:[
     {id:'overview',icon:'fa-eye',label:'Overview'},
-    {id:'mgmt-view',icon:'fa-table-list',label:'View All',color:'var(--svc)',hasBadge:true,badgeId:'mgmt-view-badge'},
+    {id:'mgmt-view',icon:'fa-table-list',label:'Detail Info',color:'var(--svc)',hasBadge:true,badgeId:'mgmt-view-badge'},
     {id:'users',icon:'fa-users-gear',label:'Users'},
     {id:'setup',icon:'fa-server',label:'Setup'}
   ],
@@ -2295,7 +2225,6 @@ function goPage(p){
   if(p==='svc-incentives'){renderSvcIncentives();populateSvcIncEngDropdown();}
   if(p==='acc-incentives') renderAccIncentives();
   if(p==='mgmt-view') renderMgmtView();
-  if(p==='mgmt-incentives'){renderMgmtIncentives();clearMgmtIncBadge();}
   if(p==='acc-stock') renderStock();
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
   if(p==='setup') renderSetupPage();
@@ -3146,36 +3075,7 @@ function renderMgmt(){
     }
   }
 
-  // Incentive summary panel
-  const incPanEl=g('mgmt-inc-panel');
-  if(incPanEl){
-    const incEntries=D.svc_incentives||[];
-    if(!incEntries.length){
-      incPanEl.innerHTML='<div class="empty" style="padding:14px"><i class="fas fa-gift" style="color:#c4b5fd"></i><p>No incentive entries yet</p></div>';
-    } else {
-      const engMap={};
-      incEntries.forEach(e=>{
-        if(!engMap[e.engineerName])engMap[e.engineerName]={name:e.engineerName,count:0,profit:0,incentive:0,pending:0,mgmtRev:0,approved:0};
-        const em=engMap[e.engineerName];
-        em.count++;em.profit+=e.profit||0;em.incentive+=(e.approvedAmt||0);
-        if(e.status==='pending')em.pending++;
-        if(e.status==='mgmt-review')em.mgmtRev++;
-        if(e.status==='approved')em.approved++;
-      });
-      incPanEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:9px;">
-        ${Object.values(engMap).map(em=>`<div style="background:#faf5ff;border:1.5px solid #e9d5ff;border-radius:11px;padding:10px 14px;min-width:160px;flex:1;">
-          <div style="font-weight:700;color:#6d28d9;font-size:.84em;margin-bottom:5px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(em.name)}</div>
-          <div style="font-size:.77em;color:var(--ink3);">${em.count} entries &nbsp;|&nbsp; P/L: <strong style="color:${em.profit>=0?'var(--green)':'var(--red)'};">${fmt(em.profit)}</strong></div>
-          <div style="font-size:.77em;margin-top:3px;">Incentive Paid: <strong style="color:#6d28d9;">${fmt(em.incentive)}</strong></div>
-          <div style="font-size:.73em;margin-top:3px;display:flex;gap:6px;flex-wrap:wrap;">
-            ${em.pending?`<span style="background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;">${em.pending} pending</span>`:''}
-            ${em.mgmtRev?`<span style="background:#fff3cd;color:#856404;border-radius:6px;padding:1px 6px;">${em.mgmtRev} for review</span>`:''}
-            ${em.approved?`<span style="background:var(--green-l);color:#065f46;border-radius:6px;padding:1px 6px;">${em.approved} approved</span>`:''}
-          </div>
-        </div>`).join('')}
-      </div>`;
-    }
-  }
+  // Incentive summary moved to Detail Info page
 
   updateSvcBadge();updateOutBadge();updateConvBadge();updateMgmtIncBadge();
 }
@@ -5375,7 +5275,6 @@ function updateMgmtViewBadge(){
   const conv=D.svc_conveyance.filter(c=>c.status==='pending').length;
   const adv=D.svc_conv_advances.filter(a=>a.status==='pending').length;
   const inc=(D.svc_incentives||[]).filter(e=>e.status==='mgmt-review').length;
-  const sal=(D.salary_advances||[]).filter(a=>a.status==='active').length;
   const tot=conv+adv+inc;
   const b=g('mgmt-view-badge');if(!b)return;
   if(tot>0){b.style.display='inline';b.textContent=tot;b.classList.add('alert');}else{b.style.display='none';}
@@ -5393,12 +5292,10 @@ function renderMgmtView(){
   const pendConv=D.svc_conveyance.filter(c=>c.status==='pending').length;
   const pendAdv=D.svc_conv_advances.filter(a=>a.status==='pending').length;
   const pendInc=(D.svc_incentives||[]).filter(e=>e.status==='mgmt-review').length;
-  const salBal=(D.salary_advances||[]).filter(a=>a.status==='active').reduce((s,a)=>s+(a.balance||0),0);
   g('mgmtViewStats').innerHTML=`
     <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Conv. Pending</div><div class="stat-value">${pendConv}</div></div>
     <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Adv. Pending</div><div class="stat-value">${pendAdv}</div></div>
-    <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">Inc. For Review</div><div class="stat-value">${pendInc}</div></div>
-    <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Sal. Adv. Balance</div><div class="stat-value">${fmt(salBal)}</div></div>`;
+    <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">Inc. For Review</div><div class="stat-value">${pendInc}</div></div>`;
 
   const body=g('mgmtViewBody');if(!body)return;
 
