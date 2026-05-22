@@ -155,7 +155,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 /* ── NAVBAR ── */
 .navbar{background:#fff;border-bottom:2px solid var(--line);padding:0 22px;display:flex;overflow-x:auto;position:sticky;top:60px;z-index:299;box-shadow:0 2px 6px rgba(0,0,0,.05);}
 .navbar::-webkit-scrollbar{display:none;}
-.nb{border:none;background:none;padding:12px 15px;font-family:'Inter',sans-serif;font-weight:600;font-size:.82em;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:6px;margin-bottom:-2px;}
+.nb{border:none;background:none;padding:9px 11px;font-family:'Inter',sans-serif;font-weight:600;font-size:.79em;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-2px;}
 .nb:hover{color:var(--ink);background:var(--bg);}
 .nb.on{color:var(--role-color);border-bottom-color:var(--role-color);}
 .nb .bc{font-size:.72em;padding:2px 6px;border-radius:8px;background:var(--line);color:var(--ink3);}
@@ -673,7 +673,7 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg"><label>Customer</label><div class="combo"><input type="text" id="iCust" list="dl-acc-cust" placeholder="Type or select…" oninput="checkAccCustHint()" autocomplete="off"><i class="fas fa-chevron-down carr"></i><datalist id="dl-acc-cust"></datalist></div><div class="hint" id="accCustHint"><i class="fas fa-plus-circle"></i> New — will be added</div></div>
       <div class="fg"><label>Notes / PO Ref</label><input type="text" id="iNotes" placeholder="Reference…"></div>
     </div>
-    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Description</th><th>Qty</th><th>Rate (₹)</th><th>Amount (₹)</th><th></th></tr></thead><tbody id="invItemsBody"></tbody></table></div>
+    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Item / Service</th><th>Qty</th><th>Rate (₹)</th><th>Amount (₹)</th><th></th></tr></thead><tbody id="invItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addInvItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--acc)"></i> Add Row</button>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;margin-bottom:11px;">
       <div style="display:flex;align-items:center;gap:9px;"><span style="font-size:.8em;font-weight:700;color:var(--ink3);">Tax:</span><select id="iTax" style="width:auto;" onchange="recalcInv()"><option value="0">None</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select></div>
@@ -1308,7 +1308,6 @@ tbody tr:last-child td{border-bottom:none;}
   <button class="btn btn-ghost" id="mvt-conv" onclick="mgmtViewTab('conv')" style="border-radius:0;border-bottom:3px solid var(--svc);font-weight:700;color:var(--svc);padding:10px 18px;"><i class="fas fa-car-side"></i> Conveyance</button>
   <button class="btn btn-ghost" id="mvt-adv" onclick="mgmtViewTab('adv')" style="border-radius:0;border-bottom:3px solid transparent;padding:10px 18px;"><i class="fas fa-hand-holding-dollar"></i> Advances</button>
   <button class="btn btn-ghost" id="mvt-inc" onclick="mgmtViewTab('inc')" style="border-radius:0;border-bottom:3px solid transparent;padding:10px 18px;"><i class="fas fa-gift"></i> Incentives</button>
-  <button class="btn btn-ghost" id="mvt-saladv" onclick="mgmtViewTab('saladv')" style="border-radius:0;border-bottom:3px solid transparent;padding:10px 18px;"><i class="fas fa-user-tie"></i> Salary Advances</button>
 </div>
 <!-- Filters -->
 <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px;align-items:center;" id="mgmtViewFilters">
@@ -1497,7 +1496,7 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 <div class="stats" id="svcOutStats"></div>
-<div class="sdiv">🔴 Urgent — 90+ Days Overdue</div><div id="svcOutUrgent"></div>
+<div class="sdiv">🔴 Urgent — 90+ Days</div><div id="svcOutUrgent"></div>
 <div class="sdiv">🟠 High — 60–90 Days</div><div id="svcOutHigh"></div>
 <div class="sdiv">🟡 Medium — 30–60 Days</div><div id="svcOutMedium"></div>
 <div class="sdiv">📋 New — Under 30 Days</div><div id="svcOutNew"></div>
@@ -2234,7 +2233,6 @@ const NAVS = {
   management:[
     {id:'overview',icon:'fa-eye',label:'Overview'},
     {id:'mgmt-view',icon:'fa-table-list',label:'View All',color:'var(--svc)',hasBadge:true,badgeId:'mgmt-view-badge'},
-    {id:'mgmt-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'mgmt-inc-badge'},
     {id:'users',icon:'fa-users-gear',label:'Users'},
     {id:'setup',icon:'fa-server',label:'Setup'}
   ],
@@ -2244,7 +2242,6 @@ const NAVS = {
     {id:'acc-orders',icon:'fa-clipboard-list',label:'Orders',color:'var(--orange)',hasBadge:true,badgeId:'order-badge'},
     {id:'payments',icon:'fa-money-bill-wave',label:'Payments'},
     {id:'advances',icon:'fa-hand-holding-dollar',label:'Advances'},
-    {id:'salary-advances',icon:'fa-user-tie',label:'Salary Adv.',color:'#1d4ed8'},
     {id:'acc-conveyance',icon:'fa-car-side',label:'Conveyance',color:'var(--svc)',hasBadge:true,badgeId:'conv-badge'},
     {id:'acc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'acc-inc-badge'},
     {id:'acc-cust',icon:'fa-users',label:'Customers'},
@@ -2280,15 +2277,18 @@ function goPage(p){
   const nb=g('nb-'+p);if(nb)nb.classList.add('on');
   document.querySelectorAll('.split-drop').forEach(x=>x.classList.remove('open'));
   if(p==='overview') renderMgmt();
+  if(p==='mkt-reports') renderMktReports();
   if(p==='materials') renderMaterialTabs();
   if(p==='users') renderUsers();
   if(p==='advances'){renderAdvances();renderAdvStats();populateAdvanceFilters();}
+  if(p==='orders') renderOrders();
+  if(p==='acc-orders'){renderAccOrders();clearOrderBadge();}
+  if(p==='mkt-outstanding') renderMktOutstanding();
+  if(p==='svc-calls'){renderSvcCalls();updateSvcBadge();}
+  if(p==='svc-conveyance') renderConveyance();
   if(p==='acc-dashboard'){renderAccDashboard();updatePendInboxBadge();}
   if(p==='invoices') renderInvoices();
   if(p==='payments') renderPayments();
-  if(p==='acc-orders'){renderAccOrders();clearOrderBadge();}
-  if(p==='svc-calls'){renderSvcCalls();updateSvcBadge();}
-  if(p==='svc-conveyance') renderConveyance();
   if(p==='acc-conveyance') renderAccConveyance();
   if(p==='svc-orders') renderSvcOrders();
   if(p==='svc-outstanding') renderSvcOutstanding();
@@ -2298,7 +2298,6 @@ function goPage(p){
   if(p==='mgmt-incentives'){renderMgmtIncentives();clearMgmtIncBadge();}
   if(p==='acc-stock') renderStock();
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
-  if(p==='salary-advances'){renderSalAdv();populateSalEmpDropdown();}
   if(p==='setup') renderSetupPage();
 }
 
@@ -2680,7 +2679,7 @@ function checkAccCustHint(){const v=g('iCust').value.trim();g('accCustHint').cla
 function addInvItem(data){
   invRC++;const n=invRC;
   const tr=document.createElement('tr');tr.id='ii-'+n;
-  tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.77em;">${n}</td><td><input type="text" class="id" placeholder="Description" style="min-width:150px;" oninput="recalcInv()"></td><td><input type="number" class="iq" value="1" style="width:58px;" oninput="recalcInv()"></td><td><input type="number" class="ir" value="0" step="0.01" style="width:88px;" oninput="recalcInv()"></td><td class="ia amt" style="color:var(--acc);">₹0</td><td><button class="btn btn-ghost btn-icon" onclick="removeInvItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
+  tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.77em;">${n}</td><td><input type="text" class="id" placeholder="Item / Service" style="min-width:120px;" oninput="recalcInv()"></td><td><input type="number" class="iq" value="1" style="width:58px;" oninput="recalcInv()"></td><td><input type="number" class="ir" value="0" step="0.01" style="width:88px;" oninput="recalcInv()"></td><td class="ia amt" style="color:var(--acc);">₹0</td><td><button class="btn btn-ghost btn-icon" onclick="removeInvItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
   g('invItemsBody').appendChild(tr);
   if(data){const r=g('ii-'+n);r.querySelector('.id').value=data.desc||'';r.querySelector('.iq').value=data.qty||1;r.querySelector('.ir').value=data.rate||0;r.querySelector('.ia').textContent='₹'+(data.amt||0).toFixed(2);}
   recalcInv();
@@ -3120,7 +3119,7 @@ function renderMgmt(){
     const pendingCalls=D.svc_calls.filter(c=>c.status==='pending'||c.status==='escalated').sort((a,b)=>b.priority==='urgent'?1:-1).slice(0,6);
     mgmtSvcEl.innerHTML=!pendingCalls.length?'<div class="empty" style="padding:14px"><i class="fas fa-headset"></i><p>No pending calls 🎉</p></div>':pendingCalls.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;"><div><div style="font-size:.85em;font-weight:700;">${esc(c.no)} <span style="color:${svcStatusColor(c.status)};font-size:.82em;">● ${c.status.replace('-',' ')}</span></div><div style="font-size:.74em;color:var(--ink3);">${esc(c.customer)} — ${c.engineer?'Eng: '+esc(c.engineer):'Unassigned'}</div></div>${svcPriorityBadge(c.priority)}</div>`).join('');
   }
-  // Charts — Top Outstanding Customers
+  // Charts
   const accC=D.ac_customers.map(c=>({name:c.name,val:D.ac_invoices.filter(i=>i.custName===c.name).reduce((a,i)=>a+getOut(i.id),0)})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val).slice(0,6);
   const accChartEl=g('mgmt-acc-chart');if(accChartEl)accChartEl.innerHTML=barChart(accC,'var(--red)');
   // Aging
@@ -3806,7 +3805,7 @@ function renderSvcOutstanding(){
   const total=custs.reduce((s,c)=>s+c.total,0);
   const urgent=custs.filter(c=>c.maxDays>90),high=custs.filter(c=>c.maxDays>60&&c.maxDays<=90),medium=custs.filter(c=>c.maxDays>30&&c.maxDays<=60),fresh=custs.filter(c=>c.maxDays<=30);
   const ss=g('svcOutStats');
-  if(ss)ss.innerHTML=`<div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Total Outstanding</div><div class="stat-value">${fmt(total)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Customers</div><div class="stat-value">${custs.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Urgent 90+d</div><div class="stat-value">${urgent.length}</div></div><div class="stat s-orange"><div class="stat-bar"></div><div class="stat-label">High 60-90d</div><div class="stat-value">${high.length}</div></div>`;
+  if(ss)ss.innerHTML=`<div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Total Outstanding</div><div class="stat-value">${fmt(total)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Customers</div><div class="stat-value">${custs.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Urgent 90+d</div><div class="stat-value">${urgent.length}</div></div><div class="stat s-orange"><div class="stat-bar"></div><div class="stat-label">High 60–90d</div><div class="stat-value">${high.length}</div></div>`;
   const renderGrp=(arr,elId)=>{
     const el=g(elId);if(!el)return;
     if(!arr.length){el.innerHTML='<div style="text-align:center;padding:15px;color:var(--ink3);font-size:.84em;">No customers in this range ✓</div>';return;}
@@ -5361,10 +5360,10 @@ function downloadFYArchive(fy){
 let _mvTab='conv';
 function mgmtViewTab(tab){
   _mvTab=tab;
-  ['conv','adv','inc','saladv'].forEach(t=>{
+  ['conv','adv','inc'].forEach(t=>{
     const b=g('mvt-'+t);if(!b)return;
     const isActive=t===tab;
-    const colors={conv:'var(--svc)',adv:'var(--amber)',inc:'#7c3aed',saladv:'#1d4ed8'};
+    const colors={conv:'var(--svc)',adv:'var(--amber)',inc:'#7c3aed'};
     b.style.borderBottomColor=isActive?colors[t]:'transparent';
     b.style.color=isActive?colors[t]:'var(--ink3)';
     b.style.fontWeight=isActive?'700':'400';
@@ -5463,29 +5462,6 @@ function renderMgmtView(){
       <td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td></td></tr>
       </tbody></table></div>`;
 
-  } else if(_mvTab==='saladv'){
-    const salAdvs=(D.salary_advances||[]);
-    const filtered=salAdvs.filter(a=>{
-      if(eng&&a.empName!==eng)return false;
-      if(stat&&a.status!==stat)return false;
-      if(from&&a.date<from)return false;
-      if(to&&a.date>to)return false;
-      return true;
-    });
-    body.innerHTML=!filtered.length?'<div class="empty"><i class="fas fa-user-tie"></i><p>No salary advances found</p></div>':
-      `<div class="tw"><table><thead><tr><th>Employee</th><th>Role</th><th>Date</th><th>Purpose</th><th>Given</th><th>Recovered</th><th>Balance</th><th>Monthly Plan</th><th>Status</th></tr></thead><tbody>
-      ${filtered.map(a=>`<tr>
-        <td><strong style="color:#1d4ed8;">${esc(a.empName)}</strong></td>
-        <td style="font-size:.8em;">${esc(a.empRole||'—')}</td>
-        <td>${a.date}</td>
-        <td style="font-size:.82em;">${esc(a.purpose)}</td>
-        <td class="amt" style="font-weight:700;">${fmt(a.amount)}</td>
-        <td class="amt" style="color:var(--green);">${fmt(a.amount-(a.balance||0))}</td>
-        <td class="amt" style="color:${a.balance>0?'var(--red)':'var(--green)'};">${fmt(a.balance||0)}</td>
-        <td class="amt">${a.monthlyRecovery?fmt(a.monthlyRecovery):'-'}</td>
-        <td><span class="st-badge ${a.status==='fully_recovered'?'st-billed':a.status==='written_off'?'st-cancelled':'st-pending'}">${a.status.replace('_',' ')}</span></td>
-      </tr>`).join('')}
-      </tbody></table></div>`;
   }
 }
 
@@ -6312,8 +6288,7 @@ function generateConvFromSelected(){
       document.querySelectorAll('.conv-call-chk').forEach(cb=>cb.checked=false);
       const sa=g('convSelectAll');if(sa)sa.checked=false;
       updateConvSelSummary();
-      showSuccessToast('✓ Draft saved — see Draft Claims below, click Submit to send to Accounts','var(--svc)');
-      setTimeout(()=>{const ds=g('convDraftList');if(ds){ds.scrollIntoView({behavior:'smooth',block:'start'});ds.style.transition='background .4s';ds.style.background='#cffafe';setTimeout(()=>{ds.style.background='';},1800);}},350);
+      showSuccessToast('✓ Draft conveyance claim saved — scroll down to view Draft Claims, then click Submit to send to Accounts','var(--svc)');
       // Scroll to the draft section so user sees it immediately
       setTimeout(()=>{
         const draftSection=g('convDraftList');
