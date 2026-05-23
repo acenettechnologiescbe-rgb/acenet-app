@@ -444,13 +444,22 @@ tbody tr:last-child td{border-bottom:none;}
 .print-header h1{font-size:1.1em;font-weight:800;color:var(--navy);}
 .print-header p{font-size:.78em;color:var(--ink3);margin-top:3px;}
 
-/* ── COMPACT FILTER ROW ── */
-.filt-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
-.filt-row select,.filt-row input[type=date],.filt-row input[type=text]{padding:5px 9px;font-size:.79em;border-radius:7px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-family:'Inter',sans-serif;height:32px;min-width:0;}
-.filt-row select{cursor:pointer;}
+/* ── COMPACT FILTER BAR ── */
+.filt-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border:1px solid var(--line);border-radius:11px;padding:8px 12px;}
+.filt-row select{padding:5px 28px 5px 10px;font-size:.78em;border-radius:7px;border:1.5px solid var(--line);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 8px center;-webkit-appearance:none;appearance:none;color:var(--ink);font-family:'Inter',sans-serif;height:30px;cursor:pointer;font-weight:600;min-width:110px;max-width:170px;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:.15s;}
+.filt-row select:hover,.filt-row select:focus{border-color:var(--role-color);outline:none;box-shadow:0 0 0 3px rgba(14,116,144,.1);}
+.filt-row input[type=date]{padding:5px 8px;font-size:.78em;border-radius:7px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-family:'Inter',sans-serif;height:30px;min-width:0;width:130px;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:.15s;}
+.filt-row input[type=date]:hover,.filt-row input[type=date]:focus{border-color:var(--role-color);outline:none;}
+.filt-row input[type=text]{padding:5px 10px;font-size:.78em;border-radius:7px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-family:'Inter',sans-serif;height:30px;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.filt-row .filt-sep{width:1px;height:20px;background:var(--line);margin:0 2px;flex-shrink:0;}
+.filt-row .filt-lbl{font-size:.69em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink4);white-space:nowrap;}
 .filt-row .combo{max-width:180px;}
-.filt-row .combo input{padding:5px 9px 5px 28px;font-size:.79em;height:32px;}
+.filt-row .combo input{padding:5px 9px 5px 28px;font-size:.78em;height:30px;}
 .filt-row .combo .carr{font-size:.7em;top:50%;transform:translateY(-50%);}
+.filt-row .filt-date-grp{display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid var(--line);border-radius:7px;padding:2px 6px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.filt-row .filt-date-grp span{font-size:.7em;color:var(--ink4);font-weight:700;}
+.filt-row .filt-date-grp input[type=date]{border:none;box-shadow:none;padding:3px 4px;width:120px;height:26px;border-radius:0;}
+.filt-row .filt-date-grp input[type=date]:focus{outline:none;}
 
 /* ── RESPONSIVE ── */
 @media(max-width:800px){.main{padding:13px;}.topbar,.navbar{padding-left:12px;padding-right:12px;}.g2,.g3{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}.mgmt-hero{grid-template-columns:1fr;}}
@@ -671,14 +680,22 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Invoice No</label><input type="text" id="iNo" placeholder="INV-2025-0001"></div>
-      <div class="fg"><label>Invoice Date</label><input type="date" id="iDate"></div>
-      <div class="fg"><label>Due Date</label><input type="date" id="iDue"></div>
+      <div class="fg"><label>Invoice Date</label><input type="date" id="iDate" oninput="autoSetDueDate()"></div>
+      <div class="fg">
+        <label>Due Date</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="date" id="iDue" style="flex:1;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="setDueDays(7)" style="white-space:nowrap;padding:5px 9px;font-size:.76em;font-weight:700;color:var(--acc);border-color:var(--acc);">+7d</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="setDueDays(15)" style="white-space:nowrap;padding:5px 9px;font-size:.76em;font-weight:700;color:var(--amber);border-color:var(--amber);">+15d</button>
+        </div>
+        <div style="font-size:.71em;color:var(--ink3);margin-top:3px;">Default +7 days · click +15d for 15-day term</div>
+      </div>
     </div>
     <div class="g2" style="margin-bottom:11px;">
       <div class="fg"><label>Customer</label><div class="combo"><input type="text" id="iCust" list="dl-acc-cust" placeholder="Type or select…" oninput="checkAccCustHint()" autocomplete="off"><i class="fas fa-chevron-down carr"></i><datalist id="dl-acc-cust"></datalist></div><div class="hint" id="accCustHint"><i class="fas fa-plus-circle"></i> New — will be added</div></div>
       <div class="fg"><label>Notes / PO Ref</label><input type="text" id="iNotes" placeholder="Reference…"></div>
     </div>
-    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Item / Service</th><th>Qty</th><th>Rate (₹)</th><th>Amount (₹)</th><th></th></tr></thead><tbody id="invItemsBody"></tbody></table></div>
+    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Qty</th><th>Rate (₹)</th><th>Amount (₹)</th><th></th></tr></thead><tbody id="invItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addInvItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--acc)"></i> Add Row</button>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:7px;margin-bottom:11px;">
       <div style="display:flex;align-items:center;gap:9px;"><span style="font-size:.8em;font-weight:700;color:var(--ink3);">Tax:</span><select id="iTax" style="width:auto;" onchange="recalcInv()"><option value="0">None</option><option value="5">5%</option><option value="12">12%</option><option value="18" selected>18%</option><option value="28">28%</option></select></div>
@@ -702,9 +719,9 @@ tbody tr:last-child td{border-bottom:none;}
     <button class="btn btn-acc" onclick="saveAdvFromInv()"><i class="fas fa-check-circle"></i> Save Advance</button>
   </div>
   <div class="sdiv">Invoice List</div>
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px;align-items:center;">
+  <div class="filt-row">
     <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="invSearch" placeholder="Search…" oninput="renderInvoices()" style="padding-left:30px;"></div>
-    <select id="invSF" onchange="renderInvoices()" ><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="overdue">Overdue</option><option value="paid">Paid</option></select>
+    <select id="invSF" onchange="renderInvoices()"><option value="">All</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="overdue">Overdue</option><option value="paid">Paid</option></select>
     <span id="invCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
   <div class="tw"><table><thead><tr><th>Invoice No</th><th>Customer</th><th>Date</th><th>Due Date</th><th>Amount</th><th>Paid</th><th>Outstanding</th><th>Status</th><th>Actions</th></tr></thead><tbody id="invBody"></tbody></table></div>
@@ -1026,7 +1043,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Call ID</label><input type="text" id="scNo" readonly style="background:var(--bg);"></div>
     <div class="fg"><label>Date &amp; Time</label><input type="datetime-local" id="scDate"></div>
-    <div class="fg"><label>Customer / Company</label><input type="text" id="scCust" placeholder="Customer name…"></div>
+    <div class="fg"><label>Customer / Company</label><div class="combo"><input type="text" id="scCust" list="dl-svc-cust" placeholder="Customer name…" autocomplete="off" oninput="autoFillSvcCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-cust"></datalist></div><div class="hint" id="svcCustHint" style="display:none;"></div></div>
   </div>
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Contact Person</label><input type="text" id="scContact" placeholder="Name of contact"></div>
@@ -1225,13 +1242,19 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="stats" id="accConvStats"></div>
 <!-- Filters -->
 <div class="filt-row">
-  <select id="convEngFilter" onchange="renderAccConveyance()" ><option value="">All Engineers</option></select>
-  <select id="convStatusFilter" onchange="renderAccConveyance()" >
+  <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+  <div class="filt-sep"></div>
+  <select id="convEngFilter" onchange="renderAccConveyance()"><option value="">All Engineers</option></select>
+  <select id="convStatusFilter" onchange="renderAccConveyance()">
     <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
   </select>
-  <input type="date" id="convFromDate" onchange="renderAccConveyance()" >
-  <input type="date" id="convToDate" onchange="renderAccConveyance()" >
-  <div class="combo" style="max-width:200px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="convSearch" placeholder="Search…" oninput="renderAccConveyance()" style="padding-left:30px;"></div>
+  <div class="filt-date-grp">
+    <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
+    <input type="date" id="convFromDate" onchange="renderAccConveyance()">
+    <span>→</span>
+    <input type="date" id="convToDate" onchange="renderAccConveyance()">
+  </div>
+  <div class="combo" style="max-width:180px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="convSearch" placeholder="Search…" oninput="renderAccConveyance()" style="padding-left:30px;"></div>
 </div>
 <!-- Per-engineer summary -->
 <div id="convEngSummary" style="margin-bottom:12px;"></div>
@@ -1266,13 +1289,19 @@ tbody tr:last-child td{border-bottom:none;}
 </div>
 <!-- Filters -->
 <div class="filt-row" id="mgmtViewFilters">
-  <select id="mvEng" onchange="renderMgmtView()" ><option value="">All Engineers</option></select>
-  <select id="mvStat" onchange="renderMgmtView()" >
+  <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+  <div class="filt-sep"></div>
+  <select id="mvEng" onchange="renderMgmtView()"><option value="">All Engineers</option></select>
+  <select id="mvStat" onchange="renderMgmtView()">
     <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="mgmt-review">Mgmt Review</option>
   </select>
-  <input type="date" id="mvFrom" onchange="renderMgmtView()" >
-  <input type="date" id="mvTo" onchange="renderMgmtView()" >
-  <button class="btn btn-outline btn-sm" onclick="exportMgmtView()"><i class="fas fa-file-excel"></i> Export</button>
+  <div class="filt-date-grp">
+    <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
+    <input type="date" id="mvFrom" onchange="renderMgmtView()">
+    <span>→</span>
+    <input type="date" id="mvTo" onchange="renderMgmtView()">
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="exportMgmtView()" style="margin-left:auto;"><i class="fas fa-file-excel"></i> Export</button>
 </div>
 <div id="mgmtViewBody"></div>
 </div>
@@ -1400,13 +1429,19 @@ tbody tr:last-child td{border-bottom:none;}
 
   <!-- Sent entries with filters -->
   <div class="sdiv" style="margin-top:14px;">📤 Sent to Accounts</div>
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
-    <span id="svcIncEngWrap"><select id="svcIncEngFilter" onchange="renderSvcIncentives()" ><option value="">All Engineers</option></select></span>
-    <select id="svcIncStatusFilter" onchange="renderSvcIncentives()" >
+  <div class="filt-row">
+    <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+    <div class="filt-sep"></div>
+    <span id="svcIncEngWrap"><select id="svcIncEngFilter" onchange="renderSvcIncentives()"><option value="">All Engineers</option></select></span>
+    <select id="svcIncStatusFilter" onchange="renderSvcIncentives()">
       <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Mgmt Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
     </select>
-    <input type="date" id="svcIncFrom" onchange="renderSvcIncentives()" >
-    <input type="date" id="svcIncTo" onchange="renderSvcIncentives()" >
+    <div class="filt-date-grp">
+      <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
+      <input type="date" id="svcIncFrom" onchange="renderSvcIncentives()">
+      <span>→</span>
+      <input type="date" id="svcIncTo" onchange="renderSvcIncentives()">
+    </div>
   </div>
   <div id="svcIncList"></div>
 </div>
@@ -1439,12 +1474,18 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="stats" id="accIncStats"></div>
   <!-- Filters -->
   <div class="filt-row">
-    <select id="accIncEngFilter" onchange="renderAccIncentives()" ><option value="">All Engineers</option></select>
-    <select id="accIncStatusFilter" onchange="renderAccIncentives()" >
+    <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+    <div class="filt-sep"></div>
+    <select id="accIncEngFilter" onchange="renderAccIncentives()"><option value="">All Engineers</option></select>
+    <select id="accIncStatusFilter" onchange="renderAccIncentives()">
       <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Sent to Mgmt</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
     </select>
-    <input type="date" id="accIncFrom" onchange="renderAccIncentives()" >
-    <input type="date" id="accIncTo" onchange="renderAccIncentives()" >
+    <div class="filt-date-grp">
+      <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
+      <input type="date" id="accIncFrom" onchange="renderAccIncentives()">
+      <span>→</span>
+      <input type="date" id="accIncTo" onchange="renderAccIncentives()">
+    </div>
   </div>
   <div class="sdiv">⏳ Pending — Awaiting Review</div>
   <div id="accIncPending"></div>
@@ -1535,7 +1576,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="stockAlerts"></div>
 
   <!-- Category Filter + Search -->
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
+  <div class="filt-row">
     <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="stockSearch" placeholder="Search item…" oninput="renderStock()" style="padding-left:30px;"></div>
     <select id="stockCatFilter" onchange="renderStock()" >
       <option value="">All Categories</option>
@@ -1560,10 +1601,9 @@ tbody tr:last-child td{border-bottom:none;}
 
   <!-- Transaction History -->
   <div class="sdiv" style="margin-top:18px;">Transaction History</div>
-  <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
-    <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="stockTxnSearch" placeholder="Search txn…" oninput="renderStockTxns()" style="padding-left:30px;"></div>
-    <input type="date" id="stockTxnFrom" onchange="renderStockTxns()" >
-    <input type="date" id="stockTxnTo" onchange="renderStockTxns()" >
+  <div class="filt-row">
+    <div class="combo" style="max-width:200px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="stockTxnSearch" placeholder="Search txn…" oninput="renderStockTxns()" style="padding-left:30px;"></div>
+    <div class="filt-date-grp"><i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i><input type="date" id="stockTxnFrom" onchange="renderStockTxns()"><span>→</span><input type="date" id="stockTxnTo" onchange="renderStockTxns()"></div>
   </div>
   <div class="tw"><table>
     <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead>
@@ -1586,7 +1626,7 @@ tbody tr:last-child td{border-bottom:none;}
 
   <!-- SUB: Outstanding by Customer -->
   <div class="rpt-panel on" id="rpt-outstanding">
-    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
+    <div class="filt-row">
       <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="outRptSearch" placeholder="Search customer…" oninput="renderRptOutstanding()" style="padding-left:30px;"></div>
       <button class="btn btn-outline btn-sm" onclick="printSection('outRptBody','Outstanding by Customer')"><i class="fas fa-print"></i> Print</button>
       <button class="btn btn-outline btn-sm" onclick="exportOutstandingExcel()"><i class="fas fa-file-excel"></i> Excel</button>
@@ -1597,9 +1637,10 @@ tbody tr:last-child td{border-bottom:none;}
 
   <!-- SUB: Collection by Customer -->
   <div class="rpt-panel" id="rpt-collection">
-    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <div class="fg" style="margin:0;"><label style="font-size:.75em;">From</label><input type="date" id="colFrom" onchange="renderRptCollection()"></div>
-      <div class="fg" style="margin:0;"><label style="font-size:.75em;">To</label><input type="date" id="colTo" onchange="renderRptCollection()"></div>
+    <div class="filt-row">
+      <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+      <div class="filt-sep"></div>
+      <div class="filt-date-grp"><i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i><input type="date" id="colFrom" onchange="renderRptCollection()"><span>→</span><input type="date" id="colTo" onchange="renderRptCollection()"></div>
       <div class="combo" style="max-width:220px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="colRptSearch" placeholder="Search…" oninput="renderRptCollection()" style="padding-left:30px;"></div>
       <button class="btn btn-outline btn-sm" onclick="printSection('colRptBody','Collection by Customer')"><i class="fas fa-print"></i> Print</button>
       <button class="btn btn-outline btn-sm" onclick="exportCollectionExcel()"><i class="fas fa-file-excel"></i> Excel</button>
@@ -1610,11 +1651,15 @@ tbody tr:last-child td{border-bottom:none;}
 
   <!-- SUB: Incentive by Engineer -->
   <div class="rpt-panel" id="rpt-incentive">
-    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px;align-items:center;">
-      <select id="incEngFilter" onchange="renderRptIncentive()" ><option value="">All Engineers</option></select>
-      <select id="incStatusFilter" onchange="renderRptIncentive()" ><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
-      <button class="btn btn-outline btn-sm" onclick="printSection('incRptBody','Incentive by Engineer')"><i class="fas fa-print"></i> Print</button>
-      <button class="btn btn-outline btn-sm" onclick="exportIncentiveExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+    <div class="filt-row">
+      <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+      <div class="filt-sep"></div>
+      <select id="incEngFilter" onchange="renderRptIncentive()"><option value="">All Engineers</option></select>
+      <select id="incStatusFilter" onchange="renderRptIncentive()"><option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn btn-outline btn-sm" onclick="printSection('incRptBody','Incentive by Engineer')"><i class="fas fa-print"></i> Print</button>
+        <button class="btn btn-outline btn-sm" onclick="exportIncentiveExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+      </div>
     </div>
     <div class="stats" id="incRptStats"></div>
     <div id="incRptEngSummary" style="margin-bottom:14px;"></div>
@@ -2071,8 +2116,19 @@ function showFirebaseError(){
 function flashSaved(){const e=g('saveInd');e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200);}
 
 function refreshDataLists(){
-  const cu=D.pl_customers.map(c=>`<option value="${esc(c)}">`).join('');
-  ['dl-mkt-cust','dl-mkt-cust2','dl-ord-cust','dl-ord-cust2'].forEach(x=>{const e=g(x);if(e)e.innerHTML=cu;});
+  // ── Unified Customer Master ──────────────────────────────────────
+  // Merge Accounts master (objects with full details) + Marketing list (strings)
+  // ac_customers is the authoritative master; pl_customers fills in any extras
+  const acNames=new Set(D.ac_customers.map(c=>c.name));
+  const allCustNames=[
+    ...D.ac_customers.map(c=>c.name),              // Accounts master (primary)
+    ...D.pl_customers.filter(n=>!acNames.has(n))   // Marketing-only extras
+  ];
+  const unifiedCu=allCustNames.map(n=>`<option value="${esc(n)}">`).join('');
+  // All department customer datalists now share the unified master
+  ['dl-mkt-cust','dl-mkt-cust2','dl-ord-cust','dl-ord-cust2',
+   'dl-svc-cust','dl-svc-ord-cust','dl-inc-cust'].forEach(x=>{const e=g(x);if(e)e.innerHTML=unifiedCu;});
+  // Accounts invoice/customer selects use ac_customers only (structured)
   const aCu=D.ac_customers.map(c=>`<option value="${esc(c.name)}">`).join('');
   ['dl-acc-cust'].forEach(x=>{const e=g(x);if(e)e.innerHTML=aCu;});
   const oi=D.ac_invoices.filter(i=>getOut(i.id)>0).map(i=>`<option value="${esc(i.no)}">`).join('');
@@ -2080,8 +2136,6 @@ function refreshDataLists(){
   const svcComp=D.svc_calls.filter(c=>c.status==='completed').map(c=>`<option value="${esc(c.no)}">`).join('');
   ['dl-svc-calls','dl-svc-calls2'].forEach(x=>{const e=g(x);if(e)e.innerHTML=svcComp;});
   populateSvcEngineerDropdowns();
-  const svOrdCustDl=g('dl-svc-ord-cust');if(svOrdCustDl)svOrdCustDl.innerHTML=cu;
-  const incCustDl=g('dl-inc-cust');if(incCustDl)incCustDl.innerHTML=cu+D.ac_customers.map(c=>`<option value="${esc(c.name)}">`).join('');
   updateAccIncBadge();updateSvcIncBadge();
   updateOutBadge();updateSvcBadge();updateConvBadge();
 }
@@ -2302,6 +2356,9 @@ function daysOD(inv){if(!inv.dueDate)return 0;const d=Math.floor((Date.now()-new
 function stBadge(st){const m={paid:'b-paid Paid',partial:'b-partial Partial',unpaid:'b-unpaid Unpaid',overdue:'b-overdue Overdue'};const p=(m[st]||'b-unpaid Unpaid').split(' ');return`<span class="badge ${p[0]}">${p[1]}</span>`;}
 function mTag(m){const mp={Cash:'pmt-cash',UPI:'pmt-upi','Bank Transfer':'pmt-bank',Cheque:'pmt-chq','NEFT/RTGS':'pmt-neft','Advance Applied':'pmt-adv'};return`<span class="pmt ${mp[m]||'pmt-cash'}">${esc(m)}</span>`;}
 function genInvNo(){return 'INV-'+new Date().getFullYear()+'-'+String(D.ac_invoices.length+1).padStart(4,'0');}
+function addDays(dateStr,n){const d=new Date(dateStr);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+function autoSetDueDate(){const d=g('iDate')?.value;if(d)g('iDue').value=addDays(d,7);}
+function setDueDays(n){const d=g('iDate')?.value||today();g('iDue').value=addDays(d,n);}
 function genOrdNo(){return 'ORD-'+new Date().getFullYear()+'-'+String(D.orders.length+1).padStart(4,'0');}
 function barChart(data,color){const max=Math.max(...data.map(d=>d.val),1);return data.length?data.map(d=>`<div class="cbar"><div class="cbar-lbl" title="${esc(d.name)}">${esc(d.name)}</div><div class="cbar-bg"><div class="cbar-fill" style="width:${Math.round(d.val/max*100)}%;background:${color};"></div></div><div class="cbar-val" style="color:${color}">${fmt(d.val)}</div></div>`).join(''):'<div class="empty" style="padding:14px"><i class="fas fa-chart-bar"></i><p>No data yet</p></div>';}
 
@@ -2598,19 +2655,43 @@ function toggleOrder(id,prefix){
 function showInvForm(inv){
   closeEl('advFormInv');
   g('invForm').style.display='block';g('invForm').scrollIntoView({behavior:'smooth'});
-  if(!inv){g('iNo').value=genInvNo();g('iDate').value=today();g('iDue').value='';g('iCust').value='';g('iNotes').value='';g('iTax').value='18';g('invItemsBody').innerHTML='';invRC=0;g('iEditId').value='';g('iFromOrder').value='';editInvId=null;g('invFormTitle').innerHTML='<i class="fas fa-plus-circle" style="color:var(--acc);margin-right:6px;"></i>New Invoice';g('iSaveTxt').textContent='Save Invoice';g('invForm').classList.remove('fp-edit');addInvItem();}
+  if(!inv){g('iNo').value=genInvNo();g('iDate').value=today();g('iDue').value=addDays(today(),7);g('iCust').value='';g('iNotes').value='';g('iTax').value='18';g('invItemsBody').innerHTML='';invRC=0;g('iEditId').value='';g('iFromOrder').value='';editInvId=null;g('invFormTitle').innerHTML='<i class="fas fa-plus-circle" style="color:var(--acc);margin-right:6px;"></i>New Invoice';g('iSaveTxt').textContent='Save Invoice';g('invForm').classList.remove('fp-edit');addInvItem();}
   else{editInvId=inv.id;g('iNo').value=inv.no;g('iDate').value=inv.date;g('iDue').value=inv.dueDate||'';g('iCust').value=inv.custName;g('iNotes').value=inv.notes||'';g('iTax').value=String(inv.taxRate||0);g('invItemsBody').innerHTML='';invRC=0;inv.items.forEach(it=>addInvItem(it));g('invFormTitle').innerHTML='<i class="fas fa-pen" style="color:var(--mgmt);margin-right:6px;"></i>Edit — '+esc(inv.no);g('iSaveTxt').textContent='Update';g('invForm').classList.add('fp-edit');g('iEditId').value=inv.id;recalcInv();}
 }
 function hideInvForm(){g('invForm').style.display='none';editInvId=null;}
 function showAdvFormInInv(){hideInvForm();g('advFormInv').style.display='block';g('aiDate').value=today();g('advFormInv').scrollIntoView({behavior:'smooth'});}
 function checkAccCustHint(){const v=g('iCust').value.trim();g('accCustHint').classList.toggle('on',v&&!D.ac_customers.find(c=>c.name===v));}
 
+// Auto-fill Phone & Location from Accounts master when customer selected in Service Call form
+function autoFillSvcCust(){
+  const name=(g('scCust')?.value||'').trim();
+  const hint=g('svcCustHint');
+  const c=D.ac_customers.find(x=>x.name===name);
+  if(c){
+    // Auto-fill phone if blank
+    if(c.phone&&!g('scPhone')?.value) g('scPhone').value=c.phone;
+    // Auto-fill location/city if blank
+    if(c.city&&!g('scLocation')?.value) g('scLocation').value=c.city;
+    if(hint){
+      const parts=[];
+      if(c.phone) parts.push('<i class="fas fa-phone" style="color:var(--svc)"></i> '+esc(c.phone));
+      if(c.city) parts.push('<i class="fas fa-location-dot" style="color:var(--acc)"></i> '+esc(c.city));
+      if(c.gstin) parts.push('GST: '+esc(c.gstin));
+      hint.innerHTML=parts.length?parts.join(' &nbsp;·&nbsp; '):'';
+      hint.style.display=parts.length?'block':'none';
+      hint.style.cssText='display:block;font-size:.73em;color:var(--ink3);margin-top:3px;padding:3px 6px;background:var(--acc-l);border-radius:5px;';
+    }
+  } else {
+    if(hint) hint.style.display='none';
+  }
+}
+
 function addInvItem(data){
   invRC++;const n=invRC;
   const tr=document.createElement('tr');tr.id='ii-'+n;
-  tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.77em;">${n}</td><td><input type="text" class="id" placeholder="Item / Service" style="min-width:120px;" oninput="recalcInv()"></td><td><input type="number" class="iq" value="1" style="width:58px;" oninput="recalcInv()"></td><td><input type="number" class="ir" value="0" step="0.01" style="width:88px;" oninput="recalcInv()"></td><td class="ia amt" style="color:var(--acc);">₹0</td><td><button class="btn btn-ghost btn-icon" onclick="removeInvItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
+  tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.77em;">${n}</td><td><input type="number" class="iq" value="1" style="width:58px;" oninput="recalcInv()"></td><td><input type="number" class="ir" value="0" step="0.01" style="width:88px;" oninput="recalcInv()"></td><td class="ia amt" style="color:var(--acc);">₹0</td><td><button class="btn btn-ghost btn-icon" onclick="removeInvItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
   g('invItemsBody').appendChild(tr);
-  if(data){const r=g('ii-'+n);r.querySelector('.id').value=data.desc||'';r.querySelector('.iq').value=data.qty||1;r.querySelector('.ir').value=data.rate||0;r.querySelector('.ia').textContent='₹'+(data.amt||0).toFixed(2);}
+  if(data){const r=g('ii-'+n);r.querySelector('.iq').value=data.qty||1;r.querySelector('.ir').value=data.rate||0;r.querySelector('.ia').textContent='₹'+(data.amt||0).toFixed(2);}
   recalcInv();
 }
 function removeInvItem(n){const r=g('ii-'+n);if(r){r.remove();recalcInv();}}
@@ -2630,7 +2711,7 @@ function saveInvoice(){
   const no=g('iNo').value.trim(),date=g('iDate').value,dueDate=g('iDue').value,custName=g('iCust').value.trim();
   if(!no||!date||!custName){alert('Fill Invoice No, Date and Customer');return;}
   const taxRate=parseFloat(g('iTax').value)||0;
-  const items=[];document.querySelectorAll('#invItemsBody tr').forEach(r=>{const desc=r.querySelector('.id')?.value.trim()||'',qty=parseFloat(r.querySelector('.iq')?.value)||0,rate=parseFloat(r.querySelector('.ir')?.value)||0;if(desc||rate>0)items.push({desc,qty,rate,amt:qty*rate});});
+  const items=[];document.querySelectorAll('#invItemsBody tr').forEach(r=>{const qty=parseFloat(r.querySelector('.iq')?.value)||0,rate=parseFloat(r.querySelector('.ir')?.value)||0;if(rate>0||qty>0)items.push({desc:'',qty,rate,amt:qty*rate});});
   if(!items.length){alert('Add at least one item');return;}
   if(D.ac_invoices.find(i=>i.no===no&&i.id!==editInvId)){alert('Invoice number already exists!');return;}
   if(!D.ac_customers.find(c=>c.name===custName)) D.ac_customers.push({id:uid(),name:custName,phone:'',email:'',gstin:'',city:''});
@@ -2957,7 +3038,24 @@ function printAccBills(){
 // ════════════════════════════════════════════════════════════════
 // ACC CUSTOMERS
 // ════════════════════════════════════════════════════════════════
-function saveAccCust(){const name=g('acName').value.trim();if(!name){alert('Enter name');return;}const obj={id:g('acEditId').value||uid(),name,phone:g('acPhone').value.trim(),email:g('acEmail').value.trim(),gstin:g('acGstin').value.trim(),city:g('acCity').value.trim()};if(g('acEditId').value){const idx=D.ac_customers.findIndex(c=>c.id===obj.id);if(idx>=0)D.ac_customers[idx]=obj;}else D.ac_customers.push(obj);cancelAccCust();saveData();renderAccCusts();}
+function saveAccCust(){
+  const name=g('acName').value.trim();if(!name){alert('Enter name');return;}
+  const obj={id:g('acEditId').value||uid(),name,phone:g('acPhone').value.trim(),email:g('acEmail').value.trim(),gstin:g('acGstin').value.trim(),city:g('acCity').value.trim()};
+  if(g('acEditId').value){
+    const idx=D.ac_customers.findIndex(c=>c.id===obj.id);
+    if(idx>=0){
+      const oldName=D.ac_customers[idx].name;
+      D.ac_customers[idx]=obj;
+      // Update name in pl_customers if it changed
+      if(oldName!==name){const pi=D.pl_customers.indexOf(oldName);if(pi>=0)D.pl_customers[pi]=name;}
+    }
+  } else {
+    D.ac_customers.push(obj);
+  }
+  // Sync to pl_customers (Marketing master) so all depts see this customer
+  if(!D.pl_customers.includes(name)) D.pl_customers.push(name);
+  cancelAccCust();saveData();renderAccCusts();refreshDataLists();
+}
 function cancelAccCust(){g('acName').value='';g('acPhone').value='';g('acEmail').value='';g('acGstin').value='';g('acCity').value='';g('acEditId').value='';g('acSaveTxt').textContent='Add';g('acCancelBtn').style.display='none';g('accCustDetail').style.display='none';}
 function renderAccCusts(){
   const s=(g('accCustSearch')?.value||'').toLowerCase();
@@ -4138,9 +4236,11 @@ function saveConvAdvance(){
 function renderConveyance(){
   populateSvcEngineerDropdowns();
   renderConvCallTable();
-  const cu=D.pl_customers.map(c=>`<option value="${esc(c)}">`).join('');
-  const svOrdCustDl=g('dl-svc-ord-cust');if(svOrdCustDl)svOrdCustDl.innerHTML=cu;
-  const incCustDl=g('dl-inc-cust');if(incCustDl)incCustDl.innerHTML=cu+D.ac_customers.map(c=>`<option value="${esc(c.name)}">`).join('');
+  // Unified customer list for all service dropdowns
+  const acNames=new Set(D.ac_customers.map(c=>c.name));
+  const allCustNames=[...D.ac_customers.map(c=>c.name),...D.pl_customers.filter(n=>!acNames.has(n))];
+  const unifiedCu=allCustNames.map(n=>`<option value="${esc(n)}">`).join('');
+  ['dl-svc-cust','dl-svc-ord-cust','dl-inc-cust'].forEach(x=>{const e=g(x);if(e)e.innerHTML=unifiedCu;});
   updateAccIncBadge();updateSvcIncBadge();
   const isService=D.currentUser?.role==='service';
   const myName=D.currentUser?.name||'';
