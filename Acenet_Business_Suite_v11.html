@@ -1079,7 +1079,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Call ID</label><input type="text" id="scNo" readonly style="background:var(--bg);"></div>
     <div class="fg"><label>Date &amp; Time</label><input type="datetime-local" id="scDate"></div>
-    <div class="fg"><label>Customer / Company</label><div class="combo"><input type="text" id="scCust" list="dl-svc-cust" placeholder="Customer name…" autocomplete="off" oninput="autoFillSvcCust()" onchange="autoFillSvcCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-cust"></datalist></div><div class="hint" id="svcCustHint" style="display:none;"></div></div>
+    <div class="fg"><label>Customer / Company</label><div class="combo"><input type="text" id="scCust" list="dl-svc-cust" placeholder="Customer name…" autocomplete="off" oninput="autoFillSvcCust()" onchange="autoFillSvcCust()" onblur="autoFillSvcCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-cust"></datalist></div><div class="hint" id="svcCustHint" style="display:none;"></div></div>
   </div>
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Contact Person</label><input type="text" id="scContact" placeholder="Name of contact"></div>
@@ -1428,6 +1428,25 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="svcRptBody"></div>
 </div>
 
+<!-- ════ SERVICE: STOCK VIEW (Read-Only) ════ -->
+<div class="page" id="page-svc-stock">
+  <div class="ph">
+    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Stock — View</span></h2><p>Current stock levels · read-only view for service engineers</p></div>
+    <button class="btn btn-outline btn-sm" onclick="exportSvcStockView()"><i class="fas fa-file-excel"></i> Export</button>
+  </div>
+  <div class="stats" id="svcStockStats"></div>
+  <div class="filt-row">
+    <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+    <div class="filt-sep"></div>
+    <div class="combo" style="max-width:200px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="svcStockSearch" placeholder="Search item…" oninput="renderSvcStockView()" style="padding-left:30px;"></div>
+    <select id="svcStockCat" onchange="renderSvcStockView()"><option value="">All Categories</option></select>
+    <select id="svcStockStatus" onchange="renderSvcStockView()">
+      <option value="">All Items</option><option value="ok">In Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option>
+    </select>
+  </div>
+  <div id="svcStockBody"></div>
+</div>
+
 <div class="page" id="page-svc-incentives">
   <div class="ph">
     <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Entries</span></h2><p>Log entries — save drafts across multiple calls, send to Accounts when ready</p></div>
@@ -1694,7 +1713,7 @@ tbody tr:last-child td{border-bottom:none;}
     <button class="rpt-tab on" onclick="switchRptTab('rpt-outstanding',this)"><i class="fas fa-exclamation-circle" style="color:var(--red);"></i> Outstanding by Customer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-collection',this)"><i class="fas fa-hand-holding-dollar" style="color:var(--green);"></i> Collection by Customer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-incentive',this)"><i class="fas fa-gift" style="color:#7c3aed;"></i> Incentive by Engineer</button>
-    <button class="rpt-tab" onclick="switchRptTab('rpt-send-mkt',this)"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send to Marketing</button>
+    <button class="rpt-tab" onclick="switchRptTab('rpt-send-mkt',this)"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send to Service Engineer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-financial',this)"><i class="fas fa-chart-bar" style="color:var(--acc);"></i> Financial Summary</button>
   </div>
 
@@ -1740,11 +1759,11 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale Amt</th><th>Purchase Amt</th><th>Profit</th><th>Approved Incentive</th><th>Status</th></tr></thead><tbody id="incRptBody"></tbody></table></div>
   </div>
 
-  <!-- SUB: Send to Marketing -->
+  <!-- SUB: Send to Service Engineer -->
   <div class="rpt-panel" id="rpt-send-mkt">
     <div class="card" style="max-width:700px;background:linear-gradient(135deg,#eff6ff,#fff);border:2px solid #bfdbfe;">
-      <div class="card-title"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send Collection Report to Marketing</div>
-      <p style="font-size:.82em;color:var(--ink3);margin-bottom:14px;">Send a summary of recent collections and outstanding to the marketing team for follow-up.</p>
+      <div class="card-title"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send Collection Report to Service Engineer</div>
+      <p style="font-size:.82em;color:var(--ink3);margin-bottom:14px;">Send a summary of recent collections and outstanding to service engineers for follow-up.</p>
       <div class="g2" style="margin-bottom:11px;">
         <div class="fg"><label>From Date</label><input type="date" id="smktFrom"></div>
         <div class="fg"><label>To Date</label><input type="date" id="smktTo"></div>
@@ -1786,6 +1805,25 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="card"><div class="card-title"><i class="fas fa-calendar-alt" style="color:var(--amber)"></i>Aging Analysis</div><div class="aging-grid" id="accRepAging2"></div></div>
     <div class="sdiv">Customer Summary</div>
     <div class="tw"><table><thead><tr><th>Customer</th><th>Total Invoiced</th><th>Collected</th><th>Outstanding</th><th>Overdue</th><th>Advance Bal</th></tr></thead><tbody id="accRepBody2"></tbody></table></div>
+  </div>
+
+  <!-- SUB: Stock Report -->
+  <div class="rpt-panel" id="rpt-stock">
+    <div class="btn-row" style="margin-bottom:13px;">
+      <button class="btn btn-outline btn-sm" onclick="printSection('stockRptTable','Stock Report')"><i class="fas fa-print"></i> Print PDF</button>
+      <button class="btn btn-outline btn-sm" onclick="exportStockReportExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+    </div>
+    <div class="stats" id="stockRptStats"></div>
+    <div class="filt-row">
+      <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+      <div class="filt-sep"></div>
+      <div class="combo" style="max-width:200px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="stockRptSearch" placeholder="Search item…" oninput="renderStockReport()" style="padding-left:30px;"></div>
+      <select id="stockRptCat" onchange="renderStockReport()"><option value="">All Categories</option></select>
+      <select id="stockRptSt" onchange="renderStockReport()">
+        <option value="">All Items</option><option value="ok">In Stock</option><option value="low">Low Stock</option><option value="out">Out of Stock</option>
+      </select>
+    </div>
+    <div id="stockRptTable"></div>
   </div>
 </div>
 
@@ -2312,7 +2350,8 @@ const NAVS = {
     {id:'svc-orders',icon:'fa-clipboard-list',label:'Order Checklist',color:'var(--orange)'},
     {id:'svc-outstanding',icon:'fa-phone-volume',label:'Outstanding',color:'var(--red)'},
     {id:'svc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'svc-inc-badge'},
-    {id:'svc-reports',icon:'fa-chart-bar',label:'Reports',color:'var(--svc)'}
+    {id:'svc-reports',icon:'fa-chart-bar',label:'Reports',color:'var(--svc)'},
+    {id:'svc-stock',icon:'fa-boxes-stacked',label:'Stock',color:'var(--green)'}
   ]
 };
 
@@ -2352,6 +2391,7 @@ function goPage(p){
   if(p==='svc-orders') renderSvcOrders();
   if(p==='svc-outstanding') renderSvcOutstanding();
   if(p==='svc-reports') renderSvcReports();
+  if(p==='svc-stock') renderSvcStockView();
   if(p==='svc-incentives'){renderSvcIncentives();populateSvcIncEngDropdown();}
   if(p==='acc-incentives') renderAccIncentives();
   if(p==='mgmt-view') renderMgmtView();
@@ -2740,23 +2780,26 @@ function checkAccCustHint(){const v=g('iCust').value.trim();g('accCustHint').cla
 
 // Auto-fill Phone & Location from Accounts master when customer selected in Service Call form
 function autoFillSvcCust(){
+  // Always keep datalist fresh from Accounts master
+  const _acN=new Set(D.ac_customers.map(c=>c.name));
+  const _allCu=[...D.ac_customers.map(c=>c.name),...(D.pl_customers||[]).filter(n=>!_acN.has(n))];
+  const _dl=g('dl-svc-cust');
+  if(_dl) _dl.innerHTML=_allCu.map(n=>`<option value="${esc(n)}">`).join('');
   const name=(g('scCust')?.value||'').trim();
   const hint=g('svcCustHint');
-  const c=D.ac_customers.find(x=>x.name===name);
+  const c=D.ac_customers.find(x=>x.name.toLowerCase()===name.toLowerCase());
   if(c){
     if(c.phone) g('scPhone').value=c.phone;
     if(c.city)  g('scLocation').value=c.city;
     if(hint){
       const parts=[];
       if(c.phone) parts.push('<i class="fas fa-phone" style="color:var(--svc)"></i> '+esc(c.phone));
-      if(c.city) parts.push('<i class="fas fa-location-dot" style="color:var(--acc)"></i> '+esc(c.city));
+      if(c.city)  parts.push('<i class="fas fa-location-dot" style="color:var(--acc)"></i> '+esc(c.city));
       if(c.gstin) parts.push('GST: '+esc(c.gstin));
       if(parts.length){hint.innerHTML=parts.join(' &nbsp;·&nbsp; ');hint.style.cssText='display:block;font-size:.73em;color:var(--ink3);margin-top:3px;padding:3px 8px;background:#f0fdfa;border-radius:5px;border-left:3px solid var(--svc);';}
       else hint.style.display='none';
     }
-  } else {
-    if(hint) hint.style.display='none';
-  }
+  } else { if(hint) hint.style.display='none'; }
 }
 
 function addInvItem(data){
@@ -3796,6 +3839,67 @@ function exportAccExcel(){
 }
 
 // ════════════════════════════════════════════════════════════════
+// SERVICE: STOCK READ-ONLY VIEW
+// ════════════════════════════════════════════════════════════════
+function renderSvcStockView(){
+  const items=D.ac_stock||[];
+  // Populate category filter
+  const catSel=g('svcStockCat');
+  if(catSel&&catSel.options.length<=1){
+    [...new Set(items.map(i=>i.category).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
+  }
+  const search=(g('svcStockSearch')?.value||'').toLowerCase();
+  const cat=g('svcStockCat')?.value||'';
+  const st=g('svcStockStatus')?.value||'';
+  let filtered=items.filter(i=>{
+    if(search&&!i.name?.toLowerCase().includes(search)&&!i.category?.toLowerCase().includes(search)) return false;
+    if(cat&&i.category!==cat) return false;
+    if(st==='ok'&&!(i.qty>(i.reorder||0))) return false;
+    if(st==='low'&&!(i.qty>0&&i.qty<=(i.reorder||0))) return false;
+    if(st==='out'&&i.qty!==0) return false;
+    return true;
+  });
+  const total=items.length;
+  const inStock=items.filter(i=>i.qty>(i.reorder||0)).length;
+  const low=items.filter(i=>i.qty>0&&i.qty<=(i.reorder||0)).length;
+  const out=items.filter(i=>i.qty===0).length;
+  g('svcStockStats').innerHTML=`
+    <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Items</div><div class="stat-value">${total}</div></div>
+    <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">In Stock</div><div class="stat-value">${inStock}</div></div>
+    <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Low Stock</div><div class="stat-value">${low}</div></div>
+    <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Out of Stock</div><div class="stat-value">${out}</div></div>`;
+  if(!filtered.length){g('svcStockBody').innerHTML='<div class="empty"><i class="fas fa-boxes-stacked"></i><p>No stock items found.</p></div>';return;}
+  g('svcStockBody').innerHTML=`<div style="overflow-x:auto;"><table class="rpt-table">
+    <thead><tr><th>Item Name</th><th>Category</th><th>Unit</th><th>Current Stock</th><th>Reorder Level</th><th>Status</th><th>Last Movement</th></tr></thead>
+    <tbody>${filtered.map(i=>{
+      const isOut=i.qty===0;
+      const isLow=i.qty>0&&i.qty<=(i.reorder||0);
+      const stLabel=isOut?'<span style="background:#fee2e2;color:#991b1b;border-radius:7px;padding:2px 9px;font-size:.75em;font-weight:700;">Out of Stock</span>':isLow?'<span style="background:#fef9c3;color:#92400e;border-radius:7px;padding:2px 9px;font-size:.75em;font-weight:700;">⚠ Low Stock</span>':'<span style="background:#dcfce7;color:#166534;border-radius:7px;padding:2px 9px;font-size:.75em;font-weight:700;">✓ OK</span>';
+      return `<tr>
+        <td><strong>${esc(i.name)}</strong></td>
+        <td><span style="background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 8px;font-size:.75em;">${esc(i.category||'General')}</span></td>
+        <td style="font-size:.8em;color:var(--ink3);">${esc(i.unit||'Nos')}</td>
+        <td class="num" style="font-size:1em;font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${i.qty??0}</td>
+        <td class="num" style="font-size:.85em;color:var(--ink3);">${i.reorder||0}</td>
+        <td>${stLabel}</td>
+        <td style="font-size:.75em;color:var(--ink3);">${i.lastMovement||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function exportSvcStockView(){
+  const items=D.ac_stock||[];
+  const rows=items.map(i=>({
+    'Item Name':i.name,'Category':i.category||'General','Unit':i.unit||'Nos',
+    'Current Stock':i.qty??0,'Reorder Level':i.reorder||0,
+    'Status':i.qty===0?'Out of Stock':i.qty<=(i.reorder||0)?'Low Stock':'In Stock',
+    'Last Movement':i.lastMovement||''
+  }));
+  xlsxExport([{name:'Stock',rows}],'acenet_stock_view_'+today());
+}
+
+// ════════════════════════════════════════════════════════════════
 // SERVICE REPORTS
 // ════════════════════════════════════════════════════════════════
 let _svcRptTab = 'engineer';
@@ -4820,9 +4924,53 @@ function convClaimCard(c,showActions){
     </div>
     <div style="flex-shrink:0;text-align:right;">
       <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--svc);margin-bottom:6px;">${fmt(c.totalAmt)}</div>
-      ${showActions?`<div style="display:flex;gap:5px;"><button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button></div>`:''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button>
+        ${showActions?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
+      </div>
     </div>
   </div>`;
+}
+
+function viewConvClaimDetails(id){
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+  const callRows=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<tr><td><strong style="color:var(--svc);">${esc(sc.no)}</strong></td><td>${esc(sc.customer)}</td><td style="font-size:.8em;">${esc(sc.location||'')}</td><td>${esc(sc.issue||'')}</td></tr>`:''}).join('');
+  const stColor=c.status==='approved'?'var(--green)':c.status==='rejected'?'var(--red)':'var(--amber)';
+  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="convDetailModal" onclick="if(event.target.id==='convDetailModal')this.remove();">
+    <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="background:linear-gradient(135deg,#0e7490,#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
+        <div>
+          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(c.no)}</div>
+          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:3px 10px;font-size:.75em;font-weight:700;">${c.status.toUpperCase()}</span>
+          <button onclick="g('convDetailModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div style="padding:18px 20px;">
+        <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:12px;padding:14px;margin-bottom:14px;">
+          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;">Expense Breakdown</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+            <div><div style="font-size:.72em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.travelAmt)}</div></div>
+            <div><div style="font-size:.72em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:1.05em;">${fmt(c.foodAmt)}</div></div>
+            <div><div style="font-size:.72em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:1.05em;">${fmt(c.otherAmt)}</div></div>
+            <div style="margin-left:auto;border-left:2px solid #99f6e4;padding-left:14px;"><div style="font-size:.72em;color:var(--ink3);">TOTAL</div><div style="font-weight:900;color:#0e7490;font-size:1.3em;">${fmt(c.totalAmt)}</div></div>
+          </div>
+        </div>
+        ${callRows?`<div style="margin-bottom:14px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;">Linked Service Calls</div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.78em;"><thead><tr style="background:#f1f5f9;"><th style="padding:7px 10px;text-align:left;">Call ID</th><th style="padding:7px 10px;text-align:left;">Customer</th><th style="padding:7px 10px;text-align:left;">Location</th><th style="padding:7px 10px;text-align:left;">Issue</th></tr></thead><tbody>${callRows}</tbody></table></div></div>`:''}
+        ${c.remarks?`<div style="font-size:.8em;background:#fffbeb;border-radius:8px;padding:9px 12px;border-left:3px solid var(--amber);margin-bottom:12px;"><i class="fas fa-comment" style="color:var(--amber);margin-right:5px;"></i>${esc(c.remarks)}</div>`:''}
+        ${c.approvedBy?`<div style="font-size:.78em;color:var(--green);margin-bottom:8px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong></div>`:''}
+        ${c.rejectedReason?`<div style="font-size:.78em;color:var(--red);margin-bottom:8px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
+        ${c.status==='pending'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
+          <button class="btn btn-success btn-sm" onclick="g('convDetailModal').remove();approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="g('convDetailModal').remove();rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>
+        </div>`:''}
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
 }
 
 function approveConvClaim(id){
@@ -5899,6 +6047,7 @@ function switchRptTab(tabId,btn){
   if(tabId==='rpt-collection') renderRptCollection();
   if(tabId==='rpt-incentive') renderRptIncentive();
   if(tabId==='rpt-send-mkt') renderSentMktHistory();
+  if(tabId==='rpt-stock') renderStockReport();
   if(tabId==='rpt-financial') renderAccFinancialRpt();
 }
 
@@ -6052,7 +6201,44 @@ function exportIncentiveExcel(){
 // Alias — used by both management and accounts export buttons
 function exportIncReport(){ exportIncentiveExcel(); }
 
-// ── Send to Marketing ─────────────────────────────────────────────
+// ── Stock Report ───────────────────────────────────────────────
+function renderStockReport(){
+  const items=D.ac_stock||[];
+  const catSel=g('stockRptCat');
+  if(catSel&&catSel.options.length<=1){
+    [...new Set(items.map(i=>i.category).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
+  }
+  const search=(g('stockRptSearch')?.value||'').toLowerCase();
+  const cat=g('stockRptCat')?.value||'';
+  const st=g('stockRptSt')?.value||'';
+  let filtered=items.filter(i=>{
+    if(search&&!i.name?.toLowerCase().includes(search)&&!i.category?.toLowerCase().includes(search)) return false;
+    if(cat&&i.category!==cat) return false;
+    if(st==='ok'&&!(i.qty>(i.reorder||0))) return false;
+    if(st==='low'&&!(i.qty>0&&i.qty<=(i.reorder||0))) return false;
+    if(st==='out'&&i.qty!==0) return false;
+    return true;
+  });
+  const total=items.length,inStock=items.filter(i=>i.qty>(i.reorder||0)).length,low=items.filter(i=>i.qty>0&&i.qty<=(i.reorder||0)).length,out=items.filter(i=>i.qty===0).length;
+  g('stockRptStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Items</div><div class="stat-value">${total}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">In Stock</div><div class="stat-value">${inStock}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Low Stock</div><div class="stat-value">${low}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Out of Stock</div><div class="stat-value">${out}</div></div>`;
+  if(!filtered.length){g('stockRptTable').innerHTML='<div class="empty"><i class="fas fa-boxes-stacked"></i><p>No items</p></div>';return;}
+  g('stockRptTable').innerHTML=`<div style="overflow-x:auto;"><table class="rpt-table">
+    <thead><tr><th>#</th><th>Item Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Reorder</th><th>Status</th><th>Last Movement</th></tr></thead>
+    <tbody>${filtered.map((i,idx)=>{
+      const isOut=i.qty===0,isLow=i.qty>0&&i.qty<=(i.reorder||0);
+      const badge=isOut?'<span style="background:#fee2e2;color:#991b1b;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">Out of Stock</span>':isLow?'<span style="background:#fef9c3;color:#92400e;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">⚠ Low</span>':'<span style="background:#dcfce7;color:#166534;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">✓ OK</span>';
+      return `<tr><td style="color:var(--ink4);font-size:.75em;">${idx+1}</td><td><strong>${esc(i.name)}</strong></td><td><span style="background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 7px;font-size:.73em;">${esc(i.category||'General')}</span></td><td style="font-size:.8em;">${esc(i.unit||'Nos')}</td><td class="num" style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${i.qty??0}</td><td class="num" style="font-size:.85em;color:var(--ink3);">${i.reorder||0}</td><td>${badge}</td><td style="font-size:.75em;color:var(--ink3);">${i.lastMovement||'—'}</td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+function exportStockReportExcel(){
+  const items=D.ac_stock||[];
+  const rows=items.map(i=>({'Item':i.name,'Category':i.category||'General','Unit':i.unit||'Nos','Stock':i.qty??0,'Reorder Level':i.reorder||0,'Status':i.qty===0?'Out of Stock':i.qty<=(i.reorder||0)?'Low Stock':'In Stock','Last Movement':i.lastMovement||''}));
+  const txns=(D.ac_stock_txns||[]).map(t=>({'Date':t.date,'Item':t.item,'Type':t.type,'Qty':t.qty,'Notes':t.notes||'','By':t.by||''}));
+  xlsxExport([{name:'Stock',rows},{name:'Transactions',rows:txns}],'acenet_stock_report_'+today());
+}
+
+// ── Send to Service Engineer ─────────────────────────────────────────────
 function generateMktReport(){
   const from=g('smktFrom')?.value,to=g('smktTo')?.value||today();
   const inclCol=g('smktInclCol')?.checked,inclOut=g('smktInclOut')?.checked,inclOD=g('smktInclOD')?.checked;
