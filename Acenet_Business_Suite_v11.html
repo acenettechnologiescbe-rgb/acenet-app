@@ -6188,6 +6188,7 @@ function setCallType(type){
     b.classList.toggle('active', b.dataset.type===type);
   });
 }
+function toggleScConv(){
   const panel=g('scConvPanel'),chev=g('scConvChevron');
   if(!panel)return;
   const open=panel.style.display==='block';
