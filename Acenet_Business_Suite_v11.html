@@ -461,6 +461,16 @@ tbody tr:last-child td{border-bottom:none;}
 .filt-row .filt-date-grp input[type=date]{border:none;box-shadow:none;padding:3px 4px;width:120px;height:26px;border-radius:0;}
 .filt-row .filt-date-grp input[type=date]:focus{outline:none;}
 
+/* ── CALL TYPE TOGGLE ── */
+.call-type-btn{display:inline-flex;align-items:center;gap:7px;padding:7px 18px;border-radius:25px;border:2px solid var(--line);background:#fff;font-size:.8em;font-weight:700;font-family:'Inter',sans-serif;color:var(--ink3);cursor:pointer;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.07);}
+.call-type-btn:hover{border-color:var(--svc);color:var(--svc);background:#f0fdfa;}
+.call-type-btn.active[data-type="AMC"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
+.call-type-btn.active[data-type="ASC"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
+.call-type-btn.active[data-type="Per Call"]{background:linear-gradient(135deg,#d97706,#f59e0b);border-color:#d97706;color:#fff;box-shadow:0 3px 10px rgba(217,119,6,.3);}
+.call-type-badge-amc{background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
+.call-type-badge-asc{background:#ede9fe;color:#7c3aed;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
+.call-type-badge-per{background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:800px){.main{padding:13px;}.topbar,.navbar{padding-left:12px;padding-right:12px;}.g2,.g3{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}.mgmt-hero{grid-template-columns:1fr;}}
 @media(max-width:470px){.stats{grid-template-columns:1fr;}}
@@ -1040,10 +1050,20 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="sora" style="font-weight:700;color:var(--svc);font-size:.93em;"><i class="fas fa-plus-circle" style="margin-right:7px;"></i><span id="svcCallFormTitle">New Service Call</span></div>
     <button class="btn btn-ghost btn-sm" onclick="hideSvcCallForm()"><i class="fas fa-times"></i></button>
   </div>
+  <!-- ── Call Type ── -->
+  <div style="margin-bottom:14px;">
+    <div style="font-size:.7em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink4);margin-bottom:7px;">Call Type</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="call-type-btn active" id="ct-amc" onclick="setCallType('AMC')" data-type="AMC"><i class="fas fa-shield-halved"></i> AMC Call</button>
+      <button type="button" class="call-type-btn" id="ct-asc" onclick="setCallType('ASC')" data-type="ASC"><i class="fas fa-screwdriver-wrench"></i> ASC Call</button>
+      <button type="button" class="call-type-btn" id="ct-per" onclick="setCallType('Per Call')" data-type="Per Call"><i class="fas fa-receipt"></i> Per Call</button>
+    </div>
+    <input type="hidden" id="scCallType" value="AMC">
+  </div>
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Call ID</label><input type="text" id="scNo" readonly style="background:var(--bg);"></div>
     <div class="fg"><label>Date &amp; Time</label><input type="datetime-local" id="scDate"></div>
-    <div class="fg"><label>Customer / Company</label><div class="combo"><input type="text" id="scCust" list="dl-svc-cust" placeholder="Customer name…" autocomplete="off" oninput="autoFillSvcCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-cust"></datalist></div><div class="hint" id="svcCustHint" style="display:none;"></div></div>
+    <div class="fg"><label>Customer / Company</label><div class="combo"><input type="text" id="scCust" list="dl-svc-cust" placeholder="Customer name…" autocomplete="off" oninput="autoFillSvcCust()" onchange="autoFillSvcCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-cust"></datalist></div><div class="hint" id="svcCustHint" style="display:none;"></div></div>
   </div>
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Contact Person</label><input type="text" id="scContact" placeholder="Name of contact"></div>
@@ -2668,18 +2688,15 @@ function autoFillSvcCust(){
   const hint=g('svcCustHint');
   const c=D.ac_customers.find(x=>x.name===name);
   if(c){
-    // Auto-fill phone if blank
-    if(c.phone&&!g('scPhone')?.value) g('scPhone').value=c.phone;
-    // Auto-fill location/city if blank
-    if(c.city&&!g('scLocation')?.value) g('scLocation').value=c.city;
+    if(c.phone) g('scPhone').value=c.phone;
+    if(c.city)  g('scLocation').value=c.city;
     if(hint){
       const parts=[];
       if(c.phone) parts.push('<i class="fas fa-phone" style="color:var(--svc)"></i> '+esc(c.phone));
       if(c.city) parts.push('<i class="fas fa-location-dot" style="color:var(--acc)"></i> '+esc(c.city));
       if(c.gstin) parts.push('GST: '+esc(c.gstin));
-      hint.innerHTML=parts.length?parts.join(' &nbsp;·&nbsp; '):'';
-      hint.style.display=parts.length?'block':'none';
-      hint.style.cssText='display:block;font-size:.73em;color:var(--ink3);margin-top:3px;padding:3px 6px;background:var(--acc-l);border-radius:5px;';
+      if(parts.length){hint.innerHTML=parts.join(' &nbsp;·&nbsp; ');hint.style.cssText='display:block;font-size:.73em;color:var(--ink3);margin-top:3px;padding:3px 8px;background:#f0fdfa;border-radius:5px;border-left:3px solid var(--svc);';}
+      else hint.style.display='none';
     }
   } else {
     if(hint) hint.style.display='none';
@@ -3837,7 +3854,14 @@ function openReminder(name,phone,amt){
 // ════════════════════════════════════════════════════════════════
 function genSvcNo(){const n=D.svc_calls.length+1;return 'SVC-'+String(n).padStart(4,'0');}
 
+function setCallType(type){
+  g('scCallType').value=type;
+  document.querySelectorAll('.call-type-btn').forEach(b=>{b.classList.toggle('active',b.dataset.type===type);});
+}
 function showSvcCallForm(call){
+  const _acN=new Set(D.ac_customers.map(c=>c.name));
+  const _allCu=[...D.ac_customers.map(c=>c.name),...(D.pl_customers||[]).filter(n=>!_acN.has(n))];
+  const _dl=g('dl-svc-cust');if(_dl)_dl.innerHTML=_allCu.map(n=>`<option value="${esc(n)}">`).join('');
   g('svcCallForm').style.display='block';
   g('svcCallForm').scrollIntoView({behavior:'smooth'});
   // Populate engineer dropdown from service-role users
@@ -3848,6 +3872,7 @@ function showSvcCallForm(call){
     const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
     g('scDate').value=now.toISOString().slice(0,16);
     g('scCust').value='';g('scContact').value='';g('scPhone').value='';g('scLocation').value='';
+    setCallType('AMC');
     g('scIssue').value='';g('scProduct').value='';g('scPriority').value='normal';
     // Pre-select current engineer if they are service role
     g('scEngineer').value=D.currentUser?.role==='service'?D.currentUser.name:'';
@@ -3863,6 +3888,7 @@ function showSvcCallForm(call){
   } else {
     g('scNo').value=call.no;g('scDate').value=call.datetime;g('scCust').value=call.customer;
     g('scContact').value=call.contact||'';g('scPhone').value=call.phone||'';g('scLocation').value=call.location||'';
+    setCallType(call.callType||'AMC');
     g('scIssue').value=call.issue||'';g('scProduct').value=call.product||'';g('scPriority').value=call.priority||'normal';
     g('scEngineer').value=call.engineer||'';g('scStatus').value=call.status;g('scETA').value=call.eta||'';g('scResolution').value=call.resolution||'';
     g('scEditId').value=call.id;g('svcCallFormTitle').textContent='Edit — '+call.no;
@@ -3893,7 +3919,7 @@ function saveSvcCall(){
   const obj={
     id:g('scEditId').value||uid(),no,datetime:dt,customer:cust,
     contact:g('scContact').value.trim(),phone:g('scPhone').value.trim(),
-    location:g('scLocation').value.trim(),issue,
+    location:g('scLocation').value.trim(),issue,callType:g('scCallType').value||'AMC',
     product:g('scProduct').value.trim(),priority:g('scPriority').value,
     engineer:g('scEngineer').value,status:g('scStatus').value,
     eta:g('scETA').value,resolution:g('scResolution').value.trim(),
@@ -3933,7 +3959,7 @@ function renderSvcCalls(){
     <div class="svc-call-card ${c.status}">
       <div class="svc-call-hdr">
         <div>
-          <div style="display:flex;align-items:center;gap:8px;"><span class="svc-call-no">${esc(c.no)}</span>${svcPriorityBadge(c.priority)}<span class="badge" style="background:${svcStatusColor(c.status)}22;color:${svcStatusColor(c.status)};border:1px solid ${svcStatusColor(c.status)}44;">● ${c.status.replace('-',' ')}</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span class="svc-call-no">${esc(c.no)}</span>${svcPriorityBadge(c.priority)}<span class="badge" style="background:${svcStatusColor(c.status)}22;color:${svcStatusColor(c.status)};border:1px solid ${svcStatusColor(c.status)}44;">● ${c.status.replace('-',' ')}</span>${c.callType?`<span class="call-type-badge-${c.callType==='AMC'?'amc':c.callType==='ASC'?'asc':'per'}">${esc(c.callType)}</span>`:''}</div>
           <div class="svc-call-meta"><span><i class="fas fa-building"></i> ${esc(c.customer)}</span>${c.engineer?`<span><i class="fas fa-user-helmet-safety"></i> ${esc(c.engineer)}</span>`:''}<span><i class="fas fa-calendar"></i> ${c.date}</span>${c.eta?`<span><i class="fas fa-clock"></i> ETA: ${c.eta}</span>`:''}</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;">
@@ -4135,6 +4161,43 @@ function saveConvDraft(){
   },300);
 }
 
+function viewConvDraft(id){
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  const refs=c.callRefs||c.callRef||'—';
+  const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+  const callDetails=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<div style="font-size:.78em;padding:5px 9px;background:#f8fafc;border-radius:6px;border-left:3px solid var(--svc);"><strong>${esc(sc.no)}</strong> — ${esc(sc.customer)} — ${esc(sc.issue||'')} <span style="color:var(--ink3);">(${sc.date})</span></div>`:''}).join('');
+  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="draftViewModal" onclick="if(event.target.id==='draftViewModal')this.remove();">
+    <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
+      <div style="background:linear-gradient(135deg,var(--svc),#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div><div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(c.no)}</div><div style="color:rgba(255,255,255,.75);font-size:.75em;margin-top:2px;">Draft Conveyance Claim</div></div>
+        <button onclick="g('draftViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.85em;"><i class="fas fa-times"></i></button>
+      </div>
+      <div style="padding:18px 20px;">
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Date</div><div style="font-weight:700;font-size:.85em;">${c.date}</div></div>
+          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Engineer</div><div style="font-weight:700;font-size:.85em;">${esc(c.engineer)}</div></div>
+          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Calls</div><div style="font-weight:700;font-size:.85em;">${esc(refs)}</div></div>
+        </div>
+        ${callDetails?`<div style="margin-bottom:12px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:5px;">Call Details</div><div style="display:flex;flex-direction:column;gap:4px;">${callDetails}</div></div>`:''}
+        <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
+          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;">Expense Breakdown</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div><div style="font-size:.72em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:.95em;">${fmt(c.travelAmt)}</div></div>
+            <div><div style="font-size:.72em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:.95em;">${fmt(c.foodAmt)}</div></div>
+            <div><div style="font-size:.72em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:.95em;">${fmt(c.otherAmt)}</div></div>
+            <div style="margin-left:auto;"><div style="font-size:.72em;color:var(--ink3);">Total</div><div style="font-weight:800;color:#0e7490;font-size:1.1em;">${fmt(c.totalAmt)}</div></div>
+          </div>
+        </div>
+        ${c.remarks?`<div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">${esc(c.remarks)}</div>`:''}
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-outline btn-sm" onclick="g('draftViewModal').remove();editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn btn-sm" style="background:var(--svc);color:#fff;font-weight:700;" onclick="g('draftViewModal').remove();submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit to Accounts</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+}
 function editConvDraft(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   showConvForm();
@@ -4294,6 +4357,7 @@ function renderConveyance(){
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0e7490;font-size:1.05em;margin-bottom:8px;">${fmt(c.totalAmt)}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+          <button class="btn btn-outline btn-sm" onclick="viewConvDraft('${c.id}')"><i class="fas fa-eye"></i> View</button>
           <button class="btn btn-outline btn-sm" onclick="editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
           <button class="btn btn-sm" style="background:var(--svc);color:#fff;font-weight:700;" onclick="submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit to Accounts</button>
           <button class="btn btn-danger btn-sm" onclick="delConvDraft('${c.id}')" title="Delete draft"><i class="fas fa-trash"></i></button>
