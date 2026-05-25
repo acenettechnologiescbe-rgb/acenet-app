@@ -467,6 +467,7 @@ tbody tr:last-child td{border-bottom:none;}
 .call-type-btn.active[data-type="AMC"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
 .call-type-btn.active[data-type="ASC"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
 .call-type-btn.active[data-type="Per Call"]{background:linear-gradient(135deg,#d97706,#f59e0b);border-color:#d97706;color:#fff;box-shadow:0 3px 10px rgba(217,119,6,.3);}
+.call-type-btn.active[data-type="Stock"]{background:linear-gradient(135deg,#059669,#10b981);border-color:#059669;color:#fff;box-shadow:0 3px 10px rgba(5,150,105,.3);}
 .call-type-badge-amc{background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
 .call-type-badge-asc{background:#ede9fe;color:#7c3aed;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
 .call-type-badge-per{background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
@@ -1364,6 +1365,7 @@ tbody tr:last-child td{border-bottom:none;}
         <button type="button" class="call-type-btn active" id="ord-ct-amc" onclick="setOrdCallType('AMC')" data-type="AMC"><i class="fas fa-shield-halved"></i> AMC</button>
         <button type="button" class="call-type-btn" id="ord-ct-asc" onclick="setOrdCallType('ASC')" data-type="ASC"><i class="fas fa-screwdriver-wrench"></i> ASC</button>
         <button type="button" class="call-type-btn" id="ord-ct-per" onclick="setOrdCallType('Per Call')" data-type="Per Call"><i class="fas fa-receipt"></i> Per Call</button>
+        <button type="button" class="call-type-btn" id="ord-ct-stock" onclick="setOrdCallType('Stock')" data-type="Stock"><i class="fas fa-boxes-stacked"></i> Stock</button>
       </div>
       <input type="hidden" id="svOrdCallType" value="AMC">
     </div>
@@ -1412,6 +1414,13 @@ tbody tr:last-child td{border-bottom:none;}
         </label>
       </div>
     </div>
+    <!-- Stock Direct Issue Panel (shown only when type=Stock) -->
+    <div id="svOrdStockPanel" style="display:none;background:linear-gradient(135deg,#f0fdf4,#fff);border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:13px;">
+      <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#059669;margin-bottom:8px;"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Stock Items — Direct Issue to Customer</div>
+      <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Stock Item</th><th>Available</th><th>Issue Qty</th><th>Notes</th><th></th></tr></thead><tbody id="svOrdStockItemsBody"></tbody></table></div>
+      <button class="btn btn-outline btn-sm" onclick="addSvOrdStockItem()" style="margin-top:8px;"><i class="fas fa-plus" style="color:var(--green)"></i> Add Stock Item</button>
+    </div>
+    <div id="svOrdRegularPanel">
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
     <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addSvOrdItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--orange)"></i> Add Item</button>
@@ -1419,8 +1428,10 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="tb-item" id="svOrdGSTRow" style="display:none;"><div class="tbl">GST @18%</div><div class="tbv" id="svOrdGSTAmt">₹0</div></div>
       <div class="tb-item"><div class="tbl">Estimated Total</div><div class="tbv big" id="svOrdTotal">₹0</div></div>
     </div>
+    </div>
     <div class="btn-row" style="margin-top:4px;">
-      <button class="btn btn-orange" onclick="sendSvcOrderToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
+      <button class="btn btn-orange" id="svOrdSendBtn" onclick="sendSvcOrderToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
+      <button class="btn" id="svOrdIssueStockBtn" style="display:none;background:var(--green);color:#fff;" onclick="issueStockFromOrder()"><i class="fas fa-boxes-stacked"></i> Issue Stock to Customer</button>
       <button class="btn btn-outline" onclick="hideSvcOrderForm()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
@@ -1470,11 +1481,11 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ SERVICE: STOCK (Full Entry) ════ -->
 <div class="page" id="page-svc-stock">
   <div class="ph">
-    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Track stock levels · inward &amp; outward entries</p></div>
+    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Issue materials to customers · outward entries &amp; export by customer</p></div>
     <div class="btn-row">
-      <button class="btn btn-outline btn-sm" onclick="showStockInForm()"><i class="fas fa-arrow-down" style="color:var(--green);"></i> Stock In</button>
       <button class="btn btn-outline btn-sm" onclick="showStockOutForm()"><i class="fas fa-arrow-up" style="color:var(--red);"></i> Stock Out</button>
       <button class="btn btn-outline btn-sm" onclick="exportSvcStockView()"><i class="fas fa-file-excel"></i> Export</button>
+      <button class="btn btn-outline btn-sm" onclick="exportSvcStockByCustomer()"><i class="fas fa-file-excel" style="color:var(--svc);"></i> Export by Customer</button>
     </div>
   </div>
   <div class="stats" id="svcStockStats"></div>
@@ -3926,8 +3937,7 @@ function renderSvcStockView(){
         <td>${stLabel}</td>
         <td style="font-size:.75em;color:var(--ink3);">${i.lastMovement||'—'}</td>
         <td><div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockIn('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-down"></i> In</button>
-          <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Out</button>
+          <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Issue Out</button>
         </div></td>
       </tr>`;
     }).join('')}</tbody>
@@ -3992,6 +4002,107 @@ function exportSvcStockView(){
     'Last Movement':i.lastMovement||''
   }));
   xlsxExport([{name:'Stock',rows}],'acenet_stock_view_'+today());
+}
+
+function exportSvcStockByCustomer(){
+  const txns=(D.ac_stock_txns||[]).filter(t=>t.type==='out');
+  if(!txns.length){alert('No outward transactions found.');return;}
+  // Group by customer (from notes or by field)
+  const custMap={};
+  txns.forEach(t=>{
+    const cust=t.customer||t.by||'Unknown';
+    if(!custMap[cust])custMap[cust]=[];
+    custMap[cust].push({'Date':t.date,'Item':t.item,'Qty Issued':t.qty,'Notes':t.notes||'','Issued By':t.by||''});
+  });
+  const sheets=Object.entries(custMap).map(([name,rows])=>({name:name.substring(0,31),rows}));
+  const summaryRows=Object.entries(custMap).map(([cust,txns])=>({'Customer':cust,'Total Transactions':txns.length,'Total Qty Issued':txns.reduce((s,t)=>s+(t['Qty Issued']||0),0)}));
+  xlsxExport([{name:'Summary by Customer',rows:summaryRows},...sheets],'acenet_stock_by_customer_'+today());
+}
+
+function toggleAllCustRptRows(checked){
+  document.querySelectorAll('.cust-rpt-chk').forEach(cb=>cb.checked=checked);
+  const hdr=g('custRptHdrChk');if(hdr)hdr.checked=checked;
+  const all=g('custRptSelectAll');if(all)all.checked=checked;
+}
+
+function exportSelectedCustomers(){
+  const selected=[...document.querySelectorAll('.cust-rpt-chk:checked')].map(cb=>cb.dataset.customer);
+  if(!selected.length){alert('Please select at least one customer using the checkboxes.');return;}
+  const calls=getSvcRptCalls().filter(c=>selected.includes(c.customer));
+  if(!calls.length){alert('No call data found for selected customers.');return;}
+  const custMap={};
+  calls.forEach(c=>{
+    const cu=c.customer||'Unknown';
+    if(!custMap[cu])custMap[cu]={Customer:cu,Total:0,Completed:0,Pending:0,'In Progress':0,Escalated:0,'AMC Calls':0,'ASC Calls':0,'Per Calls':0,Products:new Set()};
+    custMap[cu].Total++;
+    if(c.status==='completed')custMap[cu].Completed++;
+    if(c.status==='pending')custMap[cu].Pending++;
+    if(c.status==='in-progress')custMap[cu]['In Progress']++;
+    if(c.status==='escalated')custMap[cu].Escalated++;
+    if((c.callType||'AMC')==='AMC')custMap[cu]['AMC Calls']++;
+    else if(c.callType==='ASC')custMap[cu]['ASC Calls']++;
+    else custMap[cu]['Per Calls']++;
+    if(c.product)custMap[cu].Products.add(c.product);
+  });
+  const summaryRows=Object.values(custMap).sort((a,b)=>b.Total-a.Total).map(r=>({...r,Products:[...r.Products].join(', ')||'—','Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'}));
+  const detailRows=calls.map(c=>({'Customer':c.customer||'Unknown','Call ID':c.no,'Date':c.date||'','Engineer':c.engineer||'','Call Type':c.callType||'AMC','Product':c.product||'','Priority':c.priority||'','Status':c.status,'Issue':c.issue||'','Resolution':c.resolution||''}));
+  xlsxExport([{name:'Selected Customers',rows:summaryRows},{name:'Call Details',rows:detailRows}],'acenet_selected_customers_'+today());
+}
+
+let _svOrdStockRC=0;
+function addSvOrdStockItem(){
+  const items=D.ac_stock||[];
+  if(!items.length){alert('No stock items available. Please add items from Accounts > Stock.');return;}
+  const r=++_svOrdStockRC;
+  const opts=items.map(i=>`<option value="${i.id}" data-name="${esc(i.name)}" data-qty="${i.qty??0}" data-unit="${esc(i.unit||'Nos')}">${esc(i.name)} (Avail: ${i.qty??0} ${i.unit||'Nos'})</option>`).join('');
+  const row=document.createElement('tr');row.id=`svOrdStockRow${r}`;
+  row.innerHTML=`<td style="font-size:.8em;color:var(--ink4);">${r}</td>
+    <td><select id="svOrdStockItem${r}" style="width:200px;font-size:.82em;" onchange="updateSvOrdStockAvail(${r})"><option value="">-- Select Item --</option>${opts}</select></td>
+    <td id="svOrdStockAvail${r}" style="font-size:.8em;color:var(--green);font-weight:700;">—</td>
+    <td><input type="number" id="svOrdStockQty${r}" style="width:70px;" placeholder="0" min="1" step="1"></td>
+    <td><input type="text" id="svOrdStockNote${r}" placeholder="Purpose / notes" style="width:140px;font-size:.82em;"></td>
+    <td><button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="g('svOrdStockRow${r}').remove()"><i class="fas fa-trash"></i></button></td>`;
+  g('svOrdStockItemsBody').appendChild(row);
+}
+
+function updateSvOrdStockAvail(r){
+  const sel=g(`svOrdStockItem${r}`);if(!sel)return;
+  const opt=sel.selectedOptions[0];
+  const avail=opt?opt.dataset.qty:'—';
+  const avEl=g(`svOrdStockAvail${r}`);
+  if(avEl){avEl.textContent=avail+' '+(opt?.dataset.unit||'');avEl.style.color=parseInt(avail)>0?'var(--green)':'var(--red)';}
+}
+
+function issueStockFromOrder(){
+  const cust=g('svOrdCust')?.value?.trim();
+  if(!cust){alert('Please select a customer before issuing stock.');return;}
+  const rows=[...g('svOrdStockItemsBody').querySelectorAll('tr')];
+  if(!rows.length){alert('Please add at least one stock item to issue.');return;}
+  let issues=[];let errors=[];
+  rows.forEach(row=>{
+    const r=row.id.replace('svOrdStockRow','');
+    const sel=g(`svOrdStockItem${r}`);
+    const qtyEl=g(`svOrdStockQty${r}`);
+    const noteEl=g(`svOrdStockNote${r}`);
+    if(!sel||!sel.value)return;
+    const qty=parseInt(qtyEl?.value)||0;
+    if(qty<=0){errors.push('Invalid qty for '+sel.selectedOptions[0]?.text);return;}
+    const item=D.ac_stock.find(i=>i.id===sel.value);
+    if(!item){errors.push('Item not found');return;}
+    if(qty>item.qty){errors.push(`Only ${item.qty} available for ${item.name}`);return;}
+    issues.push({item,qty,notes:noteEl?.value||''});
+  });
+  if(errors.length){alert('Errors:\n'+errors.join('\n'));return;}
+  if(!issues.length){alert('No valid items to issue.');return;}
+  if(!confirm(`Issue ${issues.length} item(s) to ${cust}?\n\n`+issues.map(x=>`• ${x.item.name}: ${x.qty} ${x.item.unit||'Nos'}`).join('\n'))){return;}
+  if(!D.ac_stock_txns)D.ac_stock_txns=[];
+  issues.forEach(({item,qty,notes})=>{
+    item.qty=(item.qty||0)-qty;
+    item.lastMovement=today();
+    D.ac_stock_txns.push({id:uid(),date:today(),item:item.name,itemId:item.id,type:'out',qty,notes,customer:cust,by:D.currentUser?.name||'Service'});
+  });
+  saveData();hideSvcOrderForm();renderSvcStockView();
+  showSuccessToast(`✓ Stock issued to ${cust} — ${issues.length} item(s)`,'var(--green)');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -4159,12 +4270,17 @@ function renderRptByCustomer(calls){
   const rows=Object.values(map).sort((a,b)=>b.total-a.total);
   if(!rows.length){g('svcRptBody').innerHTML='<div class="empty"><i class="fas fa-building"></i><p>No data</p></div>';return;}
   g('svcRptBody').innerHTML=`
-    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-      <button class="btn btn-outline btn-sm" onclick="exportCustomerWiseReport()"><i class="fas fa-file-excel"></i> Export Customer-wise</button>
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <label style="font-size:.8em;font-weight:600;color:var(--ink3);display:flex;align-items:center;gap:5px;cursor:pointer;">
+        <input type="checkbox" id="custRptSelectAll" onchange="toggleAllCustRptRows(this.checked)" style="width:14px;height:14px;accent-color:var(--svc);"> Select All
+      </label>
+      <button class="btn btn-outline btn-sm" onclick="exportSelectedCustomers()"><i class="fas fa-file-excel"></i> Export Selected</button>
+      <button class="btn btn-outline btn-sm" onclick="exportCustomerWiseReport()"><i class="fas fa-file-excel"></i> Export All</button>
     </div>
     <div style="overflow-x:auto;"><table class="rpt-table">
-    <thead><tr><th>#</th><th>Customer</th><th>Total Calls</th><th>Completed</th><th>Pending</th><th>Escalated</th><th>Done %</th><th>Products</th></tr></thead>
+    <thead><tr><th style="width:36px;"><input type="checkbox" id="custRptHdrChk" onchange="toggleAllCustRptRows(this.checked)" style="cursor:pointer;accent-color:var(--svc);"></th><th>#</th><th>Customer</th><th>Total Calls</th><th>Completed</th><th>Pending</th><th>Escalated</th><th>Done %</th><th>Products</th></tr></thead>
     <tbody>${rows.map((r,i)=>`<tr>
+      <td><input type="checkbox" class="cust-rpt-chk" data-customer="${esc(r.name)}" style="width:14px;height:14px;accent-color:var(--svc);cursor:pointer;"></td>
       <td style="color:var(--ink4);font-size:.75em;">${i+1}</td>
       <td><strong>${esc(r.name)}</strong></td>
       <td class="num">${r.total}</td>
@@ -4746,7 +4862,7 @@ function viewConvDraft(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   const refs=c.callRefs||c.callRef||'—';
   const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
-  const callDetails=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<div style="font-size:.78em;padding:5px 9px;background:#f8fafc;border-radius:6px;border-left:3px solid var(--svc);"><strong>${esc(sc.no)}</strong> — ${esc(sc.customer)} — ${esc(sc.issue||'')} <span style="color:var(--ink3);">(${sc.date})</span></div>`:''}).join('');
+  const callDetails=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<div style="font-size:.78em;padding:7px 10px;background:#f8fafc;border-radius:8px;border-left:3px solid var(--svc);display:flex;flex-direction:column;gap:2px;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong style="color:var(--svc);">${esc(sc.no)}</strong><span style="font-size:.85em;font-weight:700;color:var(--ink);">${esc(sc.customer)}</span>${sc.callType?`<span style="background:#e0f2fe;color:#0369a1;border-radius:5px;padding:1px 6px;font-size:.82em;font-weight:700;">${esc(sc.callType)}</span>`:''}</div><div style="color:var(--ink2);margin-top:1px;">${esc(sc.issue||'—')}</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;"><span style="color:var(--ink4);font-size:.88em;">${sc.date}</span>${sc.location?`<span style="color:var(--ink4);font-size:.88em;"><i class="fas fa-location-dot" style="margin-right:3px;"></i>${esc(sc.location)}</span>`:''}</div></div>`:''}).join('');
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="draftViewModal" onclick="if(event.target.id==='draftViewModal')this.remove();">
     <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
       <div style="background:linear-gradient(135deg,var(--svc),#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
@@ -4759,7 +4875,7 @@ function viewConvDraft(id){
           <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Engineer</div><div style="font-weight:700;font-size:.85em;">${esc(c.engineer)}</div></div>
           <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Calls</div><div style="font-weight:700;font-size:.85em;">${esc(refs)}</div></div>
         </div>
-        ${callDetails?`<div style="margin-bottom:12px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:5px;">Call Details</div><div style="display:flex;flex-direction:column;gap:4px;">${callDetails}</div></div>`:''}
+        ${callDetails?`<div style="margin-bottom:12px;"><div style="font-size:.7em;font-weight:800;text-transform:uppercase;color:var(--svc);margin-bottom:6px;letter-spacing:.5px;"><i class="fas fa-list-check" style="margin-right:5px;"></i>Call Details</div><div style="display:flex;flex-direction:column;gap:5px;">${callDetails}</div></div>`:''}
         <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
           <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;">Expense Breakdown</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -4770,6 +4886,7 @@ function viewConvDraft(id){
           </div>
         </div>
         ${c.remarks?`<div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">${esc(c.remarks)}</div>`:''}
+        <div style="font-size:.72em;color:var(--ink4);margin-bottom:12px;padding:7px 10px;background:#f8fafc;border-radius:7px;border:1px solid var(--line);">Generated from: ${esc(refs)}</div>
         <div style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="btn btn-outline btn-sm" onclick="g('draftViewModal').remove();editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
           <button class="btn btn-sm" style="background:var(--svc);color:#fff;font-weight:700;" onclick="g('draftViewModal').remove();submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit to Accounts</button>
@@ -5141,6 +5258,11 @@ function genSvOrdNo(){return 'SORD-'+new Date().getFullYear()+'-'+String((D.orde
 function setOrdCallType(type){
   if(g('svOrdCallType')) g('svOrdCallType').value=type;
   document.querySelectorAll('#svcOrderForm .call-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
+  const isStock=type==='Stock';
+  if(g('svOrdStockPanel')) g('svOrdStockPanel').style.display=isStock?'block':'none';
+  if(g('svOrdRegularPanel')) g('svOrdRegularPanel').style.display=isStock?'none':'block';
+  if(g('svOrdSendBtn')) g('svOrdSendBtn').style.display=isStock?'none':'inline-flex';
+  if(g('svOrdIssueStockBtn')) g('svOrdIssueStockBtn').style.display=isStock?'inline-flex':'none';
 }
 function showSvcOrderForm(){
   g('svcOrderForm').style.display='block';
@@ -5154,6 +5276,8 @@ function showSvcOrderForm(){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=false;
+  if(g('svOrdStockItemsBody'))g('svOrdStockItemsBody').innerHTML='';
+  _svOrdStockRC=0;
   setOrdCallType('AMC');
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
   addSvOrdItem();
