@@ -1481,13 +1481,53 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ SERVICE: STOCK (Full Entry) ════ -->
 <div class="page" id="page-svc-stock">
   <div class="ph">
-    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Issue materials to customers · outward entries &amp; export by customer</p></div>
+    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Raise stock issue requests → Accounts approves → Do outward entry</p></div>
     <div class="btn-row">
-      <button class="btn btn-outline btn-sm" onclick="showStockOutForm()"><i class="fas fa-arrow-up" style="color:var(--red);"></i> Stock Out</button>
+      <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="showSvcStockReqForm()"><i class="fas fa-plus"></i> New Stock Request</button>
       <button class="btn btn-outline btn-sm" onclick="exportSvcStockView()"><i class="fas fa-file-excel"></i> Export</button>
       <button class="btn btn-outline btn-sm" onclick="exportSvcStockByCustomer()"><i class="fas fa-file-excel" style="color:var(--svc);"></i> Export by Customer</button>
     </div>
   </div>
+
+  <!-- ── NEW STOCK REQUEST FORM ── -->
+  <div class="form-panel" id="svcStockReqForm" style="display:none;background:linear-gradient(135deg,#f0fdf4,#fff);border:2px solid #86efac;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div class="sora" style="font-weight:700;color:var(--green);font-size:.93em;"><i class="fas fa-boxes-stacked" style="margin-right:7px;"></i>New Stock Issue Request</div>
+      <button class="btn btn-ghost btn-sm" onclick="hideSvcStockReqForm()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="g3" style="margin-bottom:11px;">
+      <div class="fg"><label>Request No</label><input type="text" id="sreqNo" readonly style="background:var(--bg);"></div>
+      <div class="fg"><label>Date *</label><input type="date" id="sreqDate"></div>
+      <div class="fg"><label>Customer *</label>
+        <div class="combo"><input type="text" id="sreqCust" list="dl-svc-cust" placeholder="Customer…" autocomplete="off"><i class="fas fa-chevron-down carr"></i></div>
+      </div>
+    </div>
+    <div class="g2" style="margin-bottom:11px;">
+      <div class="fg"><label>Service Call Ref</label><input type="text" id="sreqCallRef" placeholder="SVC-XXXX (optional)"></div>
+      <div class="fg"><label>Purpose / Notes</label><input type="text" id="sreqNotes" placeholder="Reason for issue…"></div>
+    </div>
+    <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Items to Issue</div>
+    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Stock Item</th><th>Available</th><th>Issue Qty</th><th>Notes</th><th></th></tr></thead><tbody id="sreqItemsBody"></tbody></table></div>
+    <button class="btn btn-outline btn-sm" onclick="addSreqItem()" style="margin-top:7px;margin-bottom:13px;"><i class="fas fa-plus" style="color:var(--green)"></i> Add Item</button>
+    <input type="hidden" id="sreqEditId">
+    <div class="btn-row">
+      <button class="btn" style="background:var(--green);color:#fff;" onclick="submitSvcStockRequest()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
+      <button class="btn btn-outline" onclick="hideSvcStockReqForm()"><i class="fas fa-times"></i> Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── APPROVED REQUESTS — DO OUTWARD ENTRY ── -->
+  <div class="sdiv" style="display:flex;align-items:center;justify-content:space-between;">
+    <span><i class="fas fa-check-circle" style="color:var(--green);margin-right:6px;"></i>Approved by Accounts — Ready for Outward Entry <span id="svcStockApprovedBadge" style="background:var(--green);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;display:none;"></span></span>
+  </div>
+  <div id="svcStockApprovedList"></div>
+
+  <!-- ── PENDING REQUESTS ── -->
+  <div class="sdiv" style="margin-top:12px;"><i class="fas fa-clock" style="color:var(--amber);margin-right:6px;"></i>Pending — Awaiting Accounts Approval</div>
+  <div id="svcStockPendingList"></div>
+
+  <!-- ── STOCK LEVELS ── -->
+  <div class="sdiv" style="margin-top:12px;"><i class="fas fa-boxes-stacked" style="margin-right:5px;color:var(--green);"></i>Current Stock Levels</div>
   <div class="stats" id="svcStockStats"></div>
   <div class="filt-row">
     <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
@@ -1499,7 +1539,9 @@ tbody tr:last-child td{border-bottom:none;}
     </select>
   </div>
   <div id="svcStockBody"></div>
-  <div class="sdiv" style="margin-top:16px;"><i class="fas fa-history" style="margin-right:5px;color:var(--green);"></i>Transaction History</div>
+
+  <!-- ── TRANSACTION HISTORY ── -->
+  <div class="sdiv" style="margin-top:16px;"><i class="fas fa-history" style="margin-right:5px;color:var(--green);"></i>Outward Transaction History</div>
   <div id="svcStockTxns"></div>
 </div>
 
@@ -1758,6 +1800,12 @@ tbody tr:last-child td{border-bottom:none;}
     <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead>
     <tbody id="stockTxnBody"></tbody>
   </table></div>
+
+  <!-- ── STOCK ISSUE REQUESTS FROM SERVICE ── -->
+  <div class="sdiv" style="margin-top:22px;display:flex;align-items:center;justify-content:space-between;">
+    <span><i class="fas fa-boxes-stacked" style="color:var(--green);margin-right:6px;"></i>Stock Issue Requests — From Service Team <span id="accStockReqBadge" style="background:var(--amber);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;display:none;"></span></span>
+  </div>
+  <div id="accStockReqList"></div>
 </div>
 
 <!-- ════ ACCOUNTS: REPORTS HUB ════ -->
@@ -2179,6 +2227,7 @@ async function loadData(){
   D.messages          = J(localStorage.getItem('ac_messages'))     || [];
   D.stock_items       = J(localStorage.getItem('ac_stock_items'))  || [];
   D.stock_txns        = J(localStorage.getItem('ac_stock_txns'))   || [];
+  D.svc_stock_reqs    = J(localStorage.getItem('ac_svc_stock_reqs'))|| [];
 
   // Then try to pull the latest snapshot from Firestore
   if(_fbReady && _db){
@@ -2189,7 +2238,7 @@ async function loadData(){
         const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                       'ac_invoices','ac_payments','ac_advances','ac_customers',
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances'];
+                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','svc_stock_reqs'];
         keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
         console.log('✅ Data loaded from Firestore');
       } else {
@@ -2226,6 +2275,7 @@ async function saveData(notifyType){
   localStorage.setItem('ac_messages',  JSON.stringify(D.messages||[]));
   localStorage.setItem('ac_stock_items',JSON.stringify(D.stock_items||[]));
   localStorage.setItem('ac_stock_txns', JSON.stringify(D.stock_txns||[]));
+  localStorage.setItem('ac_svc_stock_reqs',JSON.stringify(D.svc_stock_reqs||[]));
 
   // Then write the full state to Firestore so all users get the update
   if(_fbReady && _db){
@@ -2249,6 +2299,7 @@ async function saveData(notifyType){
         messages:           D.messages || [],
         stock_items:        D.stock_items || [],
         stock_txns:         D.stock_txns || [],
+        svc_stock_reqs:     D.svc_stock_reqs || [],
         salary_advances:    D.salary_advances || [],
         fy_archives:        D.fy_archives || [],
         _lastNotify:        notifyType || 'sync',
@@ -2336,7 +2387,7 @@ function refreshUI(){
   if(!r) return;
   renderInvoices();renderPayments();renderAdvances();renderAccCusts();renderUsers();renderAccOrders();
   if(r==='management'){renderMgmt();updateMgmtIncBadge();updateMgmtViewBadge();}
-  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccDashboard();updatePendInboxBadge();}
+  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccStockRequests();renderAccDashboard();updatePendInboxBadge();}
   if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();renderSvcOutstanding();}
 }
 
@@ -2447,11 +2498,11 @@ function goPage(p){
   if(p==='svc-orders') renderSvcOrders();
   if(p==='svc-outstanding') renderSvcOutstanding();
   if(p==='svc-reports') renderSvcReports();
-  if(p==='svc-stock') renderSvcStockView();
+  if(p==='svc-stock'){renderSvcStockView();renderSvcStockRequests();}
   if(p==='svc-incentives'){renderSvcIncentives();populateSvcIncEngDropdown();}
   if(p==='acc-incentives') renderAccIncentives();
   if(p==='mgmt-view') renderMgmtView();
-  if(p==='acc-stock') renderStock();
+  if(p==='acc-stock'){renderStock();renderAccStockRequests();}
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
   if(p==='setup') renderSetupPage();
 }
@@ -4106,8 +4157,295 @@ function issueStockFromOrder(){
 }
 
 // ════════════════════════════════════════════════════════════════
-// SERVICE REPORTS
+// SERVICE — STOCK ISSUE REQUEST WORKFLOW
 // ════════════════════════════════════════════════════════════════
+let _sreqRC=0;
+
+function genSreqNo(){
+  const n=(D.svc_stock_reqs||[]).length+1;
+  return 'SREQ-'+new Date().getFullYear()+'-'+String(n).padStart(4,'0');
+}
+
+function showSvcStockReqForm(){
+  const f=g('svcStockReqForm');if(!f)return;
+  f.style.display='block';
+  g('sreqNo').value=genSreqNo();
+  g('sreqDate').value=today();
+  g('sreqCust').value='';
+  g('sreqCallRef').value='';
+  g('sreqNotes').value='';
+  g('sreqItemsBody').innerHTML='';
+  g('sreqEditId').value='';
+  _sreqRC=0;
+  addSreqItem();
+  f.scrollIntoView({behavior:'smooth'});
+}
+
+function hideSvcStockReqForm(){
+  const f=g('svcStockReqForm');if(f)f.style.display='none';
+}
+
+function addSreqItem(){
+  const items=D.ac_stock||[];
+  const r=++_sreqRC;
+  const opts=items.map(i=>`<option value="${i.id}" data-avail="${i.qty??0}" data-unit="${esc(i.unit||'Nos')}">${esc(i.name)} (Avail: ${i.qty??0} ${i.unit||'Nos'})</option>`).join('');
+  const row=document.createElement('tr');row.id=`sreqRow${r}`;
+  row.innerHTML=`
+    <td style="font-size:.8em;color:var(--ink4);">${r}</td>
+    <td><select id="sreqItem${r}" style="min-width:180px;font-size:.82em;" onchange="updateSreqAvail(${r})">
+      <option value="">-- Select Item --</option>${opts}
+    </select></td>
+    <td id="sreqAvail${r}" style="font-size:.82em;font-weight:700;color:var(--green);">—</td>
+    <td><input type="number" id="sreqQty${r}" style="width:70px;" placeholder="0" min="1" step="1"></td>
+    <td><input type="text" id="sreqNote${r}" placeholder="Purpose…" style="min-width:120px;font-size:.82em;"></td>
+    <td><button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="g('sreqRow${r}').remove()"><i class="fas fa-trash"></i></button></td>`;
+  g('sreqItemsBody').appendChild(row);
+}
+
+function updateSreqAvail(r){
+  const sel=g(`sreqItem${r}`);if(!sel||!sel.value)return;
+  const opt=sel.selectedOptions[0];
+  const avEl=g(`sreqAvail${r}`);
+  if(avEl){
+    const avail=parseInt(opt?.dataset.avail)||0;
+    avEl.textContent=avail+' '+(opt?.dataset.unit||'');
+    avEl.style.color=avail>0?'var(--green)':'var(--red)';
+  }
+}
+
+function submitSvcStockRequest(){
+  const date=g('sreqDate').value, cust=g('sreqCust').value.trim();
+  if(!date||!cust){alert('Please fill Date and Customer.');return;}
+  const rows=[...g('sreqItemsBody').querySelectorAll('tr')];
+  if(!rows.length){alert('Please add at least one stock item.');return;}
+  const items=[];const errors=[];
+  rows.forEach(row=>{
+    const r=row.id.replace('sreqRow','');
+    const sel=g(`sreqItem${r}`);
+    const qty=parseInt(g(`sreqQty${r}`)?.value)||0;
+    const note=g(`sreqNote${r}`)?.value||'';
+    if(!sel||!sel.value)return;
+    const stockItem=D.ac_stock?.find(i=>i.id===sel.value);
+    if(!stockItem){errors.push('Item not found');return;}
+    if(qty<=0){errors.push(`Enter valid qty for ${stockItem.name}`);return;}
+    items.push({itemId:stockItem.id,itemName:stockItem.name,unit:stockItem.unit||'Nos',availQty:stockItem.qty??0,reqQty:qty,notes:note});
+  });
+  if(errors.length){alert('Errors:\n'+errors.join('\n'));return;}
+  if(!items.length){alert('No valid items.');return;}
+
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-boxes-stacked',
+    title:'Send Stock Request to Accounts?',
+    msg:'This request will be sent to Accounts for approval. You can do the outward entry after approval.',
+    details:[
+      {k:'Request No',v:g('sreqNo').value},
+      {k:'Date',v:date},
+      {k:'Customer',v:cust},
+      {k:'Items',v:items.length+' item(s)'},
+      {k:'Call Ref',v:g('sreqCallRef').value||'—'}
+    ],
+    btnLabel:'Send to Accounts',btnColor:'var(--green)',
+    onOk:()=>{
+      if(!D.svc_stock_reqs)D.svc_stock_reqs=[];
+      D.svc_stock_reqs.push({
+        id:uid(),no:g('sreqNo').value,date,customer:cust,
+        callRef:g('sreqCallRef').value||'',notes:g('sreqNotes').value||'',
+        items,status:'pending',
+        requestedBy:D.currentUser?.name||'Service',
+        requestedAt:new Date().toISOString(),
+        approvedBy:'',approvedAt:'',rejectedReason:''
+      });
+      hideSvcStockReqForm();
+      saveData('new_stock_req');
+      renderSvcStockRequests();
+      showSuccessToast('✓ Stock request sent to Accounts for approval!','var(--green)');
+    }
+  });
+}
+
+function renderSvcStockRequests(){
+  const reqs=D.svc_stock_reqs||[];
+  const pending=reqs.filter(r=>r.status==='pending').reverse();
+  const approved=reqs.filter(r=>r.status==='approved').reverse();
+
+  // Badge
+  const badge=g('svcStockApprovedBadge');
+  if(badge){badge.textContent=approved.length;badge.style.display=approved.length?'inline':'none';}
+
+  // Approved list
+  const appEl=g('svcStockApprovedList');
+  if(appEl){
+    if(!approved.length){
+      appEl.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No approved requests waiting. All issued!</p></div>';
+    } else {
+      appEl.innerHTML=approved.map(req=>svcStockReqCard(req,'approved')).join('');
+    }
+  }
+
+  // Pending list
+  const pendEl=g('svcStockPendingList');
+  if(pendEl){
+    if(!pending.length){
+      pendEl.innerHTML='<div class="empty"><i class="fas fa-clock"></i><p>No pending requests. Create a new stock request above.</p></div>';
+    } else {
+      pendEl.innerHTML=pending.map(req=>svcStockReqCard(req,'pending')).join('');
+    }
+  }
+}
+
+function svcStockReqCard(req,context){
+  const isApproved=req.status==='approved';
+  const borderColor=isApproved?'var(--green)':req.status==='rejected'?'var(--red)':'var(--amber)';
+  const statusBadge=isApproved
+    ?`<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:3px 10px;border-radius:20px;font-size:.71em;font-weight:700;"><i class="fas fa-check-circle"></i> Approved</span>`
+    :req.status==='rejected'
+    ?`<span style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:3px 10px;border-radius:20px;font-size:.71em;font-weight:700;"><i class="fas fa-times-circle"></i> Rejected</span>`
+    :`<span style="background:#fef9c3;color:#92400e;border:1px solid #fcd34d;padding:3px 10px;border-radius:20px;font-size:.71em;font-weight:700;"><i class="fas fa-clock"></i> Pending Approval</span>`;
+  return `<div class="conv-card" style="border-left:3px solid ${borderColor};margin-bottom:8px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-weight:800;font-size:.88em;color:var(--ink);">${esc(req.no)} ${statusBadge}</div>
+        <div style="font-size:.75em;color:var(--ink3);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;">
+          <span><i class="fas fa-calendar" style="margin-right:3px;"></i>${req.date}</span>
+          <span><i class="fas fa-building" style="margin-right:3px;"></i>${esc(req.customer)}</span>
+          ${req.callRef?`<span><i class="fas fa-headset" style="margin-right:3px;"></i>${esc(req.callRef)}</span>`:''}
+          <span><i class="fas fa-user" style="margin-right:3px;"></i>${esc(req.requestedBy||'—')}</span>
+        </div>
+        ${req.notes?`<div style="font-size:.78em;color:var(--ink3);margin-top:4px;">${esc(req.notes)}</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        ${isApproved&&context==='approved'?`<button class="btn btn-sm" style="background:var(--svc);color:#fff;" onclick="doSvcStockOutward('${req.id}')"><i class="fas fa-arrow-up"></i> Do Outward Entry</button>`:''}
+      </div>
+    </div>
+    <div style="margin-top:9px;overflow-x:auto;">
+      <table class="rpt-table" style="font-size:.8em;">
+        <thead><tr><th>Item</th><th>Available</th><th>Requested Qty</th><th>Notes</th></tr></thead>
+        <tbody>${(req.items||[]).map(it=>`<tr>
+          <td><strong>${esc(it.itemName)}</strong></td>
+          <td style="color:${it.availQty>0?'var(--green)':'var(--red)'};">${it.availQty} ${it.unit}</td>
+          <td class="num" style="font-weight:700;color:var(--svc);">${it.reqQty} ${it.unit}</td>
+          <td style="color:var(--ink3);">${esc(it.notes||'—')}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>
+    ${isApproved?`<div style="font-size:.74em;color:var(--green);margin-top:7px;"><i class="fas fa-check" style="margin-right:4px;"></i>Approved by <strong>${esc(req.approvedBy||'Accounts')}</strong> on ${req.approvedAt?new Date(req.approvedAt).toLocaleDateString('en-IN'):req.date}</div>`:''}
+    ${req.status==='rejected'&&req.rejectedReason?`<div style="font-size:.74em;color:var(--red);margin-top:7px;"><i class="fas fa-times" style="margin-right:4px;"></i>Rejection reason: ${esc(req.rejectedReason)}</div>`:''}
+  </div>`;
+}
+
+function doSvcStockOutward(reqId){
+  const req=D.svc_stock_reqs.find(r=>r.id===reqId);if(!req)return;
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-arrow-up',
+    title:'Confirm Outward Entry?',
+    msg:`Stock will be deducted from inventory and issued to ${req.customer}.`,
+    details:[
+      {k:'Request',v:req.no},{k:'Customer',v:req.customer},
+      {k:'Items',v:req.items.length+' item(s)'},
+      {k:'Date',v:today()}
+    ],
+    btnLabel:'Confirm Outward',btnColor:'var(--svc)',
+    onOk:()=>{
+      const errors=[];
+      req.items.forEach(it=>{
+        const item=D.ac_stock?.find(i=>i.id===it.itemId);
+        if(!item){errors.push(`Item ${it.itemName} not found in stock`);return;}
+        if(it.reqQty>(item.qty||0)){errors.push(`Insufficient stock for ${it.itemName}: need ${it.reqQty}, have ${item.qty||0}`);return;}
+      });
+      if(errors.length){alert('Cannot complete outward:\n'+errors.join('\n'));return;}
+      if(!D.ac_stock_txns)D.ac_stock_txns=[];
+      req.items.forEach(it=>{
+        const item=D.ac_stock.find(i=>i.id===it.itemId);
+        item.qty=(item.qty||0)-it.reqQty;
+        item.lastMovement=today();
+        D.ac_stock_txns.push({id:uid(),date:today(),item:it.itemName,itemId:it.itemId,type:'out',qty:it.reqQty,notes:it.notes||req.notes||'',customer:req.customer,ref:req.no,by:D.currentUser?.name||'Service'});
+      });
+      req.status='issued';req.issuedAt=new Date().toISOString();req.issuedBy=D.currentUser?.name||'Service';
+      saveData('stock_issued');renderSvcStockView();renderSvcStockRequests();
+      showSuccessToast(`✓ Outward entry done — stock issued to ${req.customer}`,'var(--svc)');
+    }
+  });
+}
+
+// ── ACCOUNTS: Render & Approve Stock Requests ──
+function renderAccStockRequests(){
+  const reqs=(D.svc_stock_reqs||[]).filter(r=>r.status==='pending').reverse();
+  const el=g('accStockReqList');if(!el)return;
+  const badge=g('accStockReqBadge');
+  if(badge){badge.textContent=reqs.length;badge.style.display=reqs.length?'inline':'none';}
+  if(!reqs.length){
+    el.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No pending stock requests. All cleared!</p></div>';
+    return;
+  }
+  el.innerHTML=reqs.map(req=>`
+    <div class="conv-card" style="border-left:3px solid var(--amber);margin-bottom:8px;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-weight:800;font-size:.88em;color:var(--ink);">${esc(req.no)} <span style="background:#fef9c3;color:#92400e;border:1px solid #fcd34d;padding:2px 8px;border-radius:12px;font-size:.73em;font-weight:700;">⏳ Pending</span></div>
+          <div style="font-size:.75em;color:var(--ink3);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;">
+            <span><i class="fas fa-calendar" style="margin-right:3px;"></i>${req.date}</span>
+            <span><i class="fas fa-building" style="margin-right:3px;"></i>${esc(req.customer)}</span>
+            ${req.callRef?`<span><i class="fas fa-headset" style="margin-right:3px;"></i>${esc(req.callRef)}</span>`:''}
+            <span><i class="fas fa-user" style="margin-right:3px;"></i>Requested by: ${esc(req.requestedBy||'Service')}</span>
+          </div>
+          ${req.notes?`<div style="font-size:.78em;color:var(--ink3);margin-top:3px;">${esc(req.notes)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="approveStockRequest('${req.id}')"><i class="fas fa-check"></i> Approve</button>
+          <button class="btn btn-sm" style="background:var(--red);color:#fff;" onclick="rejectStockRequest('${req.id}')"><i class="fas fa-times"></i> Reject</button>
+        </div>
+      </div>
+      <div style="margin-top:9px;overflow-x:auto;">
+        <table class="rpt-table" style="font-size:.8em;">
+          <thead><tr><th>Item</th><th>Current Stock</th><th>Requested Qty</th><th>Sufficient?</th><th>Notes</th></tr></thead>
+          <tbody>${(req.items||[]).map(it=>{
+            const item=D.ac_stock?.find(i=>i.id===it.itemId);
+            const curQty=item?.qty??it.availQty;
+            const ok=curQty>=it.reqQty;
+            return `<tr>
+              <td><strong>${esc(it.itemName)}</strong></td>
+              <td style="font-weight:700;color:${curQty>0?'var(--green)':'var(--red)'};">${curQty} ${it.unit}</td>
+              <td class="num" style="font-weight:700;color:var(--svc);">${it.reqQty} ${it.unit}</td>
+              <td>${ok?'<span style="background:#dcfce7;color:#166534;border-radius:6px;padding:2px 8px;font-size:.8em;font-weight:700;">✓ Yes</span>':'<span style="background:#fee2e2;color:#991b1b;border-radius:6px;padding:2px 8px;font-size:.8em;font-weight:700;">✗ Insufficient</span>'}</td>
+              <td style="color:var(--ink3);">${esc(it.notes||'—')}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>
+    </div>`).join('');
+}
+
+function approveStockRequest(reqId){
+  const req=D.svc_stock_reqs?.find(r=>r.id===reqId);if(!req)return;
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-check',
+    title:'Approve Stock Request?',
+    msg:`Approve ${req.no} for ${req.customer}? Service team will be notified to do the outward entry.`,
+    details:[{k:'Request',v:req.no},{k:'Customer',v:req.customer},{k:'Items',v:req.items.length+' item(s)'}],
+    btnLabel:'Approve Request',btnColor:'var(--green)',
+    onOk:()=>{
+      req.status='approved';
+      req.approvedBy=D.currentUser?.name||'Accounts';
+      req.approvedAt=new Date().toISOString();
+      saveData('stock_approved');renderAccStockRequests();renderStock();
+      showSuccessToast(`✓ Stock request ${req.no} approved!`,'var(--green)');
+    }
+  });
+}
+
+function rejectStockRequest(reqId){
+  const req=D.svc_stock_reqs?.find(r=>r.id===reqId);if(!req)return;
+  const reason=prompt(`Rejection reason for ${req.no}:\n(Will be shown to service team)`);
+  if(reason===null)return;
+  req.status='rejected';
+  req.rejectedReason=reason||'Rejected by Accounts';
+  req.rejectedBy=D.currentUser?.name||'Accounts';
+  req.rejectedAt=new Date().toISOString();
+  saveData();renderAccStockRequests();
+  showSuccessToast(`Stock request ${req.no} rejected.`,'var(--red)');
+}
+
+
 let _svcRptTab = 'engineer';
 
 function exportCustomerWiseReport(){
