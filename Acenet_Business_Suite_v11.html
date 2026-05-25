@@ -467,7 +467,6 @@ tbody tr:last-child td{border-bottom:none;}
 .call-type-btn.active[data-type="AMC"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
 .call-type-btn.active[data-type="ASC"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
 .call-type-btn.active[data-type="Per Call"]{background:linear-gradient(135deg,#d97706,#f59e0b);border-color:#d97706;color:#fff;box-shadow:0 3px 10px rgba(217,119,6,.3);}
-.call-type-btn.active[data-type="Stock"]{background:linear-gradient(135deg,#059669,#10b981);border-color:#059669;color:#fff;box-shadow:0 3px 10px rgba(5,150,105,.3);}
 .call-type-badge-amc{background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
 .call-type-badge-asc{background:#ede9fe;color:#7c3aed;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
 .call-type-badge-per{background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
@@ -1343,6 +1342,22 @@ tbody tr:last-child td{border-bottom:none;}
 <div id="mgmtViewBody"></div>
 </div>
 
+<!-- ════ MANAGEMENT: REPORTS ════ -->
+<div class="page" id="page-mgmt-reports">
+  <div class="ph">
+    <div><h2><span class="phi" style="background:var(--mgmt)"><i class="fas fa-chart-pie"></i></span><span class="sora">Management Reports</span></h2><p>Full visibility across Accounts &amp; Service departments</p></div>
+  </div>
+  <!-- Tab strip -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;" id="mgmtRptTabs">
+    <button class="rpt-tab active" data-tab="svc-summary" onclick="switchMgmtRptTab('svc-summary')"><i class="fas fa-headset"></i> Service Summary</button>
+    <button class="rpt-tab" data-tab="conv-summary" onclick="switchMgmtRptTab('conv-summary')"><i class="fas fa-car-side"></i> Conveyance</button>
+    <button class="rpt-tab" data-tab="incentive-summary" onclick="switchMgmtRptTab('incentive-summary')"><i class="fas fa-gift"></i> Incentives</button>
+    <button class="rpt-tab" data-tab="acc-summary" onclick="switchMgmtRptTab('acc-summary')"><i class="fas fa-file-invoice"></i> Accounts</button>
+    <button class="rpt-tab" data-tab="stock-summary" onclick="switchMgmtRptTab('stock-summary')"><i class="fas fa-boxes-stacked"></i> Stock</button>
+  </div>
+  <div id="mgmtRptBody"></div>
+</div>
+
 <!-- ════ MANAGEMENT: SERVICE OVERVIEW ════ -->
 <!-- (Added to management overview inline rendering) -->
 
@@ -1365,7 +1380,6 @@ tbody tr:last-child td{border-bottom:none;}
         <button type="button" class="call-type-btn active" id="ord-ct-amc" onclick="setOrdCallType('AMC')" data-type="AMC"><i class="fas fa-shield-halved"></i> AMC</button>
         <button type="button" class="call-type-btn" id="ord-ct-asc" onclick="setOrdCallType('ASC')" data-type="ASC"><i class="fas fa-screwdriver-wrench"></i> ASC</button>
         <button type="button" class="call-type-btn" id="ord-ct-per" onclick="setOrdCallType('Per Call')" data-type="Per Call"><i class="fas fa-receipt"></i> Per Call</button>
-        <button type="button" class="call-type-btn" id="ord-ct-stock" onclick="setOrdCallType('Stock')" data-type="Stock"><i class="fas fa-boxes-stacked"></i> Stock</button>
       </div>
       <input type="hidden" id="svOrdCallType" value="AMC">
     </div>
@@ -1414,13 +1428,6 @@ tbody tr:last-child td{border-bottom:none;}
         </label>
       </div>
     </div>
-    <!-- Stock Direct Issue Panel (shown only when type=Stock) -->
-    <div id="svOrdStockPanel" style="display:none;background:linear-gradient(135deg,#f0fdf4,#fff);border:1.5px solid #86efac;border-radius:12px;padding:14px;margin-bottom:13px;">
-      <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#059669;margin-bottom:8px;"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Stock Items — Direct Issue to Customer</div>
-      <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Stock Item</th><th>Available</th><th>Issue Qty</th><th>Notes</th><th></th></tr></thead><tbody id="svOrdStockItemsBody"></tbody></table></div>
-      <button class="btn btn-outline btn-sm" onclick="addSvOrdStockItem()" style="margin-top:8px;"><i class="fas fa-plus" style="color:var(--green)"></i> Add Stock Item</button>
-    </div>
-    <div id="svOrdRegularPanel">
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
     <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addSvOrdItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--orange)"></i> Add Item</button>
@@ -1428,10 +1435,8 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="tb-item" id="svOrdGSTRow" style="display:none;"><div class="tbl">GST @18%</div><div class="tbv" id="svOrdGSTAmt">₹0</div></div>
       <div class="tb-item"><div class="tbl">Estimated Total</div><div class="tbv big" id="svOrdTotal">₹0</div></div>
     </div>
-    </div>
     <div class="btn-row" style="margin-top:4px;">
-      <button class="btn btn-orange" id="svOrdSendBtn" onclick="sendSvcOrderToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
-      <button class="btn" id="svOrdIssueStockBtn" style="display:none;background:var(--green);color:#fff;" onclick="issueStockFromOrder()"><i class="fas fa-boxes-stacked"></i> Issue Stock to Customer</button>
+      <button class="btn btn-orange" onclick="sendSvcOrderToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
       <button class="btn btn-outline" onclick="hideSvcOrderForm()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
@@ -1481,54 +1486,23 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ SERVICE: STOCK (Full Entry) ════ -->
 <div class="page" id="page-svc-stock">
   <div class="ph">
-    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Raise stock issue requests → Accounts approves → Do outward entry</p></div>
+    <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Track stock levels · inward &amp; outward entries</p></div>
     <div class="btn-row">
-      <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="showSvcStockReqForm()"><i class="fas fa-plus"></i> New Stock Request</button>
+      <button class="btn btn-outline btn-sm" onclick="showSvcAddItemForm()"><i class="fas fa-plus" style="color:var(--green);"></i> Add Item</button>
+      <button class="btn btn-outline btn-sm" onclick="showStockInForm()"><i class="fas fa-arrow-down" style="color:var(--green);"></i> Stock In</button>
+      <button class="btn btn-outline btn-sm" onclick="showStockOutForm()"><i class="fas fa-arrow-up" style="color:var(--red);"></i> Stock Out</button>
       <button class="btn btn-outline btn-sm" onclick="exportSvcStockView()"><i class="fas fa-file-excel"></i> Export</button>
-      <button class="btn btn-outline btn-sm" onclick="exportSvcStockByCustomer()"><i class="fas fa-file-excel" style="color:var(--svc);"></i> Export by Customer</button>
     </div>
   </div>
-
-  <!-- ── NEW STOCK REQUEST FORM ── -->
-  <div class="form-panel" id="svcStockReqForm" style="display:none;background:linear-gradient(135deg,#f0fdf4,#fff);border:2px solid #86efac;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <div class="sora" style="font-weight:700;color:var(--green);font-size:.93em;"><i class="fas fa-boxes-stacked" style="margin-right:7px;"></i>New Stock Issue Request</div>
-      <button class="btn btn-ghost btn-sm" onclick="hideSvcStockReqForm()"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="g3" style="margin-bottom:11px;">
-      <div class="fg"><label>Request No</label><input type="text" id="sreqNo" readonly style="background:var(--bg);"></div>
-      <div class="fg"><label>Date *</label><input type="date" id="sreqDate"></div>
-      <div class="fg"><label>Customer *</label>
-        <div class="combo"><input type="text" id="sreqCust" list="dl-svc-cust" placeholder="Customer…" autocomplete="off"><i class="fas fa-chevron-down carr"></i></div>
-      </div>
-    </div>
-    <div class="g2" style="margin-bottom:11px;">
-      <div class="fg"><label>Service Call Ref</label><input type="text" id="sreqCallRef" placeholder="SVC-XXXX (optional)"></div>
-      <div class="fg"><label>Purpose / Notes</label><input type="text" id="sreqNotes" placeholder="Reason for issue…"></div>
-    </div>
-    <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Items to Issue</div>
-    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Stock Item</th><th>Available</th><th>Issue Qty</th><th>Notes</th><th></th></tr></thead><tbody id="sreqItemsBody"></tbody></table></div>
-    <button class="btn btn-outline btn-sm" onclick="addSreqItem()" style="margin-top:7px;margin-bottom:13px;"><i class="fas fa-plus" style="color:var(--green)"></i> Add Item</button>
-    <input type="hidden" id="sreqEditId">
-    <div class="btn-row">
-      <button class="btn" style="background:var(--green);color:#fff;" onclick="submitSvcStockRequest()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
-      <button class="btn btn-outline" onclick="hideSvcStockReqForm()"><i class="fas fa-times"></i> Cancel</button>
-    </div>
-  </div>
-
-  <!-- ── APPROVED REQUESTS — DO OUTWARD ENTRY ── -->
-  <div class="sdiv" style="display:flex;align-items:center;justify-content:space-between;">
-    <span><i class="fas fa-check-circle" style="color:var(--green);margin-right:6px;"></i>Approved by Accounts — Ready for Outward Entry <span id="svcStockApprovedBadge" style="background:var(--green);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;display:none;"></span></span>
-  </div>
-  <div id="svcStockApprovedList"></div>
-
-  <!-- ── PENDING REQUESTS ── -->
-  <div class="sdiv" style="margin-top:12px;"><i class="fas fa-clock" style="color:var(--amber);margin-right:6px;"></i>Pending — Awaiting Accounts Approval</div>
-  <div id="svcStockPendingList"></div>
-
-  <!-- ── STOCK LEVELS ── -->
-  <div class="sdiv" style="margin-top:12px;"><i class="fas fa-boxes-stacked" style="margin-right:5px;color:var(--green);"></i>Current Stock Levels</div>
   <div class="stats" id="svcStockStats"></div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+    <button class="call-type-btn active" data-stype="all" onclick="setSvcStockType('all',this)">All Materials</button>
+    <button class="call-type-btn" id="sst-amc" data-stype="AMC" onclick="setSvcStockType('AMC',this)"><i class="fas fa-shield-halved"></i> AMC</button>
+    <button class="call-type-btn" id="sst-asc" data-stype="ASC" onclick="setSvcStockType('ASC',this)"><i class="fas fa-screwdriver-wrench"></i> ASC</button>
+    <button class="call-type-btn" id="sst-per" data-stype="Per Call" onclick="setSvcStockType('Per Call',this)"><i class="fas fa-receipt"></i> Per Call</button>
+    <button class="call-type-btn" id="sst-gen" data-stype="General" onclick="setSvcStockType('General',this)"><i class="fas fa-boxes-stacked"></i> General</button>
+  </div>
+  <input type="hidden" id="svcStockType" value="all">
   <div class="filt-row">
     <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
     <div class="filt-sep"></div>
@@ -1539,9 +1513,7 @@ tbody tr:last-child td{border-bottom:none;}
     </select>
   </div>
   <div id="svcStockBody"></div>
-
-  <!-- ── TRANSACTION HISTORY ── -->
-  <div class="sdiv" style="margin-top:16px;"><i class="fas fa-history" style="margin-right:5px;color:var(--green);"></i>Outward Transaction History</div>
+  <div class="sdiv" style="margin-top:16px;"><i class="fas fa-history" style="margin-right:5px;color:var(--green);"></i>Transaction History</div>
   <div id="svcStockTxns"></div>
 </div>
 
@@ -1800,12 +1772,6 @@ tbody tr:last-child td{border-bottom:none;}
     <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead>
     <tbody id="stockTxnBody"></tbody>
   </table></div>
-
-  <!-- ── STOCK ISSUE REQUESTS FROM SERVICE ── -->
-  <div class="sdiv" style="margin-top:22px;display:flex;align-items:center;justify-content:space-between;">
-    <span><i class="fas fa-boxes-stacked" style="color:var(--green);margin-right:6px;"></i>Stock Issue Requests — From Service Team <span id="accStockReqBadge" style="background:var(--amber);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;display:none;"></span></span>
-  </div>
-  <div id="accStockReqList"></div>
 </div>
 
 <!-- ════ ACCOUNTS: REPORTS HUB ════ -->
@@ -2227,7 +2193,6 @@ async function loadData(){
   D.messages          = J(localStorage.getItem('ac_messages'))     || [];
   D.stock_items       = J(localStorage.getItem('ac_stock_items'))  || [];
   D.stock_txns        = J(localStorage.getItem('ac_stock_txns'))   || [];
-  D.svc_stock_reqs    = J(localStorage.getItem('ac_svc_stock_reqs'))|| [];
 
   // Then try to pull the latest snapshot from Firestore
   if(_fbReady && _db){
@@ -2238,7 +2203,7 @@ async function loadData(){
         const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                       'ac_invoices','ac_payments','ac_advances','ac_customers',
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','svc_stock_reqs'];
+                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances'];
         keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
         console.log('✅ Data loaded from Firestore');
       } else {
@@ -2275,7 +2240,6 @@ async function saveData(notifyType){
   localStorage.setItem('ac_messages',  JSON.stringify(D.messages||[]));
   localStorage.setItem('ac_stock_items',JSON.stringify(D.stock_items||[]));
   localStorage.setItem('ac_stock_txns', JSON.stringify(D.stock_txns||[]));
-  localStorage.setItem('ac_svc_stock_reqs',JSON.stringify(D.svc_stock_reqs||[]));
 
   // Then write the full state to Firestore so all users get the update
   if(_fbReady && _db){
@@ -2299,7 +2263,6 @@ async function saveData(notifyType){
         messages:           D.messages || [],
         stock_items:        D.stock_items || [],
         stock_txns:         D.stock_txns || [],
-        svc_stock_reqs:     D.svc_stock_reqs || [],
         salary_advances:    D.salary_advances || [],
         fy_archives:        D.fy_archives || [],
         _lastNotify:        notifyType || 'sync',
@@ -2387,7 +2350,7 @@ function refreshUI(){
   if(!r) return;
   renderInvoices();renderPayments();renderAdvances();renderAccCusts();renderUsers();renderAccOrders();
   if(r==='management'){renderMgmt();updateMgmtIncBadge();updateMgmtViewBadge();}
-  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccStockRequests();renderAccDashboard();updatePendInboxBadge();}
+  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccDashboard();updatePendInboxBadge();}
   if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();renderSvcOutstanding();}
 }
 
@@ -2436,6 +2399,7 @@ const NAVS = {
   management:[
     {id:'overview',icon:'fa-eye',label:'Overview'},
     {id:'mgmt-view',icon:'fa-table-list',label:'Detail Info',color:'var(--svc)',hasBadge:true,badgeId:'mgmt-view-badge'},
+    {id:'mgmt-reports',icon:'fa-chart-pie',label:'Reports',color:'var(--mgmt)'},
     {id:'users',icon:'fa-users-gear',label:'Users'},
     {id:'setup',icon:'fa-server',label:'Setup'}
   ],
@@ -2498,11 +2462,12 @@ function goPage(p){
   if(p==='svc-orders') renderSvcOrders();
   if(p==='svc-outstanding') renderSvcOutstanding();
   if(p==='svc-reports') renderSvcReports();
-  if(p==='svc-stock'){renderSvcStockView();renderSvcStockRequests();}
+  if(p==='svc-stock') renderSvcStockView();
   if(p==='svc-incentives'){renderSvcIncentives();populateSvcIncEngDropdown();}
   if(p==='acc-incentives') renderAccIncentives();
   if(p==='mgmt-view') renderMgmtView();
-  if(p==='acc-stock'){renderStock();renderAccStockRequests();}
+  if(p==='mgmt-reports') renderMgmtReports();
+  if(p==='acc-stock') renderStock();
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
   if(p==='setup') renderSetupPage();
 }
@@ -3950,7 +3915,7 @@ function exportAccExcel(){
 // ════════════════════════════════════════════════════════════════
 function renderSvcStockView(){
   // Use shared ac_stock data — same as Accounts stock
-  const items=D.ac_stock||[];
+  const items=D.stock_items||[];
   const catSel=g('svcStockCat');
   if(catSel&&catSel.options.length<=1){
     [...new Set(items.map(i=>i.category).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
@@ -3958,12 +3923,14 @@ function renderSvcStockView(){
   const search=(g('svcStockSearch')?.value||'').toLowerCase();
   const cat=g('svcStockCat')?.value||'';
   const st=g('svcStockStatus')?.value||'';
+  const stype=g('svcStockType')?.value||'all';
   let filtered=items.filter(i=>{
     if(search&&!i.name?.toLowerCase().includes(search)&&!i.category?.toLowerCase().includes(search)) return false;
     if(cat&&i.category!==cat) return false;
     if(st==='ok'&&!(i.qty>(i.reorder||0))) return false;
     if(st==='low'&&!(i.qty>0&&i.qty<=(i.reorder||0))) return false;
     if(st==='out'&&i.qty!==0) return false;
+    if(stype!=='all'&&(i.stockType||'General')!==stype) return false;
     return true;
   });
   const total=items.length,inStock=items.filter(i=>i.qty>(i.reorder||0)).length,
@@ -3980,7 +3947,7 @@ function renderSvcStockView(){
       const isOut=i.qty===0,isLow=i.qty>0&&i.qty<=(i.reorder||0);
       const stLabel=isOut?'<span style="background:#fee2e2;color:#991b1b;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">Out of Stock</span>':isLow?'<span style="background:#fef9c3;color:#92400e;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">⚠ Low</span>':'<span style="background:#dcfce7;color:#166534;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">✓ OK</span>';
       return `<tr>
-        <td><strong>${esc(i.name)}</strong></td>
+        <td><strong>${esc(i.name)}</strong><br><span style="font-size:.68em;color:var(--ink4);">${esc(i.stockType||'General')}</span></td>
         <td><span style="background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 7px;font-size:.73em;">${esc(i.category||'General')}</span></td>
         <td style="font-size:.8em;color:var(--ink3);">${esc(i.unit||'Nos')}</td>
         <td class="num" style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${i.qty??0}</td>
@@ -3988,13 +3955,14 @@ function renderSvcStockView(){
         <td>${stLabel}</td>
         <td style="font-size:.75em;color:var(--ink3);">${i.lastMovement||'—'}</td>
         <td><div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Issue Out</button>
+          <button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockIn('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-down"></i> In</button>
+          <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Out</button>
         </div></td>
       </tr>`;
     }).join('')}</tbody>
   </table></div>`;
   // Transaction history
-  const txns=(D.ac_stock_txns||[]).slice().reverse().slice(0,30);
+  const txns=(D.stock_txns||[]).slice().reverse().slice(0,30);
   const txEl=g('svcStockTxns');
   if(txEl) txEl.innerHTML=!txns.length?'<div class="empty"><i class="fas fa-history"></i><p>No transactions yet</p></div>':
     `<div style="overflow-x:auto;"><table class="rpt-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Notes</th><th>By</th></tr></thead><tbody>
@@ -4006,36 +3974,54 @@ function renderSvcStockView(){
     </tbody></table></div>`;
 }
 
+function setSvcStockType(type, btn){
+  if(g('svcStockType')) g('svcStockType').value=type;
+  document.querySelectorAll('#page-svc-stock .call-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.stype===type));
+  renderSvcStockView();
+}
 function quickStockIn(itemId,itemName){
   const qty=parseInt(prompt(`Stock IN — ${itemName}\nEnter quantity:`));
   if(!qty||qty<=0){return;}
   const notes=prompt('Notes (optional):');
-  const item=D.ac_stock.find(i=>i.id===itemId);
+  const item=D.stock_items.find(i=>i.id===itemId);
   if(!item)return;
   item.qty=(item.qty||0)+qty;
   item.lastMovement=today();
-  if(!D.ac_stock_txns)D.ac_stock_txns=[];
-  D.ac_stock_txns.push({id:uid(),date:today(),item:item.name,itemId,type:'in',qty,notes:notes||'',by:D.currentUser?.name||'Service'});
+  if(!D.stock_txns)D.stock_txns=[];
+  const sType=g('svcStockType')?.value||'General';
+  if(sType!=='all'&&!item.stockType) item.stockType=sType;
+  D.stock_txns.push({id:uid(),date:today(),item:item.name,itemId,type:'in',qty,notes:notes||'',by:D.currentUser?.name||'Service',stockType:item.stockType||'General'});
   saveData();renderSvcStockView();showSuccessToast(`✓ ${qty} ${item.unit||'units'} added to ${item.name}`,'var(--green)');
 }
 
 function quickStockOut(itemId,itemName){
-  const item=D.ac_stock.find(i=>i.id===itemId);if(!item)return;
+  const item=D.stock_items.find(i=>i.id===itemId);if(!item)return;
   const qty=parseInt(prompt(`Stock OUT — ${itemName}\nCurrent: ${item.qty??0}\nEnter quantity to issue:`));
   if(!qty||qty<=0)return;
   if(qty>(item.qty||0)){alert(`Only ${item.qty||0} available`);return;}
   const notes=prompt('Purpose / Notes (optional):');
   item.qty=(item.qty||0)-qty;
   item.lastMovement=today();
-  if(!D.ac_stock_txns)D.ac_stock_txns=[];
-  D.ac_stock_txns.push({id:uid(),date:today(),item:item.name,itemId,type:'out',qty,notes:notes||'',by:D.currentUser?.name||'Service'});
+  if(!D.stock_txns)D.stock_txns=[];
+  D.stock_txns.push({id:uid(),date:today(),item:item.name,itemId,type:'out',qty,notes:notes||'',by:D.currentUser?.name||'Service'});
   saveData();renderSvcStockView();showSuccessToast(`✓ ${qty} ${item.unit||'units'} issued from ${item.name}`,'var(--svc)');
 }
 
-function showStockInForm(){quickStockIn('','');}
+function showSvcAddItemForm(){
+  const name=prompt('Item Name:');if(!name)return;
+  const category=prompt('Category (e.g. Spare Part, Accessory, General):','General')||'General';
+  const unit=prompt('Unit (Nos/Kg/Pcs/m):','Nos')||'Nos';
+  const stockType=g('svcStockType')?.value||'General';
+  const reorder=parseInt(prompt('Reorder level (min qty alert):','0'))||0;
+  const existing=D.stock_items.find(i=>i.name.toLowerCase()===name.toLowerCase());
+  if(existing){alert('Item already exists: '+existing.name);return;}
+  D.stock_items.push({id:uid(),name,category,unit,reorder,qty:0,stockType:stockType==='all'?'General':stockType,lastMovement:'',createdAt:Date.now()});
+  saveData();renderSvcStockView();showSuccessToast('Item added: '+name,'var(--green)');
+}
+function showStockInForm(){showSvcAddItemForm();}
 function showStockOutForm(){
   // Let user pick item first then quantity
-  const items=D.ac_stock||[];
+  const items=D.stock_items||[];
   if(!items.length){alert('No stock items found. Add items from Accounts > Stock first.');return;}
   const itemName=prompt('Enter item name for Stock OUT:\n\n'+items.map((i,n)=>`${n+1}. ${i.name} (${i.qty??0} available)`).join('\n'));
   if(!itemName)return;
@@ -4045,7 +4031,7 @@ function showStockOutForm(){
 }
 
 function exportSvcStockView(){
-  const items=D.ac_stock||[];
+  const items=D.stock_items||[];
   const rows=items.map(i=>({
     'Item Name':i.name,'Category':i.category||'General','Unit':i.unit||'Nos',
     'Current Stock':i.qty??0,'Reorder Level':i.reorder||0,
@@ -4055,424 +4041,43 @@ function exportSvcStockView(){
   xlsxExport([{name:'Stock',rows}],'acenet_stock_view_'+today());
 }
 
-function exportSvcStockByCustomer(){
-  const txns=(D.ac_stock_txns||[]).filter(t=>t.type==='out');
-  if(!txns.length){alert('No outward transactions found.');return;}
-  // Group by customer (from notes or by field)
-  const custMap={};
-  txns.forEach(t=>{
-    const cust=t.customer||t.by||'Unknown';
-    if(!custMap[cust])custMap[cust]=[];
-    custMap[cust].push({'Date':t.date,'Item':t.item,'Qty Issued':t.qty,'Notes':t.notes||'','Issued By':t.by||''});
-  });
-  const sheets=Object.entries(custMap).map(([name,rows])=>({name:name.substring(0,31),rows}));
-  const summaryRows=Object.entries(custMap).map(([cust,txns])=>({'Customer':cust,'Total Transactions':txns.length,'Total Qty Issued':txns.reduce((s,t)=>s+(t['Qty Issued']||0),0)}));
-  xlsxExport([{name:'Summary by Customer',rows:summaryRows},...sheets],'acenet_stock_by_customer_'+today());
-}
-
-function toggleAllCustRptRows(checked){
-  document.querySelectorAll('.cust-rpt-chk').forEach(cb=>cb.checked=checked);
-  const hdr=g('custRptHdrChk');if(hdr)hdr.checked=checked;
-  const all=g('custRptSelectAll');if(all)all.checked=checked;
-}
-
-function exportSelectedCustomers(){
-  const selected=[...document.querySelectorAll('.cust-rpt-chk:checked')].map(cb=>cb.dataset.customer);
-  if(!selected.length){alert('Please select at least one customer using the checkboxes.');return;}
-  const calls=getSvcRptCalls().filter(c=>selected.includes(c.customer));
-  if(!calls.length){alert('No call data found for selected customers.');return;}
-  const custMap={};
-  calls.forEach(c=>{
-    const cu=c.customer||'Unknown';
-    if(!custMap[cu])custMap[cu]={Customer:cu,Total:0,Completed:0,Pending:0,'In Progress':0,Escalated:0,'AMC Calls':0,'ASC Calls':0,'Per Calls':0,Products:new Set()};
-    custMap[cu].Total++;
-    if(c.status==='completed')custMap[cu].Completed++;
-    if(c.status==='pending')custMap[cu].Pending++;
-    if(c.status==='in-progress')custMap[cu]['In Progress']++;
-    if(c.status==='escalated')custMap[cu].Escalated++;
-    if((c.callType||'AMC')==='AMC')custMap[cu]['AMC Calls']++;
-    else if(c.callType==='ASC')custMap[cu]['ASC Calls']++;
-    else custMap[cu]['Per Calls']++;
-    if(c.product)custMap[cu].Products.add(c.product);
-  });
-  const summaryRows=Object.values(custMap).sort((a,b)=>b.Total-a.Total).map(r=>({...r,Products:[...r.Products].join(', ')||'—','Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'}));
-  const detailRows=calls.map(c=>({'Customer':c.customer||'Unknown','Call ID':c.no,'Date':c.date||'','Engineer':c.engineer||'','Call Type':c.callType||'AMC','Product':c.product||'','Priority':c.priority||'','Status':c.status,'Issue':c.issue||'','Resolution':c.resolution||''}));
-  xlsxExport([{name:'Selected Customers',rows:summaryRows},{name:'Call Details',rows:detailRows}],'acenet_selected_customers_'+today());
-}
-
-let _svOrdStockRC=0;
-function addSvOrdStockItem(){
-  const items=D.ac_stock||[];
-  if(!items.length){alert('No stock items available. Please add items from Accounts > Stock.');return;}
-  const r=++_svOrdStockRC;
-  const opts=items.map(i=>`<option value="${i.id}" data-name="${esc(i.name)}" data-qty="${i.qty??0}" data-unit="${esc(i.unit||'Nos')}">${esc(i.name)} (Avail: ${i.qty??0} ${i.unit||'Nos'})</option>`).join('');
-  const row=document.createElement('tr');row.id=`svOrdStockRow${r}`;
-  row.innerHTML=`<td style="font-size:.8em;color:var(--ink4);">${r}</td>
-    <td><select id="svOrdStockItem${r}" style="width:200px;font-size:.82em;" onchange="updateSvOrdStockAvail(${r})"><option value="">-- Select Item --</option>${opts}</select></td>
-    <td id="svOrdStockAvail${r}" style="font-size:.8em;color:var(--green);font-weight:700;">—</td>
-    <td><input type="number" id="svOrdStockQty${r}" style="width:70px;" placeholder="0" min="1" step="1"></td>
-    <td><input type="text" id="svOrdStockNote${r}" placeholder="Purpose / notes" style="width:140px;font-size:.82em;"></td>
-    <td><button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="g('svOrdStockRow${r}').remove()"><i class="fas fa-trash"></i></button></td>`;
-  g('svOrdStockItemsBody').appendChild(row);
-}
-
-function updateSvOrdStockAvail(r){
-  const sel=g(`svOrdStockItem${r}`);if(!sel)return;
-  const opt=sel.selectedOptions[0];
-  const avail=opt?opt.dataset.qty:'—';
-  const avEl=g(`svOrdStockAvail${r}`);
-  if(avEl){avEl.textContent=avail+' '+(opt?.dataset.unit||'');avEl.style.color=parseInt(avail)>0?'var(--green)':'var(--red)';}
-}
-
-function issueStockFromOrder(){
-  const cust=g('svOrdCust')?.value?.trim();
-  if(!cust){alert('Please select a customer before issuing stock.');return;}
-  const rows=[...g('svOrdStockItemsBody').querySelectorAll('tr')];
-  if(!rows.length){alert('Please add at least one stock item to issue.');return;}
-  let issues=[];let errors=[];
-  rows.forEach(row=>{
-    const r=row.id.replace('svOrdStockRow','');
-    const sel=g(`svOrdStockItem${r}`);
-    const qtyEl=g(`svOrdStockQty${r}`);
-    const noteEl=g(`svOrdStockNote${r}`);
-    if(!sel||!sel.value)return;
-    const qty=parseInt(qtyEl?.value)||0;
-    if(qty<=0){errors.push('Invalid qty for '+sel.selectedOptions[0]?.text);return;}
-    const item=D.ac_stock.find(i=>i.id===sel.value);
-    if(!item){errors.push('Item not found');return;}
-    if(qty>item.qty){errors.push(`Only ${item.qty} available for ${item.name}`);return;}
-    issues.push({item,qty,notes:noteEl?.value||''});
-  });
-  if(errors.length){alert('Errors:\n'+errors.join('\n'));return;}
-  if(!issues.length){alert('No valid items to issue.');return;}
-  if(!confirm(`Issue ${issues.length} item(s) to ${cust}?\n\n`+issues.map(x=>`• ${x.item.name}: ${x.qty} ${x.item.unit||'Nos'}`).join('\n'))){return;}
-  if(!D.ac_stock_txns)D.ac_stock_txns=[];
-  issues.forEach(({item,qty,notes})=>{
-    item.qty=(item.qty||0)-qty;
-    item.lastMovement=today();
-    D.ac_stock_txns.push({id:uid(),date:today(),item:item.name,itemId:item.id,type:'out',qty,notes,customer:cust,by:D.currentUser?.name||'Service'});
-  });
-  saveData();hideSvcOrderForm();renderSvcStockView();
-  showSuccessToast(`✓ Stock issued to ${cust} — ${issues.length} item(s)`,'var(--green)');
-}
-
 // ════════════════════════════════════════════════════════════════
-// SERVICE — STOCK ISSUE REQUEST WORKFLOW
+// SERVICE REPORTS
 // ════════════════════════════════════════════════════════════════
-let _sreqRC=0;
-
-function genSreqNo(){
-  const n=(D.svc_stock_reqs||[]).length+1;
-  return 'SREQ-'+new Date().getFullYear()+'-'+String(n).padStart(4,'0');
-}
-
-function showSvcStockReqForm(){
-  const f=g('svcStockReqForm');if(!f)return;
-  f.style.display='block';
-  g('sreqNo').value=genSreqNo();
-  g('sreqDate').value=today();
-  g('sreqCust').value='';
-  g('sreqCallRef').value='';
-  g('sreqNotes').value='';
-  g('sreqItemsBody').innerHTML='';
-  g('sreqEditId').value='';
-  _sreqRC=0;
-  addSreqItem();
-  f.scrollIntoView({behavior:'smooth'});
-}
-
-function hideSvcStockReqForm(){
-  const f=g('svcStockReqForm');if(f)f.style.display='none';
-}
-
-function addSreqItem(){
-  const items=D.ac_stock||[];
-  const r=++_sreqRC;
-  const opts=items.map(i=>`<option value="${i.id}" data-avail="${i.qty??0}" data-unit="${esc(i.unit||'Nos')}">${esc(i.name)} (Avail: ${i.qty??0} ${i.unit||'Nos'})</option>`).join('');
-  const row=document.createElement('tr');row.id=`sreqRow${r}`;
-  row.innerHTML=`
-    <td style="font-size:.8em;color:var(--ink4);">${r}</td>
-    <td><select id="sreqItem${r}" style="min-width:180px;font-size:.82em;" onchange="updateSreqAvail(${r})">
-      <option value="">-- Select Item --</option>${opts}
-    </select></td>
-    <td id="sreqAvail${r}" style="font-size:.82em;font-weight:700;color:var(--green);">—</td>
-    <td><input type="number" id="sreqQty${r}" style="width:70px;" placeholder="0" min="1" step="1"></td>
-    <td><input type="text" id="sreqNote${r}" placeholder="Purpose…" style="min-width:120px;font-size:.82em;"></td>
-    <td><button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="g('sreqRow${r}').remove()"><i class="fas fa-trash"></i></button></td>`;
-  g('sreqItemsBody').appendChild(row);
-}
-
-function updateSreqAvail(r){
-  const sel=g(`sreqItem${r}`);if(!sel||!sel.value)return;
-  const opt=sel.selectedOptions[0];
-  const avEl=g(`sreqAvail${r}`);
-  if(avEl){
-    const avail=parseInt(opt?.dataset.avail)||0;
-    avEl.textContent=avail+' '+(opt?.dataset.unit||'');
-    avEl.style.color=avail>0?'var(--green)':'var(--red)';
-  }
-}
-
-function submitSvcStockRequest(){
-  const date=g('sreqDate').value, cust=g('sreqCust').value.trim();
-  if(!date||!cust){alert('Please fill Date and Customer.');return;}
-  const rows=[...g('sreqItemsBody').querySelectorAll('tr')];
-  if(!rows.length){alert('Please add at least one stock item.');return;}
-  const items=[];const errors=[];
-  rows.forEach(row=>{
-    const r=row.id.replace('sreqRow','');
-    const sel=g(`sreqItem${r}`);
-    const qty=parseInt(g(`sreqQty${r}`)?.value)||0;
-    const note=g(`sreqNote${r}`)?.value||'';
-    if(!sel||!sel.value)return;
-    const stockItem=D.ac_stock?.find(i=>i.id===sel.value);
-    if(!stockItem){errors.push('Item not found');return;}
-    if(qty<=0){errors.push(`Enter valid qty for ${stockItem.name}`);return;}
-    items.push({itemId:stockItem.id,itemName:stockItem.name,unit:stockItem.unit||'Nos',availQty:stockItem.qty??0,reqQty:qty,notes:note});
-  });
-  if(errors.length){alert('Errors:\n'+errors.join('\n'));return;}
-  if(!items.length){alert('No valid items.');return;}
-
-  showConfirm({
-    icon:'ci-send',iconClass:'fa-boxes-stacked',
-    title:'Send Stock Request to Accounts?',
-    msg:'This request will be sent to Accounts for approval. You can do the outward entry after approval.',
-    details:[
-      {k:'Request No',v:g('sreqNo').value},
-      {k:'Date',v:date},
-      {k:'Customer',v:cust},
-      {k:'Items',v:items.length+' item(s)'},
-      {k:'Call Ref',v:g('sreqCallRef').value||'—'}
-    ],
-    btnLabel:'Send to Accounts',btnColor:'var(--green)',
-    onOk:()=>{
-      if(!D.svc_stock_reqs)D.svc_stock_reqs=[];
-      D.svc_stock_reqs.push({
-        id:uid(),no:g('sreqNo').value,date,customer:cust,
-        callRef:g('sreqCallRef').value||'',notes:g('sreqNotes').value||'',
-        items,status:'pending',
-        requestedBy:D.currentUser?.name||'Service',
-        requestedAt:new Date().toISOString(),
-        approvedBy:'',approvedAt:'',rejectedReason:''
-      });
-      hideSvcStockReqForm();
-      saveData('new_stock_req');
-      renderSvcStockRequests();
-      showSuccessToast('✓ Stock request sent to Accounts for approval!','var(--green)');
-    }
-  });
-}
-
-function renderSvcStockRequests(){
-  const reqs=D.svc_stock_reqs||[];
-  const pending=reqs.filter(r=>r.status==='pending').reverse();
-  const approved=reqs.filter(r=>r.status==='approved').reverse();
-
-  // Badge
-  const badge=g('svcStockApprovedBadge');
-  if(badge){badge.textContent=approved.length;badge.style.display=approved.length?'inline':'none';}
-
-  // Approved list
-  const appEl=g('svcStockApprovedList');
-  if(appEl){
-    if(!approved.length){
-      appEl.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No approved requests waiting. All issued!</p></div>';
-    } else {
-      appEl.innerHTML=approved.map(req=>svcStockReqCard(req,'approved')).join('');
-    }
-  }
-
-  // Pending list
-  const pendEl=g('svcStockPendingList');
-  if(pendEl){
-    if(!pending.length){
-      pendEl.innerHTML='<div class="empty"><i class="fas fa-clock"></i><p>No pending requests. Create a new stock request above.</p></div>';
-    } else {
-      pendEl.innerHTML=pending.map(req=>svcStockReqCard(req,'pending')).join('');
-    }
-  }
-}
-
-function svcStockReqCard(req,context){
-  const isApproved=req.status==='approved';
-  const borderColor=isApproved?'var(--green)':req.status==='rejected'?'var(--red)':'var(--amber)';
-  const statusBadge=isApproved
-    ?`<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:3px 10px;border-radius:20px;font-size:.71em;font-weight:700;"><i class="fas fa-check-circle"></i> Approved</span>`
-    :req.status==='rejected'
-    ?`<span style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;padding:3px 10px;border-radius:20px;font-size:.71em;font-weight:700;"><i class="fas fa-times-circle"></i> Rejected</span>`
-    :`<span style="background:#fef9c3;color:#92400e;border:1px solid #fcd34d;padding:3px 10px;border-radius:20px;font-size:.71em;font-weight:700;"><i class="fas fa-clock"></i> Pending Approval</span>`;
-  return `<div class="conv-card" style="border-left:3px solid ${borderColor};margin-bottom:8px;">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <div>
-        <div style="font-weight:800;font-size:.88em;color:var(--ink);">${esc(req.no)} ${statusBadge}</div>
-        <div style="font-size:.75em;color:var(--ink3);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;">
-          <span><i class="fas fa-calendar" style="margin-right:3px;"></i>${req.date}</span>
-          <span><i class="fas fa-building" style="margin-right:3px;"></i>${esc(req.customer)}</span>
-          ${req.callRef?`<span><i class="fas fa-headset" style="margin-right:3px;"></i>${esc(req.callRef)}</span>`:''}
-          <span><i class="fas fa-user" style="margin-right:3px;"></i>${esc(req.requestedBy||'—')}</span>
-        </div>
-        ${req.notes?`<div style="font-size:.78em;color:var(--ink3);margin-top:4px;">${esc(req.notes)}</div>`:''}
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        ${isApproved&&context==='approved'?`<button class="btn btn-sm" style="background:var(--svc);color:#fff;" onclick="doSvcStockOutward('${req.id}')"><i class="fas fa-arrow-up"></i> Do Outward Entry</button>`:''}
-      </div>
-    </div>
-    <div style="margin-top:9px;overflow-x:auto;">
-      <table class="rpt-table" style="font-size:.8em;">
-        <thead><tr><th>Item</th><th>Available</th><th>Requested Qty</th><th>Notes</th></tr></thead>
-        <tbody>${(req.items||[]).map(it=>`<tr>
-          <td><strong>${esc(it.itemName)}</strong></td>
-          <td style="color:${it.availQty>0?'var(--green)':'var(--red)'};">${it.availQty} ${it.unit}</td>
-          <td class="num" style="font-weight:700;color:var(--svc);">${it.reqQty} ${it.unit}</td>
-          <td style="color:var(--ink3);">${esc(it.notes||'—')}</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>
-    ${isApproved?`<div style="font-size:.74em;color:var(--green);margin-top:7px;"><i class="fas fa-check" style="margin-right:4px;"></i>Approved by <strong>${esc(req.approvedBy||'Accounts')}</strong> on ${req.approvedAt?new Date(req.approvedAt).toLocaleDateString('en-IN'):req.date}</div>`:''}
-    ${req.status==='rejected'&&req.rejectedReason?`<div style="font-size:.74em;color:var(--red);margin-top:7px;"><i class="fas fa-times" style="margin-right:4px;"></i>Rejection reason: ${esc(req.rejectedReason)}</div>`:''}
-  </div>`;
-}
-
-function doSvcStockOutward(reqId){
-  const req=D.svc_stock_reqs.find(r=>r.id===reqId);if(!req)return;
-  showConfirm({
-    icon:'ci-send',iconClass:'fa-arrow-up',
-    title:'Confirm Outward Entry?',
-    msg:`Stock will be deducted from inventory and issued to ${req.customer}.`,
-    details:[
-      {k:'Request',v:req.no},{k:'Customer',v:req.customer},
-      {k:'Items',v:req.items.length+' item(s)'},
-      {k:'Date',v:today()}
-    ],
-    btnLabel:'Confirm Outward',btnColor:'var(--svc)',
-    onOk:()=>{
-      const errors=[];
-      req.items.forEach(it=>{
-        const item=D.ac_stock?.find(i=>i.id===it.itemId);
-        if(!item){errors.push(`Item ${it.itemName} not found in stock`);return;}
-        if(it.reqQty>(item.qty||0)){errors.push(`Insufficient stock for ${it.itemName}: need ${it.reqQty}, have ${item.qty||0}`);return;}
-      });
-      if(errors.length){alert('Cannot complete outward:\n'+errors.join('\n'));return;}
-      if(!D.ac_stock_txns)D.ac_stock_txns=[];
-      req.items.forEach(it=>{
-        const item=D.ac_stock.find(i=>i.id===it.itemId);
-        item.qty=(item.qty||0)-it.reqQty;
-        item.lastMovement=today();
-        D.ac_stock_txns.push({id:uid(),date:today(),item:it.itemName,itemId:it.itemId,type:'out',qty:it.reqQty,notes:it.notes||req.notes||'',customer:req.customer,ref:req.no,by:D.currentUser?.name||'Service'});
-      });
-      req.status='issued';req.issuedAt=new Date().toISOString();req.issuedBy=D.currentUser?.name||'Service';
-      saveData('stock_issued');renderSvcStockView();renderSvcStockRequests();
-      showSuccessToast(`✓ Outward entry done — stock issued to ${req.customer}`,'var(--svc)');
-    }
-  });
-}
-
-// ── ACCOUNTS: Render & Approve Stock Requests ──
-function renderAccStockRequests(){
-  const reqs=(D.svc_stock_reqs||[]).filter(r=>r.status==='pending').reverse();
-  const el=g('accStockReqList');if(!el)return;
-  const badge=g('accStockReqBadge');
-  if(badge){badge.textContent=reqs.length;badge.style.display=reqs.length?'inline':'none';}
-  if(!reqs.length){
-    el.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No pending stock requests. All cleared!</p></div>';
-    return;
-  }
-  el.innerHTML=reqs.map(req=>`
-    <div class="conv-card" style="border-left:3px solid var(--amber);margin-bottom:8px;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <div>
-          <div style="font-weight:800;font-size:.88em;color:var(--ink);">${esc(req.no)} <span style="background:#fef9c3;color:#92400e;border:1px solid #fcd34d;padding:2px 8px;border-radius:12px;font-size:.73em;font-weight:700;">⏳ Pending</span></div>
-          <div style="font-size:.75em;color:var(--ink3);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;">
-            <span><i class="fas fa-calendar" style="margin-right:3px;"></i>${req.date}</span>
-            <span><i class="fas fa-building" style="margin-right:3px;"></i>${esc(req.customer)}</span>
-            ${req.callRef?`<span><i class="fas fa-headset" style="margin-right:3px;"></i>${esc(req.callRef)}</span>`:''}
-            <span><i class="fas fa-user" style="margin-right:3px;"></i>Requested by: ${esc(req.requestedBy||'Service')}</span>
-          </div>
-          ${req.notes?`<div style="font-size:.78em;color:var(--ink3);margin-top:3px;">${esc(req.notes)}</div>`:''}
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="approveStockRequest('${req.id}')"><i class="fas fa-check"></i> Approve</button>
-          <button class="btn btn-sm" style="background:var(--red);color:#fff;" onclick="rejectStockRequest('${req.id}')"><i class="fas fa-times"></i> Reject</button>
-        </div>
-      </div>
-      <div style="margin-top:9px;overflow-x:auto;">
-        <table class="rpt-table" style="font-size:.8em;">
-          <thead><tr><th>Item</th><th>Current Stock</th><th>Requested Qty</th><th>Sufficient?</th><th>Notes</th></tr></thead>
-          <tbody>${(req.items||[]).map(it=>{
-            const item=D.ac_stock?.find(i=>i.id===it.itemId);
-            const curQty=item?.qty??it.availQty;
-            const ok=curQty>=it.reqQty;
-            return `<tr>
-              <td><strong>${esc(it.itemName)}</strong></td>
-              <td style="font-weight:700;color:${curQty>0?'var(--green)':'var(--red)'};">${curQty} ${it.unit}</td>
-              <td class="num" style="font-weight:700;color:var(--svc);">${it.reqQty} ${it.unit}</td>
-              <td>${ok?'<span style="background:#dcfce7;color:#166534;border-radius:6px;padding:2px 8px;font-size:.8em;font-weight:700;">✓ Yes</span>':'<span style="background:#fee2e2;color:#991b1b;border-radius:6px;padding:2px 8px;font-size:.8em;font-weight:700;">✗ Insufficient</span>'}</td>
-              <td style="color:var(--ink3);">${esc(it.notes||'—')}</td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>
-    </div>`).join('');
-}
-
-function approveStockRequest(reqId){
-  const req=D.svc_stock_reqs?.find(r=>r.id===reqId);if(!req)return;
-  showConfirm({
-    icon:'ci-send',iconClass:'fa-check',
-    title:'Approve Stock Request?',
-    msg:`Approve ${req.no} for ${req.customer}? Service team will be notified to do the outward entry.`,
-    details:[{k:'Request',v:req.no},{k:'Customer',v:req.customer},{k:'Items',v:req.items.length+' item(s)'}],
-    btnLabel:'Approve Request',btnColor:'var(--green)',
-    onOk:()=>{
-      req.status='approved';
-      req.approvedBy=D.currentUser?.name||'Accounts';
-      req.approvedAt=new Date().toISOString();
-      saveData('stock_approved');renderAccStockRequests();renderStock();
-      showSuccessToast(`✓ Stock request ${req.no} approved!`,'var(--green)');
-    }
-  });
-}
-
-function rejectStockRequest(reqId){
-  const req=D.svc_stock_reqs?.find(r=>r.id===reqId);if(!req)return;
-  const reason=prompt(`Rejection reason for ${req.no}:\n(Will be shown to service team)`);
-  if(reason===null)return;
-  req.status='rejected';
-  req.rejectedReason=reason||'Rejected by Accounts';
-  req.rejectedBy=D.currentUser?.name||'Accounts';
-  req.rejectedAt=new Date().toISOString();
-  saveData();renderAccStockRequests();
-  showSuccessToast(`Stock request ${req.no} rejected.`,'var(--red)');
-}
-
-
 let _svcRptTab = 'engineer';
 
-function exportCustomerWiseReport(){
+function exportCustomerWiseReport(selectedOnly){
+  selectedOnly = selectedOnly===true;
   const calls=getSvcRptCalls();
+  let selectedCusts=null;
+  if(selectedOnly){
+    selectedCusts=new Set([...document.querySelectorAll('.cust-chk:checked')].map(c=>c.dataset.cust));
+    if(!selectedCusts.size){alert('Please select at least one customer to export.');return;}
+  }
   const custMap={};
   calls.forEach(c=>{
     const cu=c.customer||'Unknown';
-    if(!custMap[cu])custMap[cu]={Customer:cu,Total:0,Completed:0,Pending:0,'In Progress':0,Escalated:0,'AMC Calls':0,'ASC Calls':0,'Per Calls':0,Products:new Set()};
+    if(selectedOnly&&!selectedCusts.has(cu)) return;
+    if(!custMap[cu])custMap[cu]={Customer:cu,Total:0,Completed:0,Pending:0,'In Progress':0,Escalated:0,'AMC':0,'ASC':0,'Per Call':0,Products:new Set()};
     custMap[cu].Total++;
     if(c.status==='completed')custMap[cu].Completed++;
     if(c.status==='pending')custMap[cu].Pending++;
     if(c.status==='in-progress')custMap[cu]['In Progress']++;
     if(c.status==='escalated')custMap[cu].Escalated++;
-    if((c.callType||'AMC')==='AMC')custMap[cu]['AMC Calls']++;
-    else if(c.callType==='ASC')custMap[cu]['ASC Calls']++;
-    else custMap[cu]['Per Calls']++;
+    const ct=c.callType||'AMC';
+    if(ct==='AMC')custMap[cu].AMC++;
+    else if(ct==='ASC')custMap[cu].ASC++;
+    else custMap[cu]['Per Call']++;
     if(c.product)custMap[cu].Products.add(c.product);
   });
   const summaryRows=Object.values(custMap).sort((a,b)=>b.Total-a.Total).map(r=>({
-    ...r,Products:[...r.Products].join(', ')||'—','Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'
+    ...r,Products:[...r.Products].join(', ')||'—',
+    'Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'
   }));
-  // Detail rows per customer
-  const detailRows=calls.map(c=>({'Customer':c.customer||'Unknown','Call ID':c.no,'Date':c.date||'','Engineer':c.engineer||'','Call Type':c.callType||'AMC','Product':c.product||'','Priority':c.priority||'','Status':c.status,'Issue':c.issue||'','Resolution':c.resolution||''}));
-  xlsxExport([
-    {name:'Customer Summary',rows:summaryRows},
-    {name:'All Calls by Customer',rows:detailRows}
-  ],'acenet_customer_report_'+today());
+  const filtCalls=selectedOnly?calls.filter(c=>selectedCusts.has(c.customer||'Unknown')):calls;
+  const detailRows=filtCalls.map(c=>({'Customer':c.customer||'Unknown','Call ID':c.no,'Date':c.date||'','Engineer':c.engineer||'','Call Type':c.callType||'AMC','Product':c.product||'','Priority':c.priority||'Normal','Status':c.status,'Issue':c.issue||'','Resolution':c.resolution||''}));
+  xlsxExport([{name:'Customer Summary',rows:summaryRows},{name:'Calls Detail',rows:detailRows}],
+    'acenet_cust_'+(selectedOnly?'selected_':'')+today());
 }
 
 function clearSvcRptFilters(){
@@ -4598,27 +4203,37 @@ function renderRptByCustomer(calls){
   const map={};
   calls.forEach(c=>{
     const cu=c.customer||'Unknown';
-    if(!map[cu]) map[cu]={name:cu,total:0,completed:0,pending:0,escalated:0,products:new Set()};
+    if(!map[cu]) map[cu]={name:cu,total:0,completed:0,pending:0,escalated:0,inprog:0,products:new Set(),callTypes:new Set()};
     map[cu].total++;
     if(c.status==='completed') map[cu].completed++;
     if(c.status==='pending') map[cu].pending++;
     if(c.status==='escalated') map[cu].escalated++;
+    if(c.status==='in-progress') map[cu].inprog++;
     if(c.product) map[cu].products.add(c.product);
+    map[cu].callTypes.add(c.callType||'AMC');
   });
   const rows=Object.values(map).sort((a,b)=>b.total-a.total);
   if(!rows.length){g('svcRptBody').innerHTML='<div class="empty"><i class="fas fa-building"></i><p>No data</p></div>';return;}
   g('svcRptBody').innerHTML=`
-    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <label style="font-size:.8em;font-weight:600;color:var(--ink3);display:flex;align-items:center;gap:5px;cursor:pointer;">
-        <input type="checkbox" id="custRptSelectAll" onchange="toggleAllCustRptRows(this.checked)" style="width:14px;height:14px;accent-color:var(--svc);"> Select All
-      </label>
-      <button class="btn btn-outline btn-sm" onclick="exportSelectedCustomers()"><i class="fas fa-file-excel"></i> Export Selected</button>
-      <button class="btn btn-outline btn-sm" onclick="exportCustomerWiseReport()"><i class="fas fa-file-excel"></i> Export All</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.8em;font-weight:600;cursor:pointer;">
+          <input type="checkbox" id="custSelectAll" onchange="toggleAllCustRows(this)" style="width:15px;height:15px;accent-color:var(--svc);"> Select All
+        </label>
+        <span id="custSelCount" style="font-size:.75em;color:var(--ink3);font-weight:600;"></span>
+      </div>
+      <div style="display:flex;gap:7px;">
+        <button class="btn btn-outline btn-sm" onclick="exportCustomerWiseReport(false)"><i class="fas fa-file-excel"></i> Export All</button>
+        <button class="btn btn-sm" style="background:var(--svc);color:#fff;" onclick="exportCustomerWiseReport(true)"><i class="fas fa-file-excel"></i> Export Selected</button>
+      </div>
     </div>
-    <div style="overflow-x:auto;"><table class="rpt-table">
-    <thead><tr><th style="width:36px;"><input type="checkbox" id="custRptHdrChk" onchange="toggleAllCustRptRows(this.checked)" style="cursor:pointer;accent-color:var(--svc);"></th><th>#</th><th>Customer</th><th>Total Calls</th><th>Completed</th><th>Pending</th><th>Escalated</th><th>Done %</th><th>Products</th></tr></thead>
-    <tbody>${rows.map((r,i)=>`<tr>
-      <td><input type="checkbox" class="cust-rpt-chk" data-customer="${esc(r.name)}" style="width:14px;height:14px;accent-color:var(--svc);cursor:pointer;"></td>
+    <div style="overflow-x:auto;"><table class="rpt-table" id="custRptTable">
+    <thead><tr>
+      <th style="width:36px;"><input type="checkbox" id="custHdrChk" onchange="toggleAllCustRows(this)" style="width:14px;height:14px;accent-color:var(--svc);"></th>
+      <th>#</th><th>Customer</th><th>Total</th><th>Completed</th><th>Pending</th><th>Escalated</th><th>Done %</th><th>Call Types</th><th>Products</th>
+    </tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr style="cursor:pointer;" onclick="toggleCustRow(${i},this)">
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="cust-chk" data-cust="${esc(r.name)}" onchange="updateCustSelCount()" style="width:14px;height:14px;accent-color:var(--svc);"></td>
       <td style="color:var(--ink4);font-size:.75em;">${i+1}</td>
       <td><strong>${esc(r.name)}</strong></td>
       <td class="num">${r.total}</td>
@@ -4626,11 +4241,26 @@ function renderRptByCustomer(calls){
       <td class="num" style="color:var(--amber);">${r.pending}</td>
       <td class="num" style="color:var(--red);">${r.escalated}</td>
       <td class="num"><strong>${r.total?Math.round((r.completed/r.total)*100):0}%</strong></td>
+      <td style="font-size:.72em;">${[...r.callTypes].map(ct=>`<span class="call-type-badge-${ct==='AMC'?'amc':ct==='ASC'?'asc':'per'}">${ct}</span>`).join(' ')}</td>
       <td style="font-size:.75em;color:var(--ink3);">${[...r.products].slice(0,3).join(', ')||'—'}</td>
     </tr>`).join('')}</tbody>
   </table></div>`;
 }
-
+function toggleCustRow(i,tr){const chk=tr.querySelector('.cust-chk');if(chk){chk.checked=!chk.checked;updateCustSelCount();}}
+function toggleAllCustRows(src){
+  document.querySelectorAll('.cust-chk').forEach(c=>c.checked=src.checked);
+  updateCustSelCount();
+  const hdr=g('custHdrChk');const all=g('custSelectAll');
+  if(hdr&&hdr!==src)hdr.checked=src.checked;
+  if(all&&all!==src)all.checked=src.checked;
+}
+function updateCustSelCount(){
+  const sel=document.querySelectorAll('.cust-chk:checked').length;
+  const tot=document.querySelectorAll('.cust-chk').length;
+  const el=g('custSelCount');if(el)el.textContent=sel?sel+' of '+tot+' selected':'';
+  const hdr=g('custHdrChk');if(hdr)hdr.checked=sel===tot&&tot>0;
+  const all=g('custSelectAll');if(all)all.checked=sel===tot&&tot>0;
+}
 function renderRptByCallType(calls,{total,amc,asc,perCall}){
   const types=[
     {label:'AMC Call',key:'AMC',count:amc,color:'#0e7490',bg:'#cffafe',badge:'amc'},
@@ -5200,7 +4830,7 @@ function viewConvDraft(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   const refs=c.callRefs||c.callRef||'—';
   const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
-  const callDetails=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<div style="font-size:.78em;padding:7px 10px;background:#f8fafc;border-radius:8px;border-left:3px solid var(--svc);display:flex;flex-direction:column;gap:2px;"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><strong style="color:var(--svc);">${esc(sc.no)}</strong><span style="font-size:.85em;font-weight:700;color:var(--ink);">${esc(sc.customer)}</span>${sc.callType?`<span style="background:#e0f2fe;color:#0369a1;border-radius:5px;padding:1px 6px;font-size:.82em;font-weight:700;">${esc(sc.callType)}</span>`:''}</div><div style="color:var(--ink2);margin-top:1px;">${esc(sc.issue||'—')}</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;"><span style="color:var(--ink4);font-size:.88em;">${sc.date}</span>${sc.location?`<span style="color:var(--ink4);font-size:.88em;"><i class="fas fa-location-dot" style="margin-right:3px;"></i>${esc(sc.location)}</span>`:''}</div></div>`:''}).join('');
+  const callDetails=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<div style="font-size:.78em;padding:5px 9px;background:#f8fafc;border-radius:6px;border-left:3px solid var(--svc);"><strong>${esc(sc.no)}</strong> — ${esc(sc.customer)} — ${esc(sc.issue||'')} <span style="color:var(--ink3);">(${sc.date})</span></div>`:''}).join('');
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="draftViewModal" onclick="if(event.target.id==='draftViewModal')this.remove();">
     <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
       <div style="background:linear-gradient(135deg,var(--svc),#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
@@ -5213,7 +4843,7 @@ function viewConvDraft(id){
           <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Engineer</div><div style="font-weight:700;font-size:.85em;">${esc(c.engineer)}</div></div>
           <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Calls</div><div style="font-weight:700;font-size:.85em;">${esc(refs)}</div></div>
         </div>
-        ${callDetails?`<div style="margin-bottom:12px;"><div style="font-size:.7em;font-weight:800;text-transform:uppercase;color:var(--svc);margin-bottom:6px;letter-spacing:.5px;"><i class="fas fa-list-check" style="margin-right:5px;"></i>Call Details</div><div style="display:flex;flex-direction:column;gap:5px;">${callDetails}</div></div>`:''}
+        ${callDetails?`<div style="margin-bottom:12px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:5px;">Call Details</div><div style="display:flex;flex-direction:column;gap:4px;">${callDetails}</div></div>`:''}
         <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
           <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;">Expense Breakdown</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
@@ -5224,7 +4854,6 @@ function viewConvDraft(id){
           </div>
         </div>
         ${c.remarks?`<div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">${esc(c.remarks)}</div>`:''}
-        <div style="font-size:.72em;color:var(--ink4);margin-bottom:12px;padding:7px 10px;background:#f8fafc;border-radius:7px;border:1px solid var(--line);">Generated from: ${esc(refs)}</div>
         <div style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="btn btn-outline btn-sm" onclick="g('draftViewModal').remove();editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
           <button class="btn btn-sm" style="background:var(--svc);color:#fff;font-weight:700;" onclick="g('draftViewModal').remove();submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit to Accounts</button>
@@ -5596,11 +5225,6 @@ function genSvOrdNo(){return 'SORD-'+new Date().getFullYear()+'-'+String((D.orde
 function setOrdCallType(type){
   if(g('svOrdCallType')) g('svOrdCallType').value=type;
   document.querySelectorAll('#svcOrderForm .call-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
-  const isStock=type==='Stock';
-  if(g('svOrdStockPanel')) g('svOrdStockPanel').style.display=isStock?'block':'none';
-  if(g('svOrdRegularPanel')) g('svOrdRegularPanel').style.display=isStock?'none':'block';
-  if(g('svOrdSendBtn')) g('svOrdSendBtn').style.display=isStock?'none':'inline-flex';
-  if(g('svOrdIssueStockBtn')) g('svOrdIssueStockBtn').style.display=isStock?'inline-flex':'none';
 }
 function showSvcOrderForm(){
   g('svcOrderForm').style.display='block';
@@ -5614,8 +5238,6 @@ function showSvcOrderForm(){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=false;
-  if(g('svOrdStockItemsBody'))g('svOrdStockItemsBody').innerHTML='';
-  _svOrdStockRC=0;
   setOrdCallType('AMC');
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
   addSvOrdItem();
@@ -6591,6 +6213,223 @@ function mgmtViewTab(tab){
   renderMgmtView();
 }
 
+// ════════════════════════════════════════════════════════════════
+// MANAGEMENT REPORTS
+// ════════════════════════════════════════════════════════════════
+let _mgmtRptTab='svc-summary';
+function switchMgmtRptTab(tab){
+  _mgmtRptTab=tab;
+  document.querySelectorAll('#mgmtRptTabs .rpt-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  renderMgmtReports();
+}
+function renderMgmtReports(){
+  const body=g('mgmtRptBody');if(!body)return;
+  if(_mgmtRptTab==='svc-summary') renderMgmtSvcSummary();
+  else if(_mgmtRptTab==='conv-summary') renderMgmtConvSummary();
+  else if(_mgmtRptTab==='incentive-summary') renderMgmtIncSummary();
+  else if(_mgmtRptTab==='acc-summary') renderMgmtAccSummary();
+  else if(_mgmtRptTab==='stock-summary') renderMgmtStockSummary();
+}
+
+function renderMgmtSvcSummary(){
+  const calls=D.svc_calls||[];
+  const byEng={};
+  calls.forEach(c=>{
+    const e=c.engineer||'Unknown';
+    if(!byEng[e])byEng[e]={name:e,total:0,completed:0,pending:0,amc:0,asc:0,per:0};
+    byEng[e].total++;
+    if(c.status==='completed')byEng[e].completed++;
+    if(c.status==='pending')byEng[e].pending++;
+    const ct=c.callType||'AMC';
+    if(ct==='AMC')byEng[e].amc++;else if(ct==='ASC')byEng[e].asc++;else byEng[e].per++;
+  });
+  const engs=Object.values(byEng).sort((a,b)=>b.total-a.total);
+  const total=calls.length,comp=calls.filter(c=>c.status==='completed').length;
+  const amc=calls.filter(c=>(c.callType||'AMC')==='AMC').length;
+  const asc=calls.filter(c=>c.callType==='ASC').length;
+  const per=calls.filter(c=>c.callType==='Per Call').length;
+  g('mgmtRptBody').innerHTML=`
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Calls</div><div class="stat-value">${total}</div></div>
+      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Completed</div><div class="stat-value">${comp}</div></div>
+      <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">AMC</div><div class="stat-value">${amc}</div></div>
+      <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">ASC</div><div class="stat-value">${asc}</div></div>
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Per Call</div><div class="stat-value">${per}</div></div>
+      <div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Done %</div><div class="stat-value">${total?Math.round(comp/total*100):0}%</div></div>
+    </div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Engineer</th><th>Total</th><th>Completed</th><th>Pending</th><th>AMC</th><th>ASC</th><th>Per Call</th><th>Done %</th></tr></thead>
+      <tbody>${engs.map(e=>`<tr>
+        <td><strong>${esc(e.name)}</strong></td><td class="num">${e.total}</td>
+        <td class="num" style="color:var(--green);">${e.completed}</td>
+        <td class="num" style="color:var(--amber);">${e.pending}</td>
+        <td class="num"><span class="call-type-badge-amc">${e.amc}</span></td>
+        <td class="num"><span class="call-type-badge-asc">${e.asc}</span></td>
+        <td class="num"><span class="call-type-badge-per">${e.per}</span></td>
+        <td class="num"><strong>${e.total?Math.round(e.completed/e.total*100):0}%</strong></td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+      <button class="btn btn-outline btn-sm" onclick="exportMgmtSvcExcel()"><i class="fas fa-file-excel"></i> Export</button>
+    </div>`;
+}
+
+function renderMgmtConvSummary(){
+  const convs=D.svc_conveyance||[];
+  const byEng={};
+  convs.forEach(c=>{
+    const e=c.engineer||'Unknown';
+    if(!byEng[e])byEng[e]={name:e,claims:0,total:0,approved:0,pending:0,rejected:0};
+    byEng[e].claims++;byEng[e].total+=(c.totalAmt||0);
+    if(c.status==='approved')byEng[e].approved+=(c.totalAmt||0);
+    if(c.status==='pending')byEng[e].pending+=(c.totalAmt||0);
+    if(c.status==='rejected')byEng[e].rejected+=(c.totalAmt||0);
+  });
+  const engs=Object.values(byEng).sort((a,b)=>b.total-a.total);
+  const totalAmt=convs.reduce((s,c)=>s+(c.totalAmt||0),0);
+  const approvedAmt=convs.filter(c=>c.status==='approved').reduce((s,c)=>s+(c.totalAmt||0),0);
+  const pendingCnt=convs.filter(c=>c.status==='pending').length;
+  g('mgmtRptBody').innerHTML=`
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Claims</div><div class="stat-value">${convs.length}</div></div>
+      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Total Amount</div><div class="stat-value">${fmt(totalAmt)}</div></div>
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pendingCnt}</div></div>
+      <div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approvedAmt)}</div></div>
+    </div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Engineer</th><th>Claims</th><th>Total (₹)</th><th>Approved (₹)</th><th>Pending (₹)</th><th>Rejected (₹)</th></tr></thead>
+      <tbody>${engs.map(e=>`<tr>
+        <td><strong>${esc(e.name)}</strong></td><td class="num">${e.claims}</td>
+        <td class="num">${fmt(e.total)}</td>
+        <td class="num" style="color:var(--green);">${fmt(e.approved)}</td>
+        <td class="num" style="color:var(--amber);">${fmt(e.pending)}</td>
+        <td class="num" style="color:var(--red);">${fmt(e.rejected)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div style="margin-top:16px;"><div class="sdiv">All Conveyance Claims</div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Calls</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody>${convs.sort((a,b)=>b.date>a.date?1:-1).map(c=>`<tr>
+        <td><strong style="color:var(--svc);">${esc(c.no)}</strong></td>
+        <td style="font-size:.78em;">${c.date}</td><td>${esc(c.engineer)}</td>
+        <td style="font-size:.75em;color:var(--ink3);">${esc(c.callRefs||c.callRef||'—')}</td>
+        <td class="num">${fmt(c.travelAmt)}</td><td class="num">${fmt(c.foodAmt)}</td>
+        <td class="num">${fmt(c.otherAmt)}</td>
+        <td class="num" style="font-weight:800;">${fmt(c.totalAmt)}</td>
+        <td><span style="background:${c.status==='approved'?'#dcfce7':c.status==='rejected'?'#fee2e2':'#fef9c3'};color:${c.status==='approved'?'#166534':c.status==='rejected'?'#991b1b':'#92400e'};border-radius:6px;padding:2px 8px;font-size:.72em;font-weight:700;">${c.status}</span></td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
+}
+
+function renderMgmtIncSummary(){
+  const incs=D.svc_incentives||[];
+  const byEng={};
+  incs.forEach(e=>{
+    const n=e.engineerName||'Unknown';
+    if(!byEng[n])byEng[n]={name:n,count:0,profit:0,approved:0,pending:0,mgmtRev:0};
+    byEng[n].count++;byEng[n].profit+=(e.profit||0);
+    if(e.status==='approved')byEng[n].approved+=(e.approvedAmt||0);
+    if(e.status==='pending'||e.status==='draft')byEng[n].pending++;
+    if(e.status==='mgmt-review')byEng[n].mgmtRev++;
+  });
+  const engs=Object.values(byEng).sort((a,b)=>b.profit-a.profit);
+  const totalProfit=incs.reduce((s,e)=>s+(e.profit||0),0);
+  const totalInc=incs.filter(e=>e.status==='approved').reduce((s,e)=>s+(e.approvedAmt||0),0);
+  const pendMgmt=incs.filter(e=>e.status==='mgmt-review').length;
+  g('mgmtRptBody').innerHTML=`
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Entries</div><div class="stat-value">${incs.length}</div></div>
+      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Total P/L</div><div class="stat-value" style="font-size:.85em;">${fmt(totalProfit)}</div></div>
+      <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">Incentive Paid</div><div class="stat-value" style="font-size:.85em;">${fmt(totalInc)}</div></div>
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">For Review</div><div class="stat-value">${pendMgmt}</div></div>
+    </div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Engineer</th><th>Entries</th><th>Total P/L</th><th>Incentive Paid</th><th>Pending</th><th>For Review</th></tr></thead>
+      <tbody>${engs.map(e=>`<tr>
+        <td><strong>${esc(e.name)}</strong></td><td class="num">${e.count}</td>
+        <td class="num" style="color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td>
+        <td class="num" style="color:#7c3aed;">${fmt(e.approved)}</td>
+        <td class="num" style="color:var(--amber);">${e.pending}</td>
+        <td class="num" style="color:var(--red);">${e.mgmtRev}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+function renderMgmtAccSummary(){
+  const invs=D.ac_invoices||[];
+  const total=invs.reduce((s,i)=>s+(i.total||0),0);
+  const collected=invs.reduce((s,i)=>s+getPayd(i.id),0);
+  const outstanding=total-collected;
+  const overdue=invs.filter(i=>i.dueDate&&i.dueDate<today()&&getOut(i.id)>0).reduce((s,i)=>s+getOut(i.id),0);
+  const pendOrd=(D.orders||[]).filter(o=>o.status==='pending').length;
+  g('mgmtRptBody').innerHTML=`
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Invoiced</div><div class="stat-value" style="font-size:.8em;">${fmt(total)}</div></div>
+      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Collected</div><div class="stat-value" style="font-size:.8em;">${fmt(collected)}</div></div>
+      <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Outstanding</div><div class="stat-value" style="font-size:.8em;">${fmt(outstanding)}</div></div>
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Overdue</div><div class="stat-value" style="font-size:.8em;">${fmt(overdue)}</div></div>
+      <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Pending Orders</div><div class="stat-value">${pendOrd}</div></div>
+    </div>
+    <div class="sdiv">Customer Outstanding</div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Customer</th><th>Invoiced</th><th>Collected</th><th>Outstanding</th></tr></thead>
+      <tbody>${[...new Set(invs.map(i=>i.customer))].map(cu=>{
+        const cuInvs=invs.filter(i=>i.customer===cu);
+        const cuTotal=cuInvs.reduce((s,i)=>s+(i.total||0),0);
+        const cuColl=cuInvs.reduce((s,i)=>s+getPayd(i.id),0);
+        const cuOut=cuTotal-cuColl;
+        return cuOut>0?`<tr><td><strong>${esc(cu)}</strong></td><td class="num">${fmt(cuTotal)}</td><td class="num" style="color:var(--green);">${fmt(cuColl)}</td><td class="num" style="color:var(--red);font-weight:800;">${fmt(cuOut)}</td></tr>`:'';
+      }).join('')}</tbody>
+    </table></div>`;
+}
+
+function renderMgmtStockSummary(){
+  const items=D.stock_items||[];
+  const txns=D.stock_txns||[];
+  const total=items.length,inStock=items.filter(i=>i.qty>(i.reorder||0)).length;
+  const low=items.filter(i=>i.qty>0&&i.qty<=(i.reorder||0)).length;
+  const out=items.filter(i=>i.qty===0).length;
+  const recentTxns=txns.slice().sort((a,b)=>b.date>a.date?1:-1).slice(0,20);
+  g('mgmtRptBody').innerHTML=`
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Items</div><div class="stat-value">${total}</div></div>
+      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">In Stock</div><div class="stat-value">${inStock}</div></div>
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Low Stock</div><div class="stat-value">${low}</div></div>
+      <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Out of Stock</div><div class="stat-value">${out}</div></div>
+    </div>
+    <div class="sdiv">Stock Levels</div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Item</th><th>Category</th><th>Type</th><th>Stock</th><th>Reorder</th><th>Status</th></tr></thead>
+      <tbody>${items.map(i=>{
+        const isOut=i.qty===0,isLow=i.qty>0&&i.qty<=(i.reorder||0);
+        return `<tr><td><strong>${esc(i.name)}</strong></td>
+          <td style="font-size:.78em;">${esc(i.category||'General')}</td>
+          <td>${i.stockType?`<span class="call-type-badge-${i.stockType==='AMC'?'amc':i.stockType==='ASC'?'asc':i.stockType==='Per Call'?'per':''}" style="font-size:.72em;">${i.stockType}</span>`:'—'}</td>
+          <td class="num" style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${i.qty??0}</td>
+          <td class="num" style="font-size:.8em;">${i.reorder||0}</td>
+          <td><span style="background:${isOut?'#fee2e2':isLow?'#fef9c3':'#dcfce7'};color:${isOut?'#991b1b':isLow?'#92400e':'#166534'};border-radius:6px;padding:2px 7px;font-size:.72em;font-weight:700;">${isOut?'Out':isLow?'Low':'OK'}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    <div class="sdiv" style="margin-top:14px;">Recent Transactions</div>
+    <div style="overflow-x:auto;"><table class="rpt-table">
+      <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Notes</th><th>By</th></tr></thead>
+      <tbody>${recentTxns.map(t=>`<tr>
+        <td style="font-size:.78em;">${t.date}</td><td><strong>${esc(t.item)}</strong></td>
+        <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.72em;font-weight:700;">${t.type==='in'?'▼ In':'▲ Out'}</span></td>
+        <td class="num" style="font-weight:800;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
+        <td style="font-size:.78em;color:var(--ink3);">${esc(t.notes||'—')}</td>
+        <td style="font-size:.78em;">${esc(t.by||'—')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+function exportMgmtSvcExcel(){
+  const calls=D.svc_calls||[];
+  const rows=calls.map(c=>({'Call ID':c.no,'Date':c.date||'','Customer':c.customer||'','Engineer':c.engineer||'','Call Type':c.callType||'AMC','Status':c.status,'Priority':c.priority||'Normal','Issue':c.issue||'','Resolution':c.resolution||''}));
+  xlsxExport([{name:'Service Calls',rows}],'mgmt_svc_report_'+today());
+}
+
 function updateMgmtViewBadge(){
   const conv=D.svc_conveyance.filter(c=>c.status==='pending').length;
   const adv=D.svc_conv_advances.filter(a=>a.status==='pending').length;
@@ -6860,7 +6699,7 @@ function exportIncReport(){ exportIncentiveExcel(); }
 
 // ── Stock Report ───────────────────────────────────────────────
 function renderStockReport(){
-  const items=D.ac_stock||[];
+  const items=D.stock_items||[];
   const catSel=g('stockRptCat');
   if(catSel&&catSel.options.length<=1){
     [...new Set(items.map(i=>i.category).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;catSel.appendChild(o);});
@@ -6889,9 +6728,9 @@ function renderStockReport(){
   </table></div>`;
 }
 function exportStockReportExcel(){
-  const items=D.ac_stock||[];
+  const items=D.stock_items||[];
   const rows=items.map(i=>({'Item':i.name,'Category':i.category||'General','Unit':i.unit||'Nos','Stock':i.qty??0,'Reorder Level':i.reorder||0,'Status':i.qty===0?'Out of Stock':i.qty<=(i.reorder||0)?'Low Stock':'In Stock','Last Movement':i.lastMovement||''}));
-  const txns=(D.ac_stock_txns||[]).map(t=>({'Date':t.date,'Item':t.item,'Type':t.type,'Qty':t.qty,'Notes':t.notes||'','By':t.by||''}));
+  const txns=(D.stock_txns||[]).map(t=>({'Date':t.date,'Item':t.item,'Type':t.type,'Qty':t.qty,'Notes':t.notes||'','By':t.by||''}));
   xlsxExport([{name:'Stock',rows},{name:'Transactions',rows:txns}],'acenet_stock_report_'+today());
 }
 
