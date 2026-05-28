@@ -3965,10 +3965,11 @@ function renderSvcStockView(){
   const txns=(D.stock_txns||[]).slice().reverse().slice(0,30);
   const txEl=g('svcStockTxns');
   if(txEl) txEl.innerHTML=!txns.length?'<div class="empty"><i class="fas fa-history"></i><p>No transactions yet</p></div>':
-    `<div style="overflow-x:auto;"><table class="rpt-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Notes</th><th>By</th></tr></thead><tbody>
-    ${txns.map(t=>`<tr><td style="font-size:.78em;">${t.date}</td><td><strong>${esc(t.item)}</strong></td>
+    `<div style="overflow-x:auto;"><table class="rpt-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead><tbody>
+    ${txns.map(t=>`<tr><td style="font-size:.78em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
     <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.73em;font-weight:700;">${t.type==='in'?'▼ Stock In':'▲ Stock Out'}</span></td>
     <td class="num" style="font-weight:700;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
+    <td style="font-size:.78em;color:#0369a1;">${esc(t.ref||'—')}</td>
     <td style="font-size:.78em;color:var(--ink3);">${esc(t.notes||'—')}</td>
     <td style="font-size:.78em;">${esc(t.by||'—')}</td></tr>`).join('')}
     </tbody></table></div>`;
@@ -3990,7 +3991,7 @@ function quickStockIn(itemId,itemName){
   if(!D.stock_txns)D.stock_txns=[];
   const sType=g('svcStockType')?.value||'General';
   if(sType!=='all'&&!item.stockType) item.stockType=sType;
-  D.stock_txns.push({id:uid(),date:today(),item:item.name,itemId,type:'in',qty,notes:notes||'',by:D.currentUser?.name||'Service',stockType:item.stockType||'General'});
+  D.stock_txns.push({id:uid(),date:today(),itemName:item.name,itemId,type:'in',qty,ref:'Service Stock In',notes:notes||'',by:D.currentUser?.name||'Service',stockType:item.stockType||'General'});
   saveData();renderSvcStockView();showSuccessToast(`✓ ${qty} ${item.unit||'units'} added to ${item.name}`,'var(--green)');
 }
 
@@ -4003,7 +4004,7 @@ function quickStockOut(itemId,itemName){
   item.qty=(item.qty||0)-qty;
   item.lastMovement=today();
   if(!D.stock_txns)D.stock_txns=[];
-  D.stock_txns.push({id:uid(),date:today(),item:item.name,itemId,type:'out',qty,notes:notes||'',by:D.currentUser?.name||'Service'});
+  D.stock_txns.push({id:uid(),date:today(),itemName:item.name,itemId,type:'out',qty,ref:'Service Stock Out',notes:notes||'',by:D.currentUser?.name||'Service'});
   saveData();renderSvcStockView();showSuccessToast(`✓ ${qty} ${item.unit||'units'} issued from ${item.name}`,'var(--svc)');
 }
 
@@ -5361,9 +5362,33 @@ function renderSvcOrders(){
         ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
+        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);"><button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button><span style="font-size:.7em;color:var(--ink3);margin-left:8px;">Add ordered materials to inventory</span></div>
       </div>
     </div>`;
   }).join('');
+}
+
+function receiveOrderToStock(ordId){
+  var ord=D.orders.find(function(o){return o.id===ordId;});
+  if(!ord){return;}
+  if(!ord.items||!ord.items.length){alert('No items in this order');return;}
+  var itemList=ord.items.map(function(it,i){return (i+1)+'. '+(it.material||it.name||'Item')+' x '+(it.qty||1);}).join('\n');
+  if(!confirm('Receive materials to Stock?\nOrder: '+ord.orderNo+'\n\n'+itemList+'\n\nNew items will be created in stock if not already there.'))return;
+  var date=today(),ref=ord.orderNo,by=(D.currentUser&&D.currentUser.name)||'Service';
+  if(!D.stock_txns)D.stock_txns=[];
+  var newItems=0,updItems=0;
+  ord.items.forEach(function(oi){
+    var name=oi.material||oi.name||oi.desc||'Item';
+    var qty=parseFloat(oi.qty)||1;
+    var si=D.stock_items.find(function(s){return s.name.toLowerCase()===name.toLowerCase();});
+    if(!si){si={id:uid(),name:name,category:'Spare Parts',unit:'Nos',reorder:0,qty:0,stockType:ord.callType||'General',lastMovement:date,createdAt:Date.now()};D.stock_items.push(si);newItems++;}
+    si.qty=(si.qty||0)+qty;si.lastMovement=date;
+    D.stock_txns.push({id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,ref:'Order: '+ref,notes:'Received from '+ord.orderNo,by:by});
+    updItems++;
+  });
+  saveData();
+  if(typeof renderSvcStockView==='function')renderSvcStockView();
+  showSuccessToast(updItems+' item(s) received to stock'+(newItems?' ('+newItems+' new)':''), 'var(--green)');
 }
 
 function toggleSvcOrder(id){
@@ -6415,7 +6440,7 @@ function renderMgmtStockSummary(){
     <div style="overflow-x:auto;"><table class="rpt-table">
       <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Notes</th><th>By</th></tr></thead>
       <tbody>${recentTxns.map(t=>`<tr>
-        <td style="font-size:.78em;">${t.date}</td><td><strong>${esc(t.item)}</strong></td>
+        <td style="font-size:.78em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
         <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.72em;font-weight:700;">${t.type==='in'?'▼ In':'▲ Out'}</span></td>
         <td class="num" style="font-weight:800;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
         <td style="font-size:.78em;color:var(--ink3);">${esc(t.notes||'—')}</td>
@@ -6468,8 +6493,16 @@ function renderMgmtView(){
   };
 
   if(_mvTab==='conv'){
-    const rows=filter(D.svc_conveyance,'date','engineer');
-    body.innerHTML=!rows.length?'<div class="empty"><i class="fas fa-car-side"></i><p>No conveyance claims found</p></div>':
+    // Show ALL claims including drafts so management always has visibility
+    const allConv=[...D.svc_conveyance];
+    let rows=allConv;
+    if(eng) rows=rows.filter(x=>x.engineer===eng);
+    if(stat) rows=rows.filter(x=>x.status===stat);
+    if(from) rows=rows.filter(x=>(x.date||'')>=from);
+    if(to) rows=rows.filter(x=>(x.date||'')<=to);
+    rows=rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.72em;font-weight:700;">'+lbl+'</span>';};
+    body.innerHTML=!rows.length?'<div class="empty"><i class="fas fa-car-side"></i><p>No conveyance claims yet.<br><small>Engineers generate claims in Service → Conveyance, then submit</small></p></div>':
       `<div class="tw"><table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th></tr></thead><tbody>
       ${rows.map(c=>`<tr>
         <td><strong style="color:var(--svc);">${esc(c.no)}</strong></td>
