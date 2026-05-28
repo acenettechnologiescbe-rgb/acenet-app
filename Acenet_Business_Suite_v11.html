@@ -5282,6 +5282,7 @@ function recalcSvOrd(){
     else if(gType==="inclusive"){gstRow.style.display="flex";gstAmtEl.textContent=fmt(subtotal-subtotal/(1+GST_R));displayTotal=subtotal;}
     else{gstRow.style.display="none";}
   }
+  const totalEl=g('svOrdTotal');if(totalEl)totalEl.textContent=fmt(displayTotal);
   const ordNo=g('svOrdNo').value.trim(),date=g('svOrdDate').value,cust=g('svOrdCust').value.trim(),notes=g('svOrdNotes').value.trim();
   const gstType=g('svOrdGST')?.value||'none';
   calcOrdMargin();
@@ -5301,6 +5302,7 @@ function sendSvcOrderToAccounts(){
   if(!items.length){alert('Add at least one item');return;}
   const total=items.reduce((a,x)=>a+x.amount,0);
   const margin=total-purchaseVal;
+  const gstType=g('svOrdGST')?.value||'none';
   showConfirm({
     icon:'ci-send', iconClass:'fa-clipboard-list',
     title:'Send Order to Accounts?',
