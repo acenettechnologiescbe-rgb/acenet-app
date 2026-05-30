@@ -505,8 +505,9 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="login-title">Sign In</div>
     <div class="lf"><label><i class="fas fa-user"></i> Username</label><input type="text" id="lUser" placeholder="Enter username" autocomplete="username"></div>
     <div class="lf"><label><i class="fas fa-lock"></i> Password</label><input type="password" id="lPass" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="login-btn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()"><i class="fas fa-sign-in-alt"></i> Sign In</button>
     <div class="login-err" id="loginErr"><i class="fas fa-exclamation-circle"></i> Invalid username or password</div>
+    <div id="loginSyncStatus" style="margin-top:10px;font-size:.76em;color:var(--ink4);text-align:center;display:none;"><i class="fas fa-circle-notch fa-spin" style="margin-right:5px;"></i>Syncing with server…</div>
     
   </div>
 </div>
@@ -2075,6 +2076,8 @@ function _initFirestore(){
     if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     _db = firebase.firestore();
     _fbReady = true;
+    // Show sync indicator on login page while connecting
+    const syncEl=g('loginSyncStatus');if(syncEl)syncEl.style.display='block';
     console.log('✅ Firebase Firestore connected');
     // Offline persistence so the app works without internet
     _db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
@@ -2087,6 +2090,13 @@ function _initFirestore(){
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
                     'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances'];
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
+      // Hide the sync indicator — data is ready
+      const syncEl=g('loginSyncStatus');if(syncEl)syncEl.style.display='none';
+      // If the login page is still visible (session check may have failed before
+      // Firestore synced), retry session restore and auto-login
+      if(!D.currentUser && g('loginPage').style.display!=='none'){
+        checkSession();
+      }
       refreshUI();
       if(remote._lastNotify === 'new_order' && D.currentUser?.role === 'accounts') showOrderToast();
       // Instantly update incentive views so pending entries appear without manual refresh
@@ -2366,7 +2376,40 @@ function refreshUI(){
 function doLogin(){
   const u=(g('lUser').value||'').trim(),p=(g('lPass').value||'').trim();
   const user=D.users.find(x=>x.username===u&&x.password===p&&x.active!==false);
-  if(!user){g('loginErr').classList.add('show');return;}
+  if(!user){
+    // If Firebase is available, fetch fresh user list and retry once —
+    // covers the case where a new user was added from another device
+    if(_fbReady && _db){
+      const btn=g('loginBtn');if(btn)btn.disabled=true;
+      const errEl=g('loginErr');
+      if(errEl){errEl.classList.remove('show');errEl.innerHTML='<i class="fas fa-spinner fa-spin"></i> Verifying…';}
+      _db.collection('acenet').doc('appdata').get().then(snap=>{
+        if(btn)btn.disabled=false;
+        if(snap.exists && snap.data().users){
+          D.users=snap.data().users;
+          localStorage.setItem('ac_users',JSON.stringify(D.users));
+          const fresh=D.users.find(x=>x.username===u&&x.password===p&&x.active!==false);
+          if(fresh){
+            if(errEl)errEl.classList.remove('show');
+            D.currentUser=fresh;
+            sessionStorage.setItem('ac_sess',JSON.stringify({id:fresh.id,role:fresh.role}));
+            bootApp();
+          } else {
+            if(errEl){errEl.innerHTML='<i class="fas fa-exclamation-circle"></i> Invalid username or password';errEl.classList.add('show');}
+          }
+        } else {
+          if(errEl){errEl.innerHTML='<i class="fas fa-exclamation-circle"></i> Invalid username or password';errEl.classList.add('show');}
+        }
+      }).catch(()=>{
+        if(btn)btn.disabled=false;
+        if(errEl){errEl.innerHTML='<i class="fas fa-exclamation-circle"></i> Invalid username or password';errEl.classList.add('show');}
+      });
+      return;
+    }
+    g('loginErr').innerHTML='<i class="fas fa-exclamation-circle"></i> Invalid username or password';
+    g('loginErr').classList.add('show');
+    return;
+  }
   g('loginErr').classList.remove('show');
   D.currentUser=user;
   sessionStorage.setItem('ac_sess',JSON.stringify({id:user.id,role:user.role}));
