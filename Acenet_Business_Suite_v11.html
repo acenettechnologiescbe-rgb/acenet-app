@@ -1282,7 +1282,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="filt-sep"></div>
   <select id="convEngFilter" onchange="renderAccConveyance()"><option value="">All Engineers</option></select>
   <select id="convStatusFilter" onchange="renderAccConveyance()">
-    <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="settled">Settled</option><option value="rejected">Rejected</option>
+    <option value="">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
   </select>
   <div class="filt-date-grp">
     <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
@@ -1301,11 +1301,8 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="sdiv">⏳ Pending Claims — Awaiting Approval</div>
 <div id="accConvPending"></div>
 <!-- Approved Claims -->
-<div class="sdiv">✅ Approved Claims — Ready to Settle</div>
+<div class="sdiv">✅ Approved Claims</div>
 <div id="accConvApproved"></div>
-<!-- Settled Claims -->
-<div class="sdiv">💰 Settled / Paid Claims</div>
-<div id="accConvSettled"></div>
 <!-- Rejected Claims -->
 <div class="sdiv">❌ Rejected Claims</div>
 <div id="accConvRejected"></div>
@@ -1580,7 +1577,6 @@ tbody tr:last-child td{border-bottom:none;}
     <input type="hidden" id="incEditId">
     <div class="btn-row">
       <button class="btn" style="background:#7c3aed;color:#fff;" onclick="saveSvcIncDraft()"><i class="fas fa-save"></i> Save Draft</button>
-      <button class="btn" style="background:#0e7490;color:#fff;" onclick="saveSvcIncDraftAndAddAnother()"><i class="fas fa-plus-circle"></i> Save &amp; Add Another</button>
       <button class="btn" style="background:var(--green);color:#fff;" onclick="sendSvcIncToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
       <button class="btn btn-outline" onclick="hideSvcIncForm()"><i class="fas fa-times"></i> Cancel</button>
     </div>
@@ -1645,7 +1641,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="filt-sep"></div>
     <select id="accIncEngFilter" onchange="renderAccIncentives()"><option value="">All Engineers</option></select>
     <select id="accIncStatusFilter" onchange="renderAccIncentives()">
-      <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Sent to Mgmt</option><option value="approved">Approved</option><option value="settled">Settled</option><option value="rejected">Rejected</option>
+      <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Sent to Mgmt</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
     </select>
     <div class="filt-date-grp">
       <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
@@ -1658,10 +1654,8 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="accIncPending"></div>
   <div class="sdiv">📋 Sent to Management</div>
   <div id="accIncMgmtReview"></div>
-  <div class="sdiv">✅ Approved — Ready to Settle</div>
+  <div class="sdiv">✅ Approved</div>
   <div id="accIncApproved"></div>
-  <div class="sdiv">💰 Settled / Paid</div>
-  <div id="accIncSettled"></div>
   <div class="sdiv">❌ Rejected</div>
   <div id="accIncRejected"></div>
 </div>
@@ -4863,7 +4857,6 @@ function viewConvDraft(id){
         ${c.remarks?`<div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">${esc(c.remarks)}</div>`:''}
         <div style="display:flex;gap:8px;justify-content:flex-end;">
           <button class="btn btn-outline btn-sm" onclick="g('draftViewModal').remove();editConvDraft('${c.id}')"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn btn-sm" style="background:#0e7490;color:#fff;" onclick="g('draftViewModal').remove();addCallsToDraft('${c.id}')"><i class="fas fa-plus-circle"></i> Add More Calls</button>
           <button class="btn btn-sm" style="background:var(--svc);color:#fff;font-weight:700;" onclick="g('draftViewModal').remove();submitConvDraft('${c.id}')"><i class="fas fa-paper-plane"></i> Submit to Accounts</button>
         </div>
       </div>
@@ -4926,69 +4919,6 @@ function delConvDraft(id){
   D.svc_conveyance=D.svc_conveyance.filter(x=>x.id!==id);
   saveData();renderConveyance();
   showSuccessToast('Draft deleted','var(--red)');
-}
-
-function addCallsToDraft(draftId){
-  const draft=D.svc_conveyance.find(x=>x.id===draftId);if(!draft)return;
-  const eng=draft.engineer;
-  // Get calls already in this draft
-  const usedRefs=new Set((draft.callRefs||draft.callRef||'').split(',').map(r=>r.trim()).filter(Boolean));
-  // Get calls for this engineer not yet in any draft/claim
-  const usedInAny=new Set(D.svc_conveyance.filter(c=>c.id!==draftId).flatMap(c=>(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean)));
-  const available=D.svc_calls.filter(c=>c.engineer===eng&&!usedRefs.has(c.no)&&!usedInAny.has(c.no)&&((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))>0);
-  if(!available.length){
-    showSuccessToast('No additional eligible calls available for this engineer','var(--amber)');return;
-  }
-  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="addCallsModal" onclick="if(event.target.id==='addCallsModal')this.remove();">
-    <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="background:linear-gradient(135deg,#0e7490,#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
-        <div><div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;">Add Calls to ${esc(draft.no)}</div><div style="color:rgba(255,255,255,.75);font-size:.75em;">Select service calls to append to this draft</div></div>
-        <button onclick="g('addCallsModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;"><i class="fas fa-times"></i></button>
-      </div>
-      <div style="padding:16px 20px;">
-        <div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">Select calls to add — amounts will be merged into the existing draft.</div>
-        ${available.map(c=>{const t=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);return`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background=''">
-          <input type="checkbox" class="atd-chk" data-id="${c.id}" style="margin-top:2px;accent-color:var(--svc);">
-          <div style="flex:1;">
-            <div style="font-weight:700;font-size:.85em;color:var(--svc);">${esc(c.no)} — ${esc(c.customer||'')}</div>
-            <div style="font-size:.75em;color:var(--ink3);">${c.date}${c.issue?' · '+esc(c.issue):''}</div>
-            <div style="font-size:.75em;margin-top:3px;">Travel: ${fmt(parseFloat(c.convAmt)||0)} | Food: ${fmt(parseFloat(c.convFood)||0)} | Other: ${fmt(parseFloat(c.convOther)||0)} → <strong style="color:var(--svc);">${fmt(t)}</strong></div>
-          </div>
-        </label>`;}).join('')}
-        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
-          <button class="btn btn-outline btn-sm" onclick="g('addCallsModal').remove()">Cancel</button>
-          <button class="btn btn-sm" style="background:var(--svc);color:#fff;" onclick="confirmAddCallsToDraft('${draftId}')"><i class="fas fa-plus-circle"></i> Add Selected Calls</button>
-        </div>
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend',html);
-}
-
-function confirmAddCallsToDraft(draftId){
-  const draft=D.svc_conveyance.find(x=>x.id===draftId);if(!draft)return;
-  const checked=[...document.querySelectorAll('.atd-chk:checked')];
-  if(!checked.length){alert('Select at least one call');return;}
-  const newCalls=checked.map(cb=>D.svc_calls.find(c=>c.id===cb.dataset.id)).filter(Boolean);
-  // Merge calls
-  newCalls.forEach(c=>{
-    draft.travelAmt=(draft.travelAmt||0)+(parseFloat(c.convAmt)||0);
-    draft.foodAmt=(draft.foodAmt||0)+(parseFloat(c.convFood)||0);
-    draft.otherAmt=(draft.otherAmt||0)+(parseFloat(c.convOther)||0);
-    draft.totalAmt=(draft.totalAmt||0)+(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
-    const existing=(draft.callRefs||draft.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
-    existing.push(c.no);
-    draft.callRefs=existing.join(', ');
-    draft.callRef=draft.callRefs;
-    if(!draft.callIds)draft.callIds=[];
-    draft.callIds.push(c.id);
-    if(!draft.items)draft.items=[];
-    draft.items.push({callNo:c.no,customer:c.customer||'',mode:c.convMode||'Two-wheeler',from:c.convFrom||'',to:c.convTo||'',km:parseFloat(c.convKm)||0,rate:parseFloat(c.convRate)||0,amount:parseFloat(c.convAmt)||0});
-    if(draft.remarks) draft.remarks+=', '+c.no; else draft.remarks='Generated from: '+draft.callRefs;
-  });
-  g('addCallsModal').remove();
-  saveData();renderConveyance();
-  showSuccessToast(`✓ ${newCalls.length} call(s) added to ${draft.no}`,'var(--svc)');
 }
 
 function saveConvClaim(){
@@ -5110,18 +5040,17 @@ function renderConveyance(){
   }
 
   // Stats (excluding drafts)
-  const totClaim=convs.reduce((a,c)=>a+c.totalAmt,0),totApproved=convs.filter(c=>c.status==='approved'||c.status==='settled').reduce((a,c)=>a+c.totalAmt,0),totPending=convs.filter(c=>c.status==='pending').reduce((a,c)=>a+c.totalAmt,0),totSettled=convs.filter(c=>c.status==='settled').reduce((a,c)=>a+c.totalAmt,0);
-  g('convStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Claimed</div><div class="stat-value">${fmt(totClaim)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(totPending)}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled</div><div class="stat-value">${fmt(totSettled)}</div></div>`;
+  const totClaim=convs.reduce((a,c)=>a+c.totalAmt,0),totApproved=convs.filter(c=>c.status==='approved').reduce((a,c)=>a+c.totalAmt,0),totPending=convs.filter(c=>c.status==='pending').reduce((a,c)=>a+c.totalAmt,0);
+  g('convStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Claimed</div><div class="stat-value">${fmt(totClaim)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(totPending)}</div></div>`;
 
-  const stBg={pending:'var(--amber-l)',approved:'var(--green-l)',rejected:'var(--red-l)',settled:'#e0f2fe'};
-  const stClr={pending:'#92400e',approved:'#065f46',rejected:'#991b1b',settled:'#0369a1'};
+  const stBg={pending:'var(--amber-l)',approved:'var(--green-l)',rejected:'var(--red-l)'};
+  const stClr={pending:'#92400e',approved:'#065f46',rejected:'#991b1b'};
   g('convList').innerHTML=!convs.length?'<div class="empty"><i class="fas fa-car"></i><p>No submitted claims yet.</p></div>':
     [...convs].reverse().map(c=>`<div class="conv-card">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status" style="background:${stBg[c.status]||'var(--bg)'};color:${stClr[c.status]||'var(--ink)'};">${c.status}</span></div>
         <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
         ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
-        ${c.settledBy?`<div style="font-size:.72em;color:#0369a1;margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)}</div>`:''}
         ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
       </div>
       <div style="text-align:right;flex-shrink:0;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.totalAmt)}</div><div style="font-size:.72em;color:var(--ink3);">Travel: ${fmt(c.travelAmt)} Food: ${fmt(c.foodAmt)}</div></div>
@@ -5161,13 +5090,12 @@ function renderAccConveyance(){
 
   const pending=convs.filter(c=>c.status==='pending');
   const approved=convs.filter(c=>c.status==='approved');
-  const settled=convs.filter(c=>c.status==='settled');
   const rejected=convs.filter(c=>c.status==='rejected');
   const advPending=D.svc_conv_advances.filter(a=>a.status==='pending');
   const advDone=D.svc_conv_advances.filter(a=>a.status!=='pending');
 
   // Stats
-  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(pending.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Rejected</div><div class="stat-value">${rejected.length}</div></div>`;
+  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(pending.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Rejected</div><div class="stat-value">${rejected.length}</div></div><div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Advance Requests</div><div class="stat-value">${advPending.length}</div></div>`;
 
   // Per-engineer summary
   const engMap={};
@@ -5194,37 +5122,33 @@ function renderAccConveyance(){
         ${a.status==='pending'?`<div style="display:flex;gap:5px;"><button class="btn btn-success btn-sm" onclick="approveConvAdv('${a.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvAdv('${a.id}')"><i class="fas fa-times"></i></button></div>`:''}
       </div></div>`).join('');
 
-  g('accConvPending').innerHTML=!pending.length?emptyMsg('No pending claims'):pending.map(c=>convClaimCard(c,'pending')).join('');
-  g('accConvApproved').innerHTML=!approved.length?emptyMsg('No approved claims yet'):[...approved].reverse().map(c=>convClaimCard(c,'approved')).join('');
-  const settledEl=g('accConvSettled');
-  if(settledEl) settledEl.innerHTML=!settled.length?emptyMsg('No settled claims yet'):[...settled].reverse().map(c=>convClaimCard(c,'settled')).join('');
+  g('accConvPending').innerHTML=!pending.length?emptyMsg('No pending claims'):pending.map(c=>convClaimCard(c,true)).join('');
+  g('accConvApproved').innerHTML=!approved.length?emptyMsg('No approved claims yet'):[...approved].reverse().map(c=>convClaimCard(c,false)).join('');
   const rejEl=g('accConvRejected');
-  if(rejEl) rejEl.innerHTML=!rejected.length?emptyMsg('No rejected claims'):[...rejected].reverse().map(c=>convClaimCard(c,'none')).join('');
+  if(rejEl) rejEl.innerHTML=!rejected.length?emptyMsg('No rejected claims'):[...rejected].reverse().map(c=>convClaimCard(c,false)).join('');
   updateConvBadge();
 }
 
-function convClaimCard(c,context){
-  const stMap={pending:'cs-pending',approved:'cs-approved',rejected:'cs-rejected',settled:'cs-approved',draft:'cs-pending'};
-  const borderMap={pending:'border-left:3px solid var(--amber);',rejected:'border-left:3px solid var(--red);',settled:'border-left:3px solid var(--acc);',approved:''};
-  return `<div class="conv-card" style="${borderMap[c.status]||''}">
+function convClaimCard(c,showActions){
+  const stMap={pending:'cs-pending',approved:'cs-approved',rejected:'cs-rejected'};
+  return `<div class="conv-card" style="${c.status==='pending'?'border-left:3px solid var(--amber);':c.status==='rejected'?'border-left:3px solid var(--red);':''}">
     <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status ${stMap[c.status]||'cs-pending'}">${c.status}</span></div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status ${stMap[c.status]}">${c.status}</span></div>
       <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong> &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
       <div style="font-size:.75em;margin-top:3px;color:var(--ink2);">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
       ${c.remarks?`<div style="font-size:.74em;color:var(--ink3);margin-top:2px;font-style:italic;">"${esc(c.remarks)}"</div>`:''}
       ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
-      ${c.settledBy?`<div style="font-size:.72em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}</div>`:''}
       ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;text-align:right;">
       <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--svc);margin-bottom:6px;">${fmt(c.totalAmt)}</div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
         <button class="btn btn-outline btn-sm" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button>
-        ${context==='pending'?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
-        ${context==='approved'?`<button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>`:''}
+        ${showActions?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
       </div>
     </div>
   </div>`;
+}
 
 function viewConvClaimDetails(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
@@ -5256,13 +5180,10 @@ function viewConvClaimDetails(id){
         ${callRows?`<div style="margin-bottom:14px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;">Linked Service Calls</div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.78em;"><thead><tr style="background:#f1f5f9;"><th style="padding:7px 10px;text-align:left;">Call ID</th><th style="padding:7px 10px;text-align:left;">Customer</th><th style="padding:7px 10px;text-align:left;">Location</th><th style="padding:7px 10px;text-align:left;">Issue</th></tr></thead><tbody>${callRows}</tbody></table></div></div>`:''}
         ${c.remarks?`<div style="font-size:.8em;background:#fffbeb;border-radius:8px;padding:9px 12px;border-left:3px solid var(--amber);margin-bottom:12px;"><i class="fas fa-comment" style="color:var(--amber);margin-right:5px;"></i>${esc(c.remarks)}</div>`:''}
         ${c.approvedBy?`<div style="font-size:.78em;color:var(--green);margin-bottom:8px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong></div>`:''}
-        ${c.settledBy?`<div style="font-size:.78em;color:var(--acc);margin-bottom:8px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}</div>`:''}
         ${c.rejectedReason?`<div style="font-size:.78em;color:var(--red);margin-bottom:8px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
         ${c.status==='pending'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
           <button class="btn btn-success btn-sm" onclick="g('convDetailModal').remove();approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button>
           <button class="btn btn-danger btn-sm" onclick="g('convDetailModal').remove();rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>
-        </div>`:c.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
-          <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="g('convDetailModal').remove();settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>
         </div>`:''}
       </div>
     </div>
@@ -5274,71 +5195,6 @@ function approveConvClaim(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   c.status='approved';c.approvedBy=D.currentUser?.name||'Accounts';c.approvedAt=new Date().toISOString();
   saveData();renderAccConveyance();showSuccessToast('✓ Conveyance claim approved!','var(--green)');
-}
-function settleConvClaim(id){
-  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
-  showConfirm({
-    icon:'ci-send',iconClass:'fa-wallet',
-    title:'Mark Claim as Settled?',
-    msg:'This will mark the conveyance claim as paid/settled.',
-    details:[{k:'Claim No',v:c.no},{k:'Engineer',v:c.engineer},{k:'Total',v:fmt(c.totalAmt)},{k:'Approved By',v:c.approvedBy||'—'}],
-    btnLabel:'Mark Settled',btnColor:'var(--acc)',
-    onOk:()=>{
-      c.status='settled';c.settledBy=D.currentUser?.name||'Accounts';c.settledAt=new Date().toISOString();
-      saveData();renderAccConveyance();
-      showSuccessToast(`✓ ${c.no} marked as settled`,'var(--acc)');
-    }
-  });
-}
-function settleIncentive(id){
-  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
-  showConfirm({
-    icon:'ci-send',iconClass:'fa-wallet',
-    title:'Mark Incentive as Settled?',
-    msg:'This will mark the incentive as paid to the engineer.',
-    details:[{k:'Entry',v:e.no},{k:'Engineer',v:e.engineerName},{k:'Incentive Amount',v:fmt(e.approvedAmt||0)},{k:'Approved By',v:e.approvedBy||'—'}],
-    btnLabel:'Mark Settled',btnColor:'var(--acc)',
-    onOk:()=>{
-      e.status='settled';e.settledBy=D.currentUser?.name||'Accounts';e.settledAt=new Date().toISOString();
-      saveData();renderAccIncentives();
-      showSuccessToast(`✓ ${e.no} marked as settled`,'var(--acc)');
-    }
-  });
-}
-function viewAccInc(id){
-  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
-  const profColor=e.profit>=0?'var(--green)':'var(--red)';
-  const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
-  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="accIncViewModal" onclick="if(event.target.id==='accIncViewModal')this.remove();">
-    <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
-        <div>
-          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(e.no)}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; ${stLabel}</div>
-        </div>
-        <button onclick="g('accIncViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;"><i class="fas fa-times"></i></button>
-      </div>
-      <div style="padding:18px 20px;">
-        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Customer</div><div style="font-weight:700;font-size:.85em;">${esc(e.customer)}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Product</div><div style="font-weight:700;font-size:.85em;">${esc(e.product||'—')}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">GST Type</div><div style="font-size:.83em;">${e.gstType||'—'}</div></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;">
-          <div style="background:#f0f9ff;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.1em;">${fmt(e.saleAmt)}</div></div>
-          <div style="background:#fffbeb;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.1em;">${fmt(e.purchaseAmt)}</div></div>
-          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.1em;">${fmt(e.gstAmt)}</div></div>`:''}
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.1em;">${fmt(e.profit)}</div></div>
-        </div>
-        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.1em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.78em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
-        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--acc);"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
-        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
-        ${e.suggestedPct||e.suggestedAmt?`<div style="background:#faf5ff;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:#7c3aed;"><i class="fas fa-percentage"></i> Suggested by Accounts: ${e.suggestedPct?e.suggestedPct+'%':''} ${e.suggestedAmt?'= '+fmt(e.suggestedAmt):''}</div>`:''}
-        ${e.sentToMgmtBy?`<div style="font-size:.76em;color:var(--amber);margin-bottom:8px;"><i class="fas fa-paper-plane"></i> Sent to Mgmt by ${esc(e.sentToMgmtBy)}</div>`:''}
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend',html);
 }
 function rejectConvClaim(id){
   const reason=prompt('Reason for rejection (optional):');
@@ -5418,15 +5274,17 @@ function removeSvOrdItem(n){const r=g('soi-'+n);if(r){r.remove();recalcSvOrd();}
 function recalcSvOrd(){
   let subtotal=0;
   document.querySelectorAll("#svOrdItemsBody tr").forEach(r=>{const q=parseFloat(r.querySelector(".soq")?.value)||0,rt=parseFloat(r.querySelector(".sor")?.value)||0,a=q*rt;subtotal+=a;const ac=r.querySelector(".soa");if(ac)ac.textContent="₹"+a.toFixed(2);});
-  const totalEl=g('svOrdTotal');
-  if(totalEl) totalEl.textContent=fmt(subtotal);
   const gType=g("svOrdGST")?.value||"none";
   const gstRow=g("svOrdGSTRow"),gstAmtEl=g("svOrdGSTAmt");
+  let displayTotal=subtotal;
   if(gstRow&&gstAmtEl){
-    if(gType==="exclusive"){gstRow.style.display="flex";const gst=subtotal*GST_R;gstAmtEl.textContent=fmt(gst);if(totalEl)totalEl.textContent=fmt(subtotal+gst);}
-    else if(gType==="inclusive"){gstRow.style.display="flex";gstAmtEl.textContent=fmt(subtotal-subtotal/(1+GST_R));}
+    if(gType==="exclusive"){gstRow.style.display="flex";const gst=subtotal*GST_R;gstAmtEl.textContent=fmt(gst);displayTotal=subtotal+gst;}
+    else if(gType==="inclusive"){gstRow.style.display="flex";gstAmtEl.textContent=fmt(subtotal-subtotal/(1+GST_R));displayTotal=subtotal;}
     else{gstRow.style.display="none";}
   }
+  const totalEl=g('svOrdTotal');if(totalEl)totalEl.textContent=fmt(displayTotal);
+  const ordNo=g('svOrdNo').value.trim(),date=g('svOrdDate').value,cust=g('svOrdCust').value.trim(),notes=g('svOrdNotes').value.trim();
+  const gstType=g('svOrdGST')?.value||'none';
   calcOrdMargin();
 }
 
@@ -5808,39 +5666,12 @@ function viewSvcInc(id){
         ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
         ${(e.status==='draft'||e.status==='pending')?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
           <button class="btn btn-outline btn-sm" onclick="g('incViewModal').remove();editDraftInc('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn btn-sm" style="background:#0e7490;color:#fff;" onclick="g('incViewModal').remove();showSvcIncForm()"><i class="fas fa-plus-circle"></i> Add Another Entry</button>
           ${e.status==='draft'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="g('incViewModal').remove();sendDraftInc('${e.id}')"><i class="fas fa-paper-plane"></i> Send</button>`:''}
         </div>`:''}
       </div>
     </div>
   </div>`;
   document.body.insertAdjacentHTML('beforeend',html);
-}
-
-function saveSvcIncDraftAndAddAnother(){
-  const no=g('incNo').value.trim(),date=g('incDate').value,eng=g('incEngineer').value,
-    cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
-    ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
-    purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
-  if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
-  const gstType=g('incGST')?.value||'none';
-  let gstAmt=0,netSale=sale;
-  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
-  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);}
-  const profit=netSale-purchase;
-  const editId=g('incEditId').value;
-  if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
-  if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
-  else D.svc_incentives.push(obj);
-  saveData();renderSvcIncentives();
-  showSuccessToast(`✓ Entry ${no} saved — form reset for new entry`,'#0e7490');
-  // Reset form for next entry (keep date and engineer, clear rest)
-  const savedDate=date,savedEng=eng;
-  showSvcIncForm();
-  g('incDate').value=savedDate;
-  populateSvcIncEngDropdown();
-  g('incEngineer').value=savedEng;
 }
 
 function editSentInc(id){
@@ -5890,17 +5721,15 @@ function renderAccIncentives(){
   const mgmtReview=entries.filter(e=>e.status==='mgmt-review');
   const approved=entries.filter(e=>e.status==='approved');
   const rejected=entries.filter(e=>e.status==='rejected');
-  const settled=entries.filter(e=>e.status==='settled');
 
   const el=g('accIncStats');
-  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent to Mgmt</div><div class="stat-value">${mgmtReview.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>`;
+  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent to Mgmt</div><div class="stat-value">${mgmtReview.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Total Incentive Paid</div><div class="stat-value">${fmt(approved.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>`;
 
-  const pEl=g('accIncPending'),mEl=g('accIncMgmtReview'),aEl=g('accIncApproved'),rEl=g('accIncRejected'),sEl=g('accIncSettled');
+  const pEl=g('accIncPending'),mEl=g('accIncMgmtReview'),aEl=g('accIncApproved'),rEl=g('accIncRejected');
   if(pEl) pEl.innerHTML=!pending.length?emptyMsg('No pending incentives'):pending.map(e=>incAccCard(e,'pending')).join('');
   if(mEl) mEl.innerHTML=!mgmtReview.length?emptyMsg('None sent to management yet'):[...mgmtReview].reverse().map(e=>incAccCard(e,'mgmt-review')).join('');
   if(aEl) aEl.innerHTML=!approved.length?emptyMsg('No approved entries yet'):[...approved].reverse().map(e=>incAccCard(e,'approved')).join('');
   if(rEl) rEl.innerHTML=!rejected.length?emptyMsg('None rejected'):[...rejected].reverse().map(e=>incAccCard(e,'rejected')).join('');
-  if(sEl) sEl.innerHTML=!settled.length?emptyMsg('No settled entries yet'):[...settled].reverse().map(e=>incAccCard(e,'settled')).join('');
   updateAccIncBadge();
 }
 
@@ -5908,7 +5737,7 @@ function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:va
 
 function incAccCard(e,context){
   const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
-  const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
+  const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   let actions='';
   if(context==='pending'){
@@ -5922,13 +5751,8 @@ function incAccCard(e,context){
         <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="sendIncToMgmt('${e.id}')"><i class="fas fa-user-tie"></i> Send to Mgmt</button>
       </div>
     </div>`;
-  } else if(context==='approved'){
-    actions=`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-      <div style="font-size:.78em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt||0)}</div>
-      <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>
-    </div>`;
   }
-  return `<div class="conv-card" style="${e.status==='pending'?'border-left:3px solid #7c3aed;':e.status==='mgmt-review'?'border-left:3px solid var(--amber);':e.status==='settled'?'border-left:3px solid var(--green);':''}">
+  return `<div class="conv-card" style="${e.status==='pending'?'border-left:3px solid #7c3aed;':e.status==='mgmt-review'?'border-left:3px solid var(--amber);':''}">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap;">
         <strong style="color:#7c3aed;font-size:.9em;">${esc(e.no)}</strong>
@@ -5942,13 +5766,9 @@ function incAccCard(e,context){
         ${e.suggestedPct?`<span>Suggested: <strong style="color:#7c3aed;">${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
       </div>
       ${e.approvedBy?`<div style="font-size:.73em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
-      ${e.settledBy?`<div style="font-size:.73em;color:var(--acc);margin-top:3px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.73em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
-    <div style="flex-shrink:0;text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-      <button class="btn btn-outline btn-sm" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
-      ${actions}
-    </div>
+    <div style="flex-shrink:0;text-align:right;">${actions}</div>
   </div>`;
 }
 
@@ -5984,7 +5804,7 @@ function approveIncentive(id){
   const inp=g('inc-amt-'+id);const amt=parseFloat(inp?.value)||e.suggestedAmt||0;
   e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedAt=new Date().toISOString();
   saveData();
-  if(D.currentUser?.role==='management') renderMgmtView();
+  if(D.currentUser?.role==='management') renderMgmtIncentives();
   else renderAccIncentives();
   showSuccessToast(`✓ ${e.no} approved — Incentive: ${fmt(amt)}`,'var(--green)');
 }
@@ -5994,26 +5814,8 @@ function rejectIncentive(id){
   const reason=prompt('Reason for rejection (optional):');
   e.status='rejected';e.rejectedReason=reason||'Rejected';e.rejectedAt=new Date().toISOString();e.rejectedBy=D.currentUser?.name||'';
   saveData();
-  if(D.currentUser?.role==='management') renderMgmtView();
+  if(D.currentUser?.role==='management') renderMgmtIncentives();
   else renderAccIncentives();
-}
-
-function mgmtApproveInc(id){
-  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
-  const amtEl=g('mv-inc-amt-'+id);
-  const amt=parseFloat(amtEl?.value)||e.suggestedAmt||0;
-  showConfirm({
-    icon:'ci-send',iconClass:'fa-check-circle',
-    title:'Approve Incentive?',
-    msg:'This incentive will be marked as approved and visible to Accounts.',
-    details:[{k:'Entry',v:e.no},{k:'Engineer',v:e.engineerName},{k:'P/L',v:fmt(e.profit)},{k:'Incentive Amount',v:fmt(amt)}],
-    btnLabel:'Approve',btnColor:'var(--green)',
-    onOk:()=>{
-      e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedAt=new Date().toISOString();
-      saveData();renderMgmtView();
-      showSuccessToast(`✓ ${e.no} approved — Incentive: ${fmt(amt)}`,'var(--green)');
-    }
-  });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -6734,22 +6536,21 @@ function renderMgmtView(){
   } else if(_mvTab==='inc'){
     const incs=filter(D.svc_incentives||[],'date','engineerName');
     body.innerHTML=!incs.length?'<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries found</p></div>':
-      `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Incentive</th><th>Status</th><th>Action</th></tr></thead><tbody>
+      `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Incentive</th><th>Status</th></tr></thead><tbody>
       ${incs.map(e=>`<tr>
         <td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td>
         <td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.82em;">${esc(e.customer)}</td>
         <td style="font-size:.8em;">${esc(e.product||'—')}</td>
         <td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td>
         <td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td>
-        <td class="amt" style="color:#6d28d9;">${e.status==='approved'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td>
-        <td><span class="st-badge ${e.status==='approved'?'st-billed':e.status==='rejected'?'st-cancelled':'st-pending'}">${e.status==='mgmt-review'?'mgmt-review':e.status}</span></td>
-        <td>${e.status==='mgmt-review'?`<div style="display:flex;gap:4px;"><button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 8px;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button></div>`:e.status==='approved'?`<span style="font-size:.75em;color:var(--green);"><i class="fas fa-check-circle"></i> ${esc(e.approvedBy||'')}</span>`:''}</td>
+        <td class="amt" style="color:#6d28d9;">${fmt(e.approvedAmt||0)}</td>
+        <td><span class="st-badge ${e.status==='approved'?'st-billed':e.status==='rejected'?'st-cancelled':'st-pending'}">${e.status}</span></td>
       </tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td>
       <td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.saleAmt,0))}</td>
       <td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.purchaseAmt,0))}</td>
       <td class="amt" style="padding:9px 12px;color:${incs.reduce((s,e)=>s+e.profit,0)>=0?'var(--green)':'var(--red)'};">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td>
-      <td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td></td><td></td></tr>
+      <td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td></td></tr>
       </tbody></table></div>`;
 
   }
