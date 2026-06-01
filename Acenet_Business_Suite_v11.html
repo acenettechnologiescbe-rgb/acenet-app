@@ -5272,9 +5272,10 @@ function convClaimCard(c,context){
 
 function viewConvClaimDetails(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  const isAccounts=D.currentUser?.role==='accounts';
   const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
   const callRows=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<tr><td><strong style="color:var(--svc);">${esc(sc.no)}</strong></td><td>${esc(sc.customer)}</td><td style="font-size:.8em;">${esc(sc.location||'')}</td><td>${esc(sc.issue||'')}</td></tr>`:''}).join('');
-  const stColor=c.status==='approved'?'var(--green)':c.status==='rejected'?'var(--red)':'var(--amber)';
+  const stColor=c.status==='approved'?'var(--green)':c.status==='settled'?'#0369a1':c.status==='rejected'?'var(--red)':'var(--amber)';
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="convDetailModal" onclick="if(event.target.id==='convDetailModal')this.remove();">
     <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
       <div style="background:linear-gradient(135deg,#0e7490,#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
@@ -5300,12 +5301,12 @@ function viewConvClaimDetails(id){
         ${callRows?`<div style="margin-bottom:14px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;">Linked Service Calls</div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.78em;"><thead><tr style="background:#f1f5f9;"><th style="padding:7px 10px;text-align:left;">Call ID</th><th style="padding:7px 10px;text-align:left;">Customer</th><th style="padding:7px 10px;text-align:left;">Location</th><th style="padding:7px 10px;text-align:left;">Issue</th></tr></thead><tbody>${callRows}</tbody></table></div></div>`:''}
         ${c.remarks?`<div style="font-size:.8em;background:#fffbeb;border-radius:8px;padding:9px 12px;border-left:3px solid var(--amber);margin-bottom:12px;"><i class="fas fa-comment" style="color:var(--amber);margin-right:5px;"></i>${esc(c.remarks)}</div>`:''}
         ${c.approvedBy?`<div style="font-size:.78em;color:var(--green);margin-bottom:8px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong></div>`:''}
-        ${c.settledBy?`<div style="font-size:.78em;color:var(--acc);margin-bottom:8px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}</div>`:''}
+        ${c.settledBy?`<div style="font-size:.78em;color:#0369a1;margin-bottom:8px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}</div>`:''}
         ${c.rejectedReason?`<div style="font-size:.78em;color:var(--red);margin-bottom:8px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
-        ${c.status==='pending'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
+        ${isAccounts&&c.status==='pending'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
           <button class="btn btn-success btn-sm" onclick="g('convDetailModal').remove();approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button>
           <button class="btn btn-danger btn-sm" onclick="g('convDetailModal').remove();rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>
-        </div>`:c.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
+        </div>`:isAccounts&&c.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
           <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="g('convDetailModal').remove();settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>
         </div>`:''}
       </div>
@@ -5351,6 +5352,8 @@ function settleIncentive(id){
 }
 function viewAccInc(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  const isAccounts=D.currentUser?.role==='accounts';
+  const isMgmt=D.currentUser?.role==='management';
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="accIncViewModal" onclick="if(event.target.id==='accIncViewModal')this.remove();">
@@ -5375,10 +5378,12 @@ function viewAccInc(id){
           <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.1em;">${fmt(e.profit)}</div></div>
         </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.1em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.78em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
-        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--acc);"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
+        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
         ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
         ${e.suggestedPct||e.suggestedAmt?`<div style="background:#faf5ff;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:#7c3aed;"><i class="fas fa-percentage"></i> Suggested by Accounts: ${e.suggestedPct?e.suggestedPct+'%':''} ${e.suggestedAmt?'= '+fmt(e.suggestedAmt):''}</div>`:''}
         ${e.sentToMgmtBy?`<div style="font-size:.76em;color:var(--amber);margin-bottom:8px;"><i class="fas fa-paper-plane"></i> Sent to Mgmt by ${esc(e.sentToMgmtBy)}</div>`:''}
+        ${isAccounts&&e.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);"><button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="g('accIncViewModal').remove();settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button></div>`:''}
+        ${isMgmt&&(e.status==='pending'||e.status==='mgmt-review')?`<div style="padding-top:10px;border-top:1px solid var(--line);"><div style="font-size:.75em;color:var(--ink3);text-align:center;"><i class="fas fa-eye"></i> Management view — use Detail Info table to Approve / Reject</div></div>`:''}
       </div>
     </div>
   </div>`;
@@ -6745,18 +6750,19 @@ function renderMgmtView(){
     if(from) rows=rows.filter(x=>(x.date||'')>=from);
     if(to) rows=rows.filter(x=>(x.date||'')<=to);
     rows=rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.72em;font-weight:700;">'+lbl+'</span>';};
+    const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected',settled:'#e0f2fe|#0369a1|Settled'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.72em;font-weight:700;">'+lbl+'</span>';};
     body.innerHTML=!rows.length?'<div class="empty"><i class="fas fa-car-side"></i><p>No conveyance claims yet.<br><small>Engineers generate claims in Service → Conveyance, then submit</small></p></div>':
-      `<div class="tw"><table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th></tr></thead><tbody>
+      `<div class="tw"><table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th><th>View</th></tr></thead><tbody>
       ${rows.map(c=>`<tr>
         <td><strong style="color:var(--svc);">${esc(c.no)}</strong></td>
         <td>${c.date}</td><td>${esc(c.engineer)}</td><td style="font-size:.8em;">${esc(c.callRef||'—')}</td>
         <td style="font-size:.8em;">${esc(c.location||'—')}</td>
         <td class="amt">${fmt(c.travelAmt)}</td><td class="amt">${fmt(c.foodAmt)}</td><td class="amt">${fmt(c.otherAmt)}</td>
         <td class="amt" style="font-weight:700;">${fmt(c.totalAmt)}</td>
-        <td><span class="st-badge ${c.status==='approved'?'st-billed':c.status==='rejected'?'st-cancelled':'st-pending'}">${c.status}</span></td>
+        <td>${sbg(c.status)}</td>
+        <td><button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 8px;" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button></td>
       </tr>`).join('')}
-      <tr style="background:var(--bg);font-weight:700;"><td colspan="8" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,c)=>s+c.totalAmt,0))}</td><td></td></tr>
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="8" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,c)=>s+c.totalAmt,0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
   } else if(_mvTab==='adv'){
@@ -6785,9 +6791,16 @@ function renderMgmtView(){
         <td style="font-size:.8em;">${esc(e.product||'—')}</td>
         <td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td>
         <td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td>
-        <td class="amt" style="color:#6d28d9;">${e.status==='approved'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td>
-        <td><span class="st-badge ${e.status==='approved'?'st-billed':e.status==='rejected'?'st-cancelled':'st-pending'}">${e.status==='mgmt-review'?'mgmt-review':e.status}</span></td>
-        <td>${e.status==='mgmt-review'?`<div style="display:flex;gap:4px;"><button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 8px;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" style="padding:3px 8px;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button></div>`:e.status==='approved'?`<span style="font-size:.75em;color:var(--green);"><i class="fas fa-check-circle"></i> ${esc(e.approvedBy||'')}</span>`:''}</td>
+        <td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td>
+        <td><span class="st-badge ${e.status==='approved'||e.status==='settled'?'st-billed':e.status==='rejected'?'st-cancelled':'st-pending'}">${e.status==='mgmt-review'?'For Review':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1)}</span></td>
+        <td>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 8px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
+            ${e.status==='mgmt-review'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 8px;font-size:.72em;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" style="padding:3px 8px;font-size:.72em;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button>`:''}
+            ${e.status==='approved'?`<span style="font-size:.72em;color:var(--green);"><i class="fas fa-check-circle"></i> ${esc(e.approvedBy||'')}</span>`:''}
+            ${e.status==='settled'?`<span style="font-size:.72em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled</span>`:''}
+          </div>
+        </td>
       </tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td>
       <td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.saleAmt,0))}</td>
