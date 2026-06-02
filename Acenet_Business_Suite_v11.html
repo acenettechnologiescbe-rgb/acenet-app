@@ -1377,7 +1377,7 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
   <div class="form-panel fp-orange" id="svcOrderForm" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <div class="sora" style="font-weight:700;color:var(--orange);font-size:.93em;"><i class="fas fa-clipboard-list" style="margin-right:7px;"></i>New Service Order</div>
+      <div class="sora" style="font-weight:700;color:var(--orange);font-size:.93em;"><i class="fas fa-clipboard-list" style="margin-right:7px;"></i><span id="svOrdFormTitle">New Service Order</span></div>
       <button class="btn btn-ghost btn-sm" onclick="hideSvcOrderForm()"><i class="fas fa-times"></i></button>
     </div>
     <!-- Customer Type -->
@@ -1389,6 +1389,7 @@ tbody tr:last-child td{border-bottom:none;}
         <button type="button" class="call-type-btn" id="ord-ct-per" onclick="setOrdCallType('Per Call')" data-type="Per Call"><i class="fas fa-receipt"></i> Per Call</button>
       </div>
       <input type="hidden" id="svOrdCallType" value="AMC">
+      <input type="hidden" id="svOrdEditId" value="">
     </div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Order Number</label><input type="text" id="svOrdNo" placeholder="SORD-2025-0001" readonly style="background:var(--bg);"></div>
@@ -1443,7 +1444,7 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="tb-item"><div class="tbl">Estimated Total</div><div class="tbv big" id="svOrdTotal">₹0</div></div>
     </div>
     <div class="btn-row" style="margin-top:4px;">
-      <button class="btn btn-orange" onclick="sendSvcOrderToAccounts()"><i class="fas fa-paper-plane"></i> Send to Accounts</button>
+      <button class="btn btn-orange" id="svOrdSendBtn" onclick="sendSvcOrderToAccounts()"><i class="fas fa-paper-plane"></i> <span id="svOrdSendLabel">Send to Accounts</span></button>
       <button class="btn btn-outline" onclick="hideSvcOrderForm()"><i class="fas fa-times"></i> Cancel</button>
     </div>
   </div>
@@ -2838,7 +2839,7 @@ function orderAccCard(o,showConfirm){
         <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span><span>${o.items.length} item(s)</span></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        ${o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
+        ${o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
         <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
       </div>
     </div>
@@ -2854,6 +2855,7 @@ function orderAccCard(o,showConfirm){
       </tfoot>
       </table></div>
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
+      ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
       ${showConfirm?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
@@ -5538,6 +5540,9 @@ function setOrdCallType(type){
 }
 function showSvcOrderForm(){
   g('svcOrderForm').style.display='block';
+  if(g('svOrdEditId')) g('svOrdEditId').value='';
+  if(g('svOrdFormTitle')) g('svOrdFormTitle').textContent='New Service Order';
+  if(g('svOrdSendLabel')) g('svOrdSendLabel').textContent='Send to Accounts';
   g('svOrdNo').value=genSvOrdNo();
   g('svOrdDate').value=today();
   g('svOrdCust').value='';g('svOrdNotes').value='';
@@ -5553,7 +5558,37 @@ function showSvcOrderForm(){
   addSvOrdItem();
   g('svcOrderForm').scrollIntoView({behavior:'smooth'});
 }
-function hideSvcOrderForm(){g('svcOrderForm').style.display='none';}
+
+function hideSvcOrderForm(){
+  g('svcOrderForm').style.display='none';
+  if(g('svOrdEditId')) g('svOrdEditId').value='';
+  if(g('svOrdFormTitle')) g('svOrdFormTitle').textContent='New Service Order';
+  if(g('svOrdSendLabel')) g('svOrdSendLabel').textContent='Send to Accounts';
+}
+
+function editSvcOrder(id){
+  const o=D.orders.find(x=>x.id===id);if(!o)return;
+  g('svcOrderForm').style.display='block';
+  if(g('svOrdEditId')) g('svOrdEditId').value=id;
+  if(g('svOrdFormTitle')) g('svOrdFormTitle').textContent='Edit Order — '+o.orderNo;
+  if(g('svOrdSendLabel')) g('svOrdSendLabel').textContent='Resend to Accounts';
+  g('svOrdNo').value=o.orderNo;
+  g('svOrdDate').value=o.date;
+  g('svOrdCust').value=o.customer||'';
+  g('svOrdNotes').value=o.notes||'';
+  if(g('svOrdSupplier'))g('svOrdSupplier').value=o.supplier||'';
+  if(g('svOrdPurchaseVal'))g('svOrdPurchaseVal').value=o.purchaseVal||'';
+  if(g('svOrdFrom'))g('svOrdFrom').value=o.orderFrom||'';
+  if(g('svOrdOralConf'))g('svOrdOralConf').checked=o.oralConf||false;
+  if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=o.writeConf||false;
+  if(g('svOrdUrgent'))g('svOrdUrgent').checked=o.urgent||false;
+  setOrdCallType(o.callType||'AMC');
+  if(g('svOrdGST'))g('svOrdGST').value=o.gstType||'none';
+  g('svOrdItemsBody').innerHTML='';svOrdRC=0;
+  (o.items||[]).forEach(it=>addSvOrdItem(it));
+  recalcSvOrd();
+  g('svcOrderForm').scrollIntoView({behavior:'smooth'});
+}
 
 function calcOrdMargin(){
   const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
@@ -5599,6 +5634,7 @@ function sendSvcOrderToAccounts(){
   const ordNo=g('svOrdNo').value.trim(),date=g('svOrdDate').value,cust=g('svOrdCust').value.trim(),notes=g('svOrdNotes').value.trim();
   const supplier=(g('svOrdSupplier')?.value||'').trim();
   const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
+  const editId=g('svOrdEditId')?.value||'';
   if(!date||!cust){alert('Fill date and customer');return;}
   const items=[];
   document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{
@@ -5610,10 +5646,11 @@ function sendSvcOrderToAccounts(){
   const total=items.reduce((a,x)=>a+x.amount,0);
   const margin=total-purchaseVal;
   const gstType=g('svOrdGST')?.value||'none';
+  const isEdit=!!editId;
   showConfirm({
     icon:'ci-send', iconClass:'fa-clipboard-list',
-    title:'Send Order to Accounts?',
-    msg:'This order will be sent to the Accounts team for billing.',
+    title:isEdit?'Resend Modified Order to Accounts?':'Send Order to Accounts?',
+    msg:isEdit?'The existing order will be updated. Accounts will see the changes immediately.':'This order will be sent to the Accounts team for billing.',
     details:[
       {k:'Order No', v:ordNo},
       {k:'Date', v:date},
@@ -5624,23 +5661,49 @@ function sendSvcOrderToAccounts(){
       {k:'Purchase Value', v:purchaseVal?fmt(purchaseVal):'—'},
       {k:'Margin', v:purchaseVal?fmt(margin):'—'}
     ],
-    btnLabel:'Send to Accounts',
+    btnLabel:isEdit?'Resend to Accounts':'Send to Accounts',
     btnColor:'var(--orange)',
     onOk:()=>{
-      D.orders.push({
-        id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,gstType,
-        supplier,purchaseVal,margin,
-        callType:g('svOrdCallType')?.value||'AMC',
-        orderFrom:g('svOrdFrom')?.value||'',
-        oralConf:g('svOrdOralConf')?.checked||false,
-        writeConf:g('svOrdWriteConf')?.checked||false,
-        urgent:g('svOrdUrgent')?.checked||false,
-        status:'pending',invoiceNo:'',billedDate:'',
-        createdAt:Date.now(),source:'service',
-        createdBy:D.currentUser?.name||'Service'
-      });
-      hideSvcOrderForm();saveData('new_order');renderSvcOrders();
-      showSuccessToast(`✓ Order ${ordNo} sent to Accounts!`,'var(--orange)');
+      if(isEdit){
+        // UPDATE existing order
+        const idx=D.orders.findIndex(x=>x.id===editId);
+        if(idx>=0){
+          const prev=D.orders[idx];
+          D.orders[idx]={
+            ...prev,
+            date,customer:cust,notes,items,total,gstType,
+            supplier,purchaseVal,margin,
+            callType:g('svOrdCallType')?.value||prev.callType||'AMC',
+            orderFrom:g('svOrdFrom')?.value||prev.orderFrom||'',
+            oralConf:g('svOrdOralConf')?.checked||false,
+            writeConf:g('svOrdWriteConf')?.checked||false,
+            urgent:g('svOrdUrgent')?.checked||false,
+            status:'pending',
+            modified:true,
+            modifiedAt:Date.now(),
+            modifiedBy:D.currentUser?.name||'Service',
+            modifiedCount:(prev.modifiedCount||0)+1
+          };
+          hideSvcOrderForm();saveData('new_order');renderSvcOrders();
+          showSuccessToast(`✓ Order ${ordNo} updated & resent to Accounts!`,'var(--orange)');
+        }
+      } else {
+        // CREATE new order
+        D.orders.push({
+          id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,gstType,
+          supplier,purchaseVal,margin,
+          callType:g('svOrdCallType')?.value||'AMC',
+          orderFrom:g('svOrdFrom')?.value||'',
+          oralConf:g('svOrdOralConf')?.checked||false,
+          writeConf:g('svOrdWriteConf')?.checked||false,
+          urgent:g('svOrdUrgent')?.checked||false,
+          status:'pending',invoiceNo:'',billedDate:'',
+          createdAt:Date.now(),source:'service',
+          createdBy:D.currentUser?.name||'Service'
+        });
+        hideSvcOrderForm();saveData('new_order');renderSvcOrders();
+        showSuccessToast(`✓ Order ${ordNo} sent to Accounts!`,'var(--orange)');
+      }
     }
   });
 }
@@ -5671,7 +5734,12 @@ function renderSvcOrders(){
         ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
-        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);"><button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button><span style="font-size:.7em;color:var(--ink3);margin-left:8px;">Add ordered materials to inventory</span></div>
+        ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:4px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
+        <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
+          ${o.status==='pending'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
+          <span style="font-size:.7em;color:var(--ink3);">Add ordered materials to inventory</span>
+        </div>
       </div>
     </div>`;
   }).join('');
