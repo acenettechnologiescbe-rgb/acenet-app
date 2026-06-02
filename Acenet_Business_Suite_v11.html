@@ -1298,6 +1298,9 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- Advance Requests from Service -->
 <div class="sdiv">💰 Conveyance Advance Requests</div>
 <div id="accConvAdvList"></div>
+<!-- Deducted Advances -->
+<div class="sdiv">✂️ Deducted Advances — Applied to Settled Claims</div>
+<div id="accConvAdvDeducted"></div>
 <!-- Pending Claims -->
 <div class="sdiv">⏳ Pending Claims — Awaiting Approval</div>
 <div id="accConvPending"></div>
@@ -5227,15 +5230,45 @@ function renderAccConveyance(){
     </div>`;
   } else if(sumEl) sumEl.innerHTML='';
 
-  // Advance requests
-  g('accConvAdvList').innerHTML=!advPending.length&&!advDone.length?emptyMsg('No advance requests'):
-    [...advPending,...advDone].map(a=>`<div class="conv-card" style="${a.status==='pending'?'border-left:3px solid var(--amber);':''}">
-      <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong><span class="conv-status cs-${a.status}">${a.status}</span></div>
-      <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div></div>
+  // Advance requests — split into active vs deducted
+  const advActive=D.svc_conv_advances.filter(a=>a.status!=='deducted');
+  const advDeducted=D.svc_conv_advances.filter(a=>a.status==='deducted');
+
+  g('accConvAdvList').innerHTML=!advActive.length?emptyMsg('No active advance requests'):
+    advActive.map(a=>`<div class="conv-card" style="${a.status==='pending'?'border-left:3px solid var(--amber);':a.status==='approved'?'border-left:3px solid var(--green);':''}">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+          <strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong>
+          <span class="conv-status cs-${a.status}">${a.status}</span>
+        </div>
+        <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')}${a.callRef?' — Call: '+esc(a.callRef):''}</div>
+        ${a.status==='approved'?`<div style="font-size:.73em;color:var(--green);margin-top:2px;"><i class="fas fa-info-circle"></i> Will be deducted when claim is settled</div>`:''}
+      </div>
       <div style="flex-shrink:0;text-align:right;">
         <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);margin-bottom:5px;">${fmt(a.amount)}</div>
         ${a.status==='pending'?`<div style="display:flex;gap:5px;"><button class="btn btn-success btn-sm" onclick="approveConvAdv('${a.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvAdv('${a.id}')"><i class="fas fa-times"></i></button></div>`:''}
-      </div></div>`).join('');
+      </div>
+    </div>`).join('');
+
+  const dedEl=g('accConvAdvDeducted');
+  if(dedEl) dedEl.innerHTML=!advDeducted.length?emptyMsg('No advances deducted yet'):
+    advDeducted.map(a=>`<div class="conv-card" style="border-left:3px solid #0369a1;background:linear-gradient(135deg,#f0f9ff,#fff);">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+          <strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong>
+          <span class="conv-status" style="background:#dbeafe;color:#1e40af;">deducted</span>
+        </div>
+        <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')}</div>
+        <div style="font-size:.74em;color:#0369a1;margin-top:3px;"><i class="fas fa-scissors"></i> Deducted from <strong>${esc(a.deductedFrom||'')}</strong>${a.deductedAt?' on '+a.deductedAt.slice(0,10):''} by ${esc(a.deductedBy||'')}</div>
+      </div>
+      <div style="flex-shrink:0;text-align:right;">
+        <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0369a1;">−${fmt(a.amount)}</div>
+      </div>
+    </div>`).join('');
+
+  // Update stats to include advance info
+  const totalAdv=advActive.filter(a=>a.status==='approved').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(pending.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,c)=>a+c.totalAmt,0))}</div></div>${totalAdv>0?`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Advance (to Deduct)</div><div class="stat-value" style="font-size:.9em;">${fmt(totalAdv)}</div></div>`:''}`;
 
   g('accConvPending').innerHTML=!pending.length?emptyMsg('No pending claims'):pending.map(c=>convClaimCard(c,'pending')).join('');
   g('accConvApproved').innerHTML=!approved.length?emptyMsg('No approved claims yet'):[...approved].reverse().map(c=>convClaimCard(c,'approved')).join('');
@@ -5256,12 +5289,13 @@ function convClaimCard(c,context){
       <div style="font-size:.75em;margin-top:3px;color:var(--ink2);">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
       ${c.remarks?`<div style="font-size:.74em;color:var(--ink3);margin-top:2px;font-style:italic;">"${esc(c.remarks)}"</div>`:''}
       ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
-      ${c.settledBy?`<div style="font-size:.72em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}</div>`:''}
+      ${c.settledBy?`<div style="font-size:.72em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Adv. deducted: ${fmt(c.advDeducted)} · Net: ${fmt(c.netSettled||0)}`:''}</div>`:''}
       ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;text-align:right;">
-      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--svc);margin-bottom:6px;">${fmt(c.totalAmt)}</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--svc);margin-bottom:2px;">${fmt(c.totalAmt)}</div>
+      ${c.advDeducted?`<div style="font-size:.72em;color:#0369a1;">Net paid: ${fmt(c.netSettled||0)}</div>`:''}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-top:5px;">
         <button class="btn btn-outline btn-sm" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button>
         ${context==='pending'?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
         ${context==='approved'?`<button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>`:''}
@@ -5274,14 +5308,49 @@ function viewConvClaimDetails(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
   const isAccounts=D.currentUser?.role==='accounts';
   const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
-  const callRows=calls.map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?`<tr><td><strong style="color:var(--svc);">${esc(sc.no)}</strong></td><td>${esc(sc.customer)}</td><td style="font-size:.8em;">${esc(sc.location||'')}</td><td>${esc(sc.issue||'')}</td></tr>`:''}).join('');
+
+  // Build per-call detail rows with full service-entered conveyance data
+  const callDetailRows=calls.map(ref=>{
+    const sc=D.svc_calls.find(x=>x.no===ref);
+    if(!sc) return '';
+    const tAmt=parseFloat(sc.convAmt)||0, fAmt=parseFloat(sc.convFood)||0, oAmt=parseFloat(sc.convOther)||0;
+    const total=tAmt+fAmt+oAmt;
+    return `<tr style="border-bottom:1px solid #f1f5f9;">
+      <td style="padding:8px 10px;vertical-align:top;">
+        <div style="font-weight:700;color:var(--svc);font-size:.82em;">${esc(sc.no)}</div>
+        <div style="font-size:.73em;color:var(--ink3);margin-top:1px;">${esc(sc.date||'')}</div>
+      </td>
+      <td style="padding:8px 10px;vertical-align:top;">
+        <div style="font-size:.82em;font-weight:600;">${esc(sc.customer||'')}</div>
+        <div style="font-size:.73em;color:var(--ink3);">${esc(sc.issue||'')}</div>
+      </td>
+      <td style="padding:8px 10px;vertical-align:top;">
+        <div style="font-size:.78em;">${esc(sc.convMode||'—')}</div>
+        ${sc.convFrom||sc.convTo?`<div style="font-size:.72em;color:var(--ink3);">${esc(sc.convFrom||'')}${sc.convTo?' → '+esc(sc.convTo):''}</div>`:''}
+        ${sc.convKm?`<div style="font-size:.72em;color:var(--ink3);">${sc.convKm} km${sc.convRate?' @ ₹'+sc.convRate:''}</div>`:''}
+      </td>
+      <td style="padding:8px 10px;text-align:right;vertical-align:top;">
+        <div style="font-size:.78em;color:var(--svc);font-weight:700;">${tAmt>0?fmt(tAmt):'—'}</div>
+        ${fAmt>0?`<div style="font-size:.72em;color:var(--amber);">Food: ${fmt(fAmt)}</div>`:''}
+        ${oAmt>0?`<div style="font-size:.72em;color:var(--ink3);">Other: ${fmt(oAmt)}</div>`:''}
+        <div style="font-size:.75em;font-weight:800;color:#0e7490;border-top:1px solid #e0f2fe;margin-top:2px;padding-top:2px;">${fmt(total)}</div>
+      </td>
+    </tr>`;
+  }).join('');
+
   const stColor=c.status==='approved'?'var(--green)':c.status==='settled'?'#0369a1':c.status==='rejected'?'var(--red)':'var(--amber)';
+
+  // Check for pending advances for this engineer (for deduction notice)
+  const pendingAdvances=(D.svc_conv_advances||[]).filter(a=>a.engineer===c.engineer&&a.status==='approved'&&!a.deductedFrom);
+  const totalAdv=pendingAdvances.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const netPayable=c.totalAmt-totalAdv;
+
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="convDetailModal" onclick="if(event.target.id==='convDetailModal')this.remove();">
-    <div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="background:linear-gradient(135deg,#0e7490,#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
+    <div style="background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="background:linear-gradient(135deg,#0e7490,#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;">
         <div>
           <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(c.no)}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)}</div>
+          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong></div>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:3px 10px;font-size:.75em;font-weight:700;">${c.status.toUpperCase()}</span>
@@ -5289,25 +5358,56 @@ function viewConvClaimDetails(id){
         </div>
       </div>
       <div style="padding:18px 20px;">
+
+        <!-- Expense Summary -->
         <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:12px;padding:14px;margin-bottom:14px;">
-          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;">Expense Breakdown</div>
+          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;letter-spacing:.05em;">Expense Summary</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
             <div><div style="font-size:.72em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.travelAmt)}</div></div>
             <div><div style="font-size:.72em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:1.05em;">${fmt(c.foodAmt)}</div></div>
             <div><div style="font-size:.72em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:1.05em;">${fmt(c.otherAmt)}</div></div>
-            <div style="margin-left:auto;border-left:2px solid #99f6e4;padding-left:14px;"><div style="font-size:.72em;color:var(--ink3);">TOTAL</div><div style="font-weight:900;color:#0e7490;font-size:1.3em;">${fmt(c.totalAmt)}</div></div>
+            <div style="margin-left:auto;border-left:2px solid #99f6e4;padding-left:14px;"><div style="font-size:.72em;color:var(--ink3);">CLAIM TOTAL</div><div style="font-weight:900;color:#0e7490;font-size:1.3em;">${fmt(c.totalAmt)}</div></div>
           </div>
         </div>
-        ${callRows?`<div style="margin-bottom:14px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;">Linked Service Calls</div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.78em;"><thead><tr style="background:#f1f5f9;"><th style="padding:7px 10px;text-align:left;">Call ID</th><th style="padding:7px 10px;text-align:left;">Customer</th><th style="padding:7px 10px;text-align:left;">Location</th><th style="padding:7px 10px;text-align:left;">Issue</th></tr></thead><tbody>${callRows}</tbody></table></div></div>`:''}
-        ${c.remarks?`<div style="font-size:.8em;background:#fffbeb;border-radius:8px;padding:9px 12px;border-left:3px solid var(--amber);margin-bottom:12px;"><i class="fas fa-comment" style="color:var(--amber);margin-right:5px;"></i>${esc(c.remarks)}</div>`:''}
-        ${c.approvedBy?`<div style="font-size:.78em;color:var(--green);margin-bottom:8px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong></div>`:''}
-        ${c.settledBy?`<div style="font-size:.78em;color:#0369a1;margin-bottom:8px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}</div>`:''}
-        ${c.rejectedReason?`<div style="font-size:.78em;color:var(--red);margin-bottom:8px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
-        ${isAccounts&&c.status==='pending'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
+
+        <!-- Per-call breakdown from service -->
+        ${callDetailRows?`<div style="margin-bottom:14px;">
+          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;letter-spacing:.05em;">Per-Call Conveyance Breakdown <span style="font-weight:400;text-transform:none;color:var(--ink3);">(as entered by service engineer)</span></div>
+          <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--line);">
+            <table style="width:100%;border-collapse:collapse;font-size:.78em;">
+              <thead><tr style="background:#f1f5f9;">
+                <th style="padding:7px 10px;text-align:left;font-size:.78em;">Call</th>
+                <th style="padding:7px 10px;text-align:left;font-size:.78em;">Customer / Issue</th>
+                <th style="padding:7px 10px;text-align:left;font-size:.78em;">Mode / Route / KM</th>
+                <th style="padding:7px 10px;text-align:right;font-size:.78em;">Amount</th>
+              </tr></thead>
+              <tbody>${callDetailRows}</tbody>
+            </table>
+          </div>
+        </div>`:''}
+
+        <!-- Advance deduction notice -->
+        ${isAccounts&&totalAdv>0&&(c.status==='pending'||c.status==='approved')?`<div style="background:#fef9c3;border-radius:10px;padding:12px 14px;margin-bottom:12px;border-left:3px solid var(--amber);">
+          <div style="font-size:.72em;font-weight:700;color:#92400e;margin-bottom:6px;"><i class="fas fa-coins"></i> Pending Advance Deduction</div>
+          ${pendingAdvances.map(a=>`<div style="font-size:.78em;display:flex;justify-content:space-between;margin-bottom:3px;"><span><strong>${esc(a.no)}</strong> — ${esc(a.purpose||'')}</span><span style="color:var(--amber);font-weight:700;">− ${fmt(a.amount)}</span></div>`).join('')}
+          <div style="border-top:1px solid #fde68a;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-weight:700;font-size:.82em;">
+            <span>Net Payable to Engineer</span>
+            <span style="color:${netPayable>=0?'#0e7490':'var(--red)'};">${fmt(Math.max(0,netPayable))}</span>
+          </div>
+        </div>`:''}
+
+        <!-- Status trail -->
+        ${c.approvedBy?`<div style="font-size:.78em;color:var(--green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong>${c.approvedAt?' on '+c.approvedAt.slice(0,10):''}</div>`:''}
+        ${c.settledBy?`<div style="font-size:.78em;color:#0369a1;margin-bottom:6px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Advance deducted: ${fmt(c.advDeducted)}`:''}</div>`:''}
+        ${c.rejectedReason?`<div style="font-size:.78em;color:var(--red);margin-bottom:6px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
+        ${c.remarks?`<div style="font-size:.8em;background:#fffbeb;border-radius:8px;padding:9px 12px;border-left:3px solid var(--amber);margin-bottom:10px;"><i class="fas fa-comment" style="color:var(--amber);margin-right:5px;"></i>${esc(c.remarks)}</div>`:''}
+
+        <!-- Actions (Accounts only) -->
+        ${isAccounts&&c.status==='pending'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);">
           <button class="btn btn-success btn-sm" onclick="g('convDetailModal').remove();approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button>
           <button class="btn btn-danger btn-sm" onclick="g('convDetailModal').remove();rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>
-        </div>`:isAccounts&&c.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
-          <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="g('convDetailModal').remove();settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>
+        </div>`:isAccounts&&c.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);">
+          <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="g('convDetailModal').remove();settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled${totalAdv>0?' (Net: '+fmt(Math.max(0,netPayable))+')':''}</button>
         </div>`:''}
       </div>
     </div>
@@ -5322,16 +5422,32 @@ function approveConvClaim(id){
 }
 function settleConvClaim(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  // Find approved advances for this engineer that haven't been deducted yet
+  const pendingAdvances=(D.svc_conv_advances||[]).filter(a=>a.engineer===c.engineer&&a.status==='approved'&&!a.deductedFrom);
+  const totalAdv=pendingAdvances.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const netPayable=Math.max(0,c.totalAmt-totalAdv);
+  const advDetails=totalAdv>0?[
+    {k:'Claim Total',v:fmt(c.totalAmt)},
+    {k:'Advance Deducted',v:'− '+fmt(totalAdv)+' ('+pendingAdvances.map(a=>a.no).join(', ')+')'},
+    {k:'Net Payable',v:fmt(netPayable)}
+  ]:[{k:'Claim No',v:c.no},{k:'Engineer',v:c.engineer},{k:'Total',v:fmt(c.totalAmt)},{k:'Approved By',v:c.approvedBy||'—'}];
   showConfirm({
     icon:'ci-send',iconClass:'fa-wallet',
-    title:'Mark Claim as Settled?',
-    msg:'This will mark the conveyance claim as paid/settled.',
-    details:[{k:'Claim No',v:c.no},{k:'Engineer',v:c.engineer},{k:'Total',v:fmt(c.totalAmt)},{k:'Approved By',v:c.approvedBy||'—'}],
+    title:'Settle Conveyance Claim?',
+    msg:totalAdv>0?`Advance of ${fmt(totalAdv)} will be deducted. Net payment: ${fmt(netPayable)}`:'This will mark the conveyance claim as paid/settled.',
+    details:advDetails,
     btnLabel:'Mark Settled',btnColor:'var(--acc)',
     onOk:()=>{
       c.status='settled';c.settledBy=D.currentUser?.name||'Accounts';c.settledAt=new Date().toISOString();
+      if(totalAdv>0){
+        c.advDeducted=totalAdv;
+        c.advDeductedNos=pendingAdvances.map(a=>a.no).join(', ');
+        // Mark each advance as deducted
+        pendingAdvances.forEach(a=>{a.status='deducted';a.deductedFrom=c.no;a.deductedAt=new Date().toISOString();a.deductedBy=D.currentUser?.name||'Accounts';});
+      }
+      c.netSettled=netPayable;
       saveData();renderAccConveyance();
-      showSuccessToast(`✓ ${c.no} marked as settled`,'var(--acc)');
+      showSuccessToast(`✓ ${c.no} settled${totalAdv>0?' · Advance ₹'+totalAdv.toFixed(2)+' deducted':''}`,'var(--acc)');
     }
   });
 }
