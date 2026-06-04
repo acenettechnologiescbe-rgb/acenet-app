@@ -1097,34 +1097,19 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="fg"><label>Expected Resolution</label><input type="date" id="scETA"></div>
   </div>
   <div class="fg" style="margin-bottom:11px;"><label>Resolution / Notes</label><textarea id="scResolution" rows="2" placeholder="Action taken or remarks…"></textarea></div>
-  <!-- ── Inline Conveyance ── -->
+  <!-- ── Inline Conveyance (Multi-leg) ── -->
   <div style="background:#f0fdfa;border:1.5px solid #5eead4;border-radius:10px;padding:13px 14px;margin-bottom:11px;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;" onclick="toggleScConv()">
       <i class="fas fa-car-side" style="color:var(--svc);"></i>
       <span class="sora" style="font-weight:700;font-size:.85em;color:var(--svc);">Conveyance for this Call</span>
-      <span style="font-size:.73em;color:var(--ink3);margin-left:4px;">(optional — fill if travel was made)</span>
+      <span style="font-size:.73em;color:var(--ink3);margin-left:4px;">(optional — add one row per transport leg)</span>
       <i class="fas fa-chevron-down" id="scConvChevron" style="margin-left:auto;color:var(--svc);font-size:.8em;transition:.2s;"></i>
     </div>
     <div id="scConvPanel" style="display:none;">
-      <div class="g3" style="margin-bottom:9px;">
-        <div class="fg"><label>From Location</label><input type="text" id="scConvFrom" placeholder="Starting point"></div>
-        <div class="fg"><label>To Location</label><input type="text" id="scConvTo" placeholder="Destination"></div>
-        <div class="fg"><label>Mode of Transport</label>
-          <select id="scConvMode">
-            <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
-            <option>Train</option><option>Company Vehicle</option><option>Other</option>
-          </select>
-        </div>
-      </div>
-      <div class="g4" style="margin-bottom:9px;">
-        <div class="fg"><label>Distance (km)</label><input type="number" id="scConvKm" value="0" step="0.1" oninput="calcScConvAmt()"></div>
-        <div class="fg"><label>Rate ₹/km (or flat fare)</label><input type="number" id="scConvRate" value="0" step="0.01" oninput="calcScConvAmt()"></div>
-        <div class="fg"><label>Travel Amount (₹)</label><input type="text" id="scConvAmt" readonly style="background:#e0fdf4;font-weight:700;color:var(--svc);" placeholder="₹0"></div>
-        <div class="fg"><label>Food/Allow. (₹)</label><input type="number" id="scConvFood" value="0" step="0.01"></div>
-      </div>
-      <div class="g2" style="margin-bottom:3px;">
-        <div class="fg"><label>Other Expenses (₹)</label><input type="number" id="scConvOther" value="0" step="0.01"></div>
-        <div class="fg"><label>Remarks</label><input type="text" id="scConvRemarks" placeholder="Optional conveyance notes"></div>
+      <div id="scConvRows"></div>
+      <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+        <button type="button" class="btn btn-outline btn-sm" onclick="addConvRow()" style="color:var(--svc);border-color:var(--svc);"><i class="fas fa-plus"></i> Add Transport Leg</button>
+        <span id="scConvTotal" style="margin-left:auto;font-weight:700;font-size:.88em;color:var(--svc);"></span>
       </div>
     </div>
   </div>
@@ -1437,7 +1422,7 @@ tbody tr:last-child td{border-bottom:none;}
       </div>
     </div>
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
-    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
+    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Expense Type</th><th>Expense (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addSvOrdItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--orange)"></i> Add Item</button>
     <div class="tot-bar" style="background:linear-gradient(135deg,var(--orange),#c2410c);">
       <div class="tb-item" id="svOrdGSTRow" style="display:none;"><div class="tbl">GST @18%</div><div class="tbv" id="svOrdGSTAmt">₹0</div></div>
@@ -1579,6 +1564,28 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg">
         <label>Profit / Loss <span style="font-size:.76em;color:var(--ink3);">— Auto calculated</span></label>
         <input type="text" id="incProfitDisplay" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00">
+      </div>
+    </div>
+    <div class="g3" style="margin-bottom:11px;">
+      <div class="fg">
+        <label>Expense Type</label>
+        <select id="incExpType" onchange="calcIncProfit()">
+          <option value="">-- No Expense --</option>
+          <option value="Travel">Travel</option>
+          <option value="Food">Food / Allowance</option>
+          <option value="Stationery">Stationery</option>
+          <option value="Courier">Courier / Shipping</option>
+          <option value="Tools">Tools / Equipment</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Expense Amount (₹)</label>
+        <input type="number" id="incExpAmt" placeholder="0.00" step="0.01" value="0" oninput="calcIncProfit()">
+      </div>
+      <div class="fg">
+        <label>Net Profit (after expense) <span style="font-size:.76em;color:var(--ink3);">— Auto</span></label>
+        <input type="text" id="incNetProfit" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00">
       </div>
     </div>
     <div class="fg" style="margin-bottom:12px;max-width:400px;"><label>Notes</label><input type="text" id="incNotes" placeholder="Optional notes"></div>
@@ -1843,8 +1850,16 @@ tbody tr:last-child td{border-bottom:none;}
   <!-- SUB: Send to Service Engineer -->
   <div class="rpt-panel" id="rpt-send-mkt">
     <div class="card" style="max-width:700px;background:linear-gradient(135deg,#eff6ff,#fff);border:2px solid #bfdbfe;">
-      <div class="card-title"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send Collection Report to Service Engineer</div>
-      <p style="font-size:.82em;color:var(--ink3);margin-bottom:14px;">Send a summary of recent collections and outstanding to service engineers for follow-up.</p>
+      <div class="card-title"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send Outstanding Report to Engineer</div>
+      <p style="font-size:.82em;color:var(--ink3);margin-bottom:14px;">Send a summary of recent collections and outstanding to a service engineer for follow-up.</p>
+      <div class="g2" style="margin-bottom:11px;">
+        <div class="fg"><label>Select Engineer</label>
+          <select id="smktEngineer" style="width:100%;">
+            <option value="">-- All Engineers --</option>
+          </select>
+        </div>
+        <div class="fg"></div>
+      </div>
       <div class="g2" style="margin-bottom:11px;">
         <div class="fg"><label>From Date</label><input type="date" id="smktFrom"></div>
         <div class="fg"><label>To Date</label><input type="date" id="smktTo"></div>
@@ -1862,7 +1877,7 @@ tbody tr:last-child td{border-bottom:none;}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;flex-wrap:wrap;gap:8px;">
         <div class="sora" style="font-weight:700;font-size:.93em;color:var(--mkt);">Report Preview</div>
         <div class="btn-row">
-          <button class="btn btn-outline btn-sm" onclick="printSection('mktRptContent','Marketing Report')"><i class="fas fa-print"></i> Print / PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="printSection('mktRptContent','Outstanding Report')"><i class="fas fa-print"></i> Print / PDF</button>
           <button class="btn btn-mkt btn-sm" onclick="copyMktReport()"><i class="fas fa-copy"></i> Copy Text</button>
         </div>
       </div>
@@ -4586,7 +4601,17 @@ function showSvcCallForm(call){
   g('svcCallForm').scrollIntoView({behavior:'smooth'});
   // Populate engineer dropdown from service-role users
   const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
-  g('scEngineer').innerHTML='<option value="">-- Select Engineer --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+  const engSel=g('scEngineer');
+  engSel.innerHTML='<option value="">-- Select Engineer --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+  // If logged-in user is a service engineer, lock the field to themselves
+  if(D.currentUser?.role==='service'){
+    engSel.value=D.currentUser.name;
+    engSel.disabled=true;
+    engSel.style.background='var(--bg)';engSel.style.color='var(--ink3)';engSel.style.cursor='default';
+  } else {
+    engSel.disabled=false;
+    engSel.style.background='';engSel.style.color='';engSel.style.cursor='';
+  }
   if(!call){
     g('scNo').value=genSvcNo();
     const now=new Date();now.setMinutes(now.getMinutes()-now.getTimezoneOffset());
@@ -4594,37 +4619,32 @@ function showSvcCallForm(call){
     g('scCust').value='';g('scContact').value='';g('scPhone').value='';g('scLocation').value='';
     setCallType('AMC');
     g('scIssue').value='';g('scProduct').value='';g('scPriority').value='normal';
-    // Pre-select current engineer if they are service role
-    g('scEngineer').value=D.currentUser?.role==='service'?D.currentUser.name:'';
+    // Engineer already set/locked above based on role
+    if(D.currentUser?.role!=='service') g('scEngineer').value='';
     g('scStatus').value='pending';g('scETA').value='';g('scResolution').value='';
     g('scEditId').value='';g('svcCallFormTitle').textContent='New Service Call';
     // Clear conveyance panel on new call
     const cp2=g('scConvPanel');if(cp2)cp2.style.display='none';
     const cc2=g('scConvChevron');if(cc2)cc2.style.transform='';
-    ['scConvFrom','scConvTo','scConvRemarks'].forEach(id=>{const el=g(id);if(el)el.value='';});
-    ['scConvKm','scConvRate','scConvFood','scConvOther'].forEach(id=>{const el=g(id);if(el)el.value=0;});
-    const sca=g('scConvAmt');if(sca)sca.value='\u20b90';
-    const scm=g('scConvMode');if(scm)scm.value='Two-wheeler';
+    scConvRC=0;if(g('scConvRows'))g('scConvRows').innerHTML='';
+    if(g('scConvTotal'))g('scConvTotal').textContent='';
   } else {
     g('scNo').value=call.no;g('scDate').value=call.datetime;g('scCust').value=call.customer;
     g('scContact').value=call.contact||'';g('scPhone').value=call.phone||'';g('scLocation').value=call.location||'';
     setCallType(call.callType||'AMC');
     g('scIssue').value=call.issue||'';g('scProduct').value=call.product||'';g('scPriority').value=call.priority||'normal';
-    g('scEngineer').value=call.engineer||'';g('scStatus').value=call.status;g('scETA').value=call.eta||'';g('scResolution').value=call.resolution||'';
+    if(D.currentUser?.role!=='service') g('scEngineer').value=call.engineer||'';
+    g('scStatus').value=call.status;g('scETA').value=call.eta||'';g('scResolution').value=call.resolution||'';
     g('scEditId').value=call.id;g('svcCallFormTitle').textContent='Edit — '+call.no;
-    // Restore conveyance
-    if(call.convFrom||call.convTo||call.convKm||call.convAmt){
+    // Restore multi-row conveyance
+    scConvRC=0;if(g('scConvRows'))g('scConvRows').innerHTML='';
+    const rows=call.convRows&&call.convRows.length?call.convRows
+      // Migrate legacy single-entry data
+      :(call.convFrom||call.convKm)?[{from:call.convFrom,to:call.convTo,mode:call.convMode||'Two-wheeler',km:call.convKm,rate:call.convRate,food:call.convFood,other:call.convOther,remarks:call.convRemarks}]:[];
+    if(rows.length){
       const p=g('scConvPanel');if(p){p.style.display='block';const cv=g('scConvChevron');if(cv)cv.style.transform='rotate(180deg)';}
+      rows.forEach(r=>addConvRow(r));
     }
-    if(g('scConvFrom'))g('scConvFrom').value=call.convFrom||'';
-    if(g('scConvTo'))g('scConvTo').value=call.convTo||'';
-    if(g('scConvMode'))g('scConvMode').value=call.convMode||'Two-wheeler';
-    if(g('scConvKm'))g('scConvKm').value=call.convKm||0;
-    if(g('scConvRate'))g('scConvRate').value=call.convRate||0;
-    if(g('scConvFood'))g('scConvFood').value=call.convFood||0;
-    if(g('scConvOther'))g('scConvOther').value=call.convOther||0;
-    if(g('scConvRemarks'))g('scConvRemarks').value=call.convRemarks||'';
-    calcScConvAmt();
   }
 }
 function hideSvcCallForm(){g('svcCallForm').style.display='none';}
@@ -4632,10 +4652,10 @@ function hideSvcCallForm(){g('svcCallForm').style.display='none';}
 function saveSvcCall(){
   const no=g('scNo').value,dt=g('scDate').value,cust=g('scCust').value.trim(),issue=g('scIssue').value.trim();
   if(!cust||!issue){alert('Customer and issue are required');return;}
-  // Inline conveyance data
-  const convKm=parseFloat(g('scConvKm')?.value)||0;
-  const convRate=parseFloat(g('scConvRate')?.value)||0;
-  const convAmtRaw=convKm>0&&convRate>0?convKm*convRate:convRate;
+  const convRows=getConvRows();
+  const convAmt=convRows.reduce((a,r)=>a+r.amt+r.food+r.other,0);
+  // Keep legacy fields for backwards-compat with conveyance claims
+  const firstRow=convRows[0]||{};
   const obj={
     id:g('scEditId').value||uid(),no,datetime:dt,customer:cust,
     contact:g('scContact').value.trim(),phone:g('scPhone').value.trim(),
@@ -4644,14 +4664,12 @@ function saveSvcCall(){
     engineer:g('scEngineer').value,status:g('scStatus').value,
     eta:g('scETA').value,resolution:g('scResolution').value.trim(),
     createdBy:D.currentUser?.name||'',date:dt.slice(0,10),
-    // Conveyance
-    convFrom:g('scConvFrom')?.value.trim()||'',
-    convTo:g('scConvTo')?.value.trim()||'',
-    convMode:g('scConvMode')?.value||'Two-wheeler',
-    convKm,convRate,convAmt:convAmtRaw,
-    convFood:parseFloat(g('scConvFood')?.value)||0,
-    convOther:parseFloat(g('scConvOther')?.value)||0,
-    convRemarks:g('scConvRemarks')?.value.trim()||''
+    // Multi-leg conveyance
+    convRows,convAmt,
+    // Legacy single-entry fields (first leg, for claim compatibility)
+    convFrom:firstRow.from||'',convTo:firstRow.to||'',convMode:firstRow.mode||'',
+    convKm:firstRow.km||0,convRate:firstRow.rate||0,convFood:firstRow.food||0,
+    convOther:firstRow.other||0,convRemarks:firstRow.remarks||''
   };
   if(g('scEditId').value) D.svc_calls=D.svc_calls.map(c=>c.id===obj.id?obj:c);
   else{if(!D.svc_calls.find(c=>c.no===no))D.svc_calls.push(obj);}
@@ -5608,16 +5626,25 @@ function addSvOrdItem(data){
     <td><input type="text" class="som" placeholder="Part / Material…" oninput="recalcSvOrd()" style="min-width:140px;"></td>
     <td><input type="number" class="soq" value="1" style="width:65px;" oninput="recalcSvOrd()"></td>
     <td><input type="number" class="sor" value="0" step="0.01" style="width:90px;" oninput="recalcSvOrd()"></td>
+    <td><select class="soet" onchange="recalcSvOrd()" style="min-width:110px;font-size:.82em;">
+      <option value="">— None —</option>
+      <option value="Travel">Travel</option>
+      <option value="Food">Food</option>
+      <option value="Courier">Courier</option>
+      <option value="Tools">Tools</option>
+      <option value="Other">Other</option>
+    </select></td>
+    <td><input type="number" class="soea" value="0" step="0.01" style="width:80px;" oninput="recalcSvOrd()"></td>
     <td class="soa amt" style="color:var(--orange);">₹0</td>
     <td><button class="btn btn-ghost btn-icon" onclick="removeSvOrdItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
   g('svOrdItemsBody').appendChild(tr);
-  if(data){const r=g('soi-'+n);r.querySelector('.som').value=data.material||'';r.querySelector('.soq').value=data.qty||1;r.querySelector('.sor').value=data.rate||0;r.querySelector('.soa').textContent='₹'+(data.amount||0).toFixed(2);}
+  if(data){const r=g('soi-'+n);r.querySelector('.som').value=data.material||'';r.querySelector('.soq').value=data.qty||1;r.querySelector('.sor').value=data.rate||0;if(data.expType)r.querySelector('.soet').value=data.expType||'';r.querySelector('.soea').value=data.expAmt||0;r.querySelector('.soa').textContent='₹'+(data.amount||0).toFixed(2);}
   recalcSvOrd();
 }
 function removeSvOrdItem(n){const r=g('soi-'+n);if(r){r.remove();recalcSvOrd();}}
 function recalcSvOrd(){
-  let subtotal=0;
-  document.querySelectorAll("#svOrdItemsBody tr").forEach(r=>{const q=parseFloat(r.querySelector(".soq")?.value)||0,rt=parseFloat(r.querySelector(".sor")?.value)||0,a=q*rt;subtotal+=a;const ac=r.querySelector(".soa");if(ac)ac.textContent="₹"+a.toFixed(2);});
+  let subtotal=0,totalExp=0;
+  document.querySelectorAll("#svOrdItemsBody tr").forEach(r=>{const q=parseFloat(r.querySelector(".soq")?.value)||0,rt=parseFloat(r.querySelector(".sor")?.value)||0,ea=parseFloat(r.querySelector(".soea")?.value)||0,a=q*rt+ea;subtotal+=a;totalExp+=ea;const ac=r.querySelector(".soa");if(ac)ac.textContent="₹"+a.toFixed(2);});
   const totalEl=g('svOrdTotal');
   if(totalEl) totalEl.textContent=fmt(subtotal);
   const gType=g("svOrdGST")?.value||"none";
@@ -5640,7 +5667,8 @@ function sendSvcOrderToAccounts(){
   document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{
     const m=r.querySelector('.som')?.value.trim();if(!m)return;
     const qty=parseFloat(r.querySelector('.soq')?.value)||0,rate=parseFloat(r.querySelector('.sor')?.value)||0;
-    items.push({material:m,qty,rate,amount:qty*rate});
+    const expType=r.querySelector('.soet')?.value||'',expAmt=parseFloat(r.querySelector('.soea')?.value)||0;
+    items.push({material:m,qty,rate,amount:qty*rate+expAmt,expType,expAmt});
   });
   if(!items.length){alert('Add at least one item');return;}
   const total=items.reduce((a,x)=>a+x.amount,0);
@@ -5787,6 +5815,9 @@ function showSvcIncForm(){
   if(D.currentUser?.role==='service') g('incEngineer').value=D.currentUser.name;
   g('incCust').value='';g('incProduct').value='';g('incRef').value='';
   g('incSaleAmt').value='';g('incPurchaseAmt').value='';g('incNotes').value='';
+  if(g('incExpType'))g('incExpType').value='';
+  if(g('incExpAmt'))g('incExpAmt').value=0;
+  if(g('incNetProfit'))g('incNetProfit').value='₹0.00';
   g('incProfitDisplay').value='₹0.00';
   g('svcIncForm').scrollIntoView({behavior:'smooth'});
 }
@@ -5800,9 +5831,17 @@ function populateSvcIncEngDropdown(){
 }
 
 function calcIncProfit(){
-  const s=parseFloat(g('incSaleAmt')?.value)||0,p=parseFloat(g('incPurchaseAmt')?.value)||0,profit=s-p;
+  const s=parseFloat(g('incSaleAmt')?.value)||0,p=parseFloat(g('incPurchaseAmt')?.value)||0;
+  const exp=parseFloat(g('incExpAmt')?.value)||0;
+  const gstType=g('incGST')?.value||'none';
+  let netSale=s;
+  if(gstType==='inclusive'){netSale=s/(1+GST_R);}
+  const grossProfit=netSale-p;
+  const netProfit=grossProfit-exp;
   const disp=g('incProfitDisplay');
-  if(disp){disp.value=(profit>=0?'+':'')+fmt(profit).replace('₹','₹');disp.style.color=profit>=0?'var(--green)':'var(--red)';}
+  if(disp){disp.value=(grossProfit>=0?'+':'')+fmt(grossProfit).replace('₹','₹');disp.style.color=grossProfit>=0?'var(--green)':'var(--red)';}
+  const np=g('incNetProfit');
+  if(np){np.value=(netProfit>=0?'+':'')+fmt(netProfit).replace('₹','₹');np.style.color=netProfit>=0?'var(--green)':'var(--red)';}
 }
 
 function saveSvcIncDraft(){
@@ -5810,15 +5849,17 @@ function saveSvcIncDraft(){
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
+  const expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
   let gstAmt=0,netSale=sale;
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
   else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);}
   const profit=netSale-purchase;
+  const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
   if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
   else D.svc_incentives.push(obj);
   hideSvcIncForm();saveData();renderSvcIncentives();
@@ -5830,6 +5871,7 @@ function sendSvcIncToAccounts(){
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
+  const expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
   const gstType2=g('incGST')?.value||'none';
@@ -5837,16 +5879,17 @@ function sendSvcIncToAccounts(){
   if(gstType2==='exclusive'){gstAmt2=sale*GST_R;netSale2=sale;}
   else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale/(1+GST_R);}
   const profit=netSale2-purchase;
+  const netProfit=profit-expAmt;
   showConfirm({
     icon:'ci-send',iconClass:'fa-gift',
     title:'Send Incentive to Accounts?',
     msg:'This entry will be sent to Accounts for review.',
-    details:[{k:'Entry No',v:no},{k:'Date',v:date},{k:'Engineer',v:eng},{k:'Customer',v:cust},{k:'Product',v:product||'—'},{k:'Sale Amt',v:fmt(sale)},{k:'GST',v:gstType2!=='none'?fmt(gstAmt2):'—'},{k:'Net Sale',v:fmt(netSale2)},{k:'Purchase Amt',v:fmt(purchase)},{k:'Profit/Loss',v:fmt(profit)}],
+    details:[{k:'Entry No',v:no},{k:'Date',v:date},{k:'Engineer',v:eng},{k:'Customer',v:cust},{k:'Product',v:product||'—'},{k:'Sale Amt',v:fmt(sale)},{k:'GST',v:gstType2!=='none'?fmt(gstAmt2):'—'},{k:'Net Sale',v:fmt(netSale2)},{k:'Purchase Amt',v:fmt(purchase)},{k:'Expense',v:expType?(expType+' '+fmt(expAmt)):'—'},{k:'Profit/Loss',v:fmt(profit)},{k:'Net Profit',v:fmt(netProfit)}],
     btnLabel:'Send to Accounts',btnColor:'#7c3aed',
     onOk:()=>{
       const editId=g('incEditId').value;
       if(!D.svc_incentives)D.svc_incentives=[];
-      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
       if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
       else D.svc_incentives.push(obj);
       hideSvcIncForm();saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
@@ -5880,6 +5923,8 @@ function editDraftInc(id){
   g('incPurchaseAmt').value=e.purchaseAmt||'';g('incNotes').value=e.notes||'';
   g('incEditId').value=e.id;
   const gEl=g('incGST');if(gEl)gEl.value=e.gstType||'none';
+  if(g('incExpType'))g('incExpType').value=e.expType||'';
+  if(g('incExpAmt'))g('incExpAmt').value=e.expAmt||0;
   g('svcIncFormTitle').textContent='Edit Draft Entry';
   calcIncProfit();
   g('svcIncForm').style.display='block';
@@ -7017,7 +7062,7 @@ function switchRptTab(tabId,btn){
   if(tabId==='rpt-outstanding') renderRptOutstanding();
   if(tabId==='rpt-collection') renderRptCollection();
   if(tabId==='rpt-incentive') renderRptIncentive();
-  if(tabId==='rpt-send-mkt') renderSentMktHistory();
+  if(tabId==='rpt-send-mkt'){renderSentMktHistory();populateSmktEngDropdown();}
   if(tabId==='rpt-stock') renderStockReport();
   if(tabId==='rpt-financial') renderAccFinancialRpt();
 }
@@ -7210,10 +7255,17 @@ function exportStockReportExcel(){
 }
 
 // ── Send to Service Engineer ─────────────────────────────────────────────
+function populateSmktEngDropdown(){
+  const sel=g('smktEngineer');if(!sel)return;
+  const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
+  sel.innerHTML='<option value="">-- All Engineers --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+}
 function generateMktReport(){
   const from=g('smktFrom')?.value,to=g('smktTo')?.value||today();
   const inclCol=g('smktInclCol')?.checked,inclOut=g('smktInclOut')?.checked,inclOD=g('smktInclOD')?.checked;
-  let html=`<div style="font-family:'Sora',sans-serif;font-size:.9em;font-weight:700;margin-bottom:12px;">Acenet Technologies India Pvt. Ltd. — Report for Marketing</div>`;
+  const selectedEng=g('smktEngineer')?.value||'';
+  const engLabel=selectedEng||'All Engineers';
+  let html=`<div style="font-family:'Sora',sans-serif;font-size:.9em;font-weight:700;margin-bottom:12px;">Acenet Technologies India Pvt. Ltd. — Outstanding Report for ${esc(engLabel)}</div>`;
   html+=`<div style="font-size:.79em;color:var(--ink3);margin-bottom:14px;">Period: ${from||'All time'} to ${to} &nbsp;·&nbsp; Generated: ${today()}</div>`;
   if(inclCol){
     let pays=[...D.ac_payments];if(from)pays=pays.filter(p=>p.date>=from);pays=pays.filter(p=>p.date<=to);
@@ -7236,7 +7288,7 @@ function generateMktReport(){
   g('mktReportPreview').style.display='block';
   // Save to history
   if(!D.mkt_sent_reports)D.mkt_sent_reports=[];
-  D.mkt_sent_reports.push({id:uid(),generatedAt:today(),from:from||'',to,inclCol,inclOut,inclOD,generatedBy:D.currentUser?.name||'Accounts'});
+  D.mkt_sent_reports.push({id:uid(),generatedAt:today(),from:from||'',to,inclCol,inclOut,inclOD,engineer:selectedEng||'All',generatedBy:D.currentUser?.name||'Accounts'});
   saveData();renderSentMktHistory();
 }
 function copyMktReport(){const text=g('mktRptContent')?.innerText||'';navigator.clipboard?.writeText(text).then(()=>alert('Copied!'));}
@@ -7246,7 +7298,7 @@ function renderSentMktHistory(){
   if(!D.mkt_sent_reports.length){el.innerHTML='<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.84em;">No reports generated yet</div>';return;}
   el.innerHTML=[...D.mkt_sent_reports].reverse().slice(0,10).map(r=>`<div class="mkt-notify-card">
     <div style="flex:1;"><div style="font-weight:700;font-size:.86em;">Report — ${r.from||'All time'} to ${r.to}</div>
-    <div style="font-size:.75em;color:var(--ink3);margin-top:2px;">Generated: ${r.generatedAt} by ${esc(r.generatedBy||'')} &nbsp;·&nbsp; Incl: ${[r.inclCol?'Collections':'',r.inclOut?'Outstanding':'',r.inclOD?'Overdue only':''].filter(Boolean).join(', ')}</div></div>
+    <div style="font-size:.75em;color:var(--ink3);margin-top:2px;">Generated: ${r.generatedAt} by ${esc(r.generatedBy||'')} &nbsp;·&nbsp; Engineer: ${esc(r.engineer||'All')} &nbsp;·&nbsp; Incl: ${[r.inclCol?'Collections':'',r.inclOut?'Outstanding':'',r.inclOD?'Overdue only':''].filter(Boolean).join(', ')}</div></div>
     <span class="mkt-badge-sent">Generated</span>
   </div>`).join('');
 }
@@ -7688,21 +7740,99 @@ function openMsgWithRef(toRole,ref,type){
 // ═══════════════════════════════════════════════════════════════
 // INLINE CONVEYANCE IN SERVICE CALL FORM
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// INLINE CONVEYANCE IN SERVICE CALL FORM (multi-leg)
+// ═══════════════════════════════════════════════════════════════
+var scConvRC=0;
 function toggleScConv(){
   const panel=g('scConvPanel'),chev=g('scConvChevron');
   if(!panel)return;
   const open=panel.style.display==='block';
   panel.style.display=open?'none':'block';
   if(chev)chev.style.transform=open?'':'rotate(180deg)';
+  if(!open&&g('scConvRows')&&g('scConvRows').children.length===0) addConvRow();
 }
 
-function calcScConvAmt(){
-  const km=parseFloat(g('scConvKm')?.value)||0;
-  const rate=parseFloat(g('scConvRate')?.value)||0;
-  const amt=km>0&&rate>0?km*rate:rate;
-  const el=g('scConvAmt');
-  if(el) el.value=amt>0?fmt(amt):'₹0';
+function addConvRow(data){
+  scConvRC++;const n=scConvRC;
+  const div=document.createElement('div');
+  div.id='scr-'+n;
+  div.style.cssText='background:#fff;border:1px solid #a7f3d0;border-radius:8px;padding:10px 12px;margin-bottom:8px;position:relative;';
+  div.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:.74em;font-weight:700;color:var(--svc);">Leg ${n}</span>
+      <button type="button" onclick="removeConvRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85em;padding:2px 6px;"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="g3" style="margin-bottom:7px;">
+      <div class="fg"><label style="font-size:.72em;">From</label><input type="text" class="scr-from" placeholder="Starting point" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">To</label><input type="text" class="scr-to" placeholder="Destination" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">Mode of Transport</label>
+        <select class="scr-mode" onchange="calcConvTotal()">
+          <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
+          <option>Train</option><option>Company Vehicle</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="g4" style="margin-bottom:5px;">
+      <div class="fg"><label style="font-size:.72em;">Distance (km)</label><input type="number" class="scr-km" value="0" step="0.1" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">Rate ₹/km</label><input type="number" class="scr-rate" value="0" step="0.01" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">Travel Amt (₹)</label><input type="text" class="scr-amt" readonly style="background:#e0fdf4;font-weight:700;color:var(--svc);font-size:.88em;" placeholder="₹0"></div>
+      <div class="fg"><label style="font-size:.72em;">Food/Allow. (₹)</label><input type="number" class="scr-food" value="0" step="0.01" oninput="calcConvTotal()"></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label style="font-size:.72em;">Other Expenses (₹)</label><input type="number" class="scr-other" value="0" step="0.01" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="scr-remarks" placeholder="Optional notes"></div>
+    </div>`;
+  g('scConvRows').appendChild(div);
+  if(data){
+    const r=g('scr-'+n);
+    r.querySelector('.scr-from').value=data.from||'';
+    r.querySelector('.scr-to').value=data.to||'';
+    r.querySelector('.scr-mode').value=data.mode||'Two-wheeler';
+    r.querySelector('.scr-km').value=data.km||0;
+    r.querySelector('.scr-rate').value=data.rate||0;
+    r.querySelector('.scr-food').value=data.food||0;
+    r.querySelector('.scr-other').value=data.other||0;
+    r.querySelector('.scr-remarks').value=data.remarks||'';
+  }
+  calcConvTotal();
 }
+
+function removeConvRow(n){const el=g('scr-'+n);if(el){el.remove();calcConvTotal();}}
+
+function calcConvTotal(){
+  let total=0;
+  document.querySelectorAll('#scConvRows>div').forEach(row=>{
+    const km=parseFloat(row.querySelector('.scr-km')?.value)||0;
+    const rate=parseFloat(row.querySelector('.scr-rate')?.value)||0;
+    const food=parseFloat(row.querySelector('.scr-food')?.value)||0;
+    const other=parseFloat(row.querySelector('.scr-other')?.value)||0;
+    const amt=km>0&&rate>0?km*rate:rate;
+    const amtEl=row.querySelector('.scr-amt');if(amtEl)amtEl.value=amt>0?fmt(amt):'₹0';
+    total+=amt+food+other;
+  });
+  const tot=g('scConvTotal');if(tot)tot.textContent=total>0?'Total: '+fmt(total):'';
+}
+
+function getConvRows(){
+  const rows=[];
+  document.querySelectorAll('#scConvRows>div').forEach(row=>{
+    const from=row.querySelector('.scr-from')?.value.trim()||'';
+    const to=row.querySelector('.scr-to')?.value.trim()||'';
+    const mode=row.querySelector('.scr-mode')?.value||'Two-wheeler';
+    const km=parseFloat(row.querySelector('.scr-km')?.value)||0;
+    const rate=parseFloat(row.querySelector('.scr-rate')?.value)||0;
+    const food=parseFloat(row.querySelector('.scr-food')?.value)||0;
+    const other=parseFloat(row.querySelector('.scr-other')?.value)||0;
+    const remarks=row.querySelector('.scr-remarks')?.value.trim()||'';
+    const amt=km>0&&rate>0?km*rate:rate;
+    if(from||to||km||rate)rows.push({from,to,mode,km,rate,amt,food,other,remarks});
+  });
+  return rows;
+}
+
+// Legacy compat stub (kept so old saved calls load gracefully)
+function calcScConvAmt(){}
 
 // ═══════════════════════════════════════════════════════════════
 // CONVEYANCE TAB — CHECKBOX TABLE
