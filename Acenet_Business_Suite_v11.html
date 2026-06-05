@@ -84,7 +84,62 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .inc-status-rejected{background:var(--red-l);color:var(--red);border:1px solid #fca5a5;padding:3px 9px;border-radius:20px;font-size:.71em;font-weight:700;}
 .fp-incentive{background:linear-gradient(135deg,#faf5ff,#fff);border:2px solid #c4b5fd;}
 .s-purple2 .stat-bar{background:#7c3aed;}.s-purple2 .stat-icon{background:#f3e8ff;color:#7c3aed;}.s-purple2 .stat-value{color:#7c3aed;}
-/* ── REPORT TABS ── */
+/* ═══ REDESIGNED ACCOUNTS DASHBOARD ═══ */
+.acc-hero{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px;}
+@media(max-width:900px){.acc-hero{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:560px){.acc-hero{grid-template-columns:repeat(2,1fr);}}
+.acc-kpi{border-radius:14px;padding:18px 16px 14px;position:relative;overflow:hidden;transition:.2s;box-shadow:0 2px 10px rgba(0,0,0,.08);}
+.acc-kpi:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.14);}
+.acc-kpi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95em;margin-bottom:10px;}
+.acc-kpi-val{font-family:'Sora',sans-serif;font-size:1.65em;font-weight:800;line-height:1;}
+.acc-kpi-lbl{font-size:.7em;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px;opacity:.85;}
+.acc-kpi-glow{position:absolute;right:-18px;top:-18px;width:76px;height:76px;border-radius:50%;opacity:.18;}
+.acc-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-radius:12px 12px 0 0;margin-top:18px;}
+.acc-section-body{background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
+.acc-action-card{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);gap:12px;transition:.15s;}
+.acc-action-card:last-child{border-bottom:none;}
+.acc-action-card:hover{background:#f8fafc;}
+.acc-action-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9em;flex-shrink:0;}
+.acc-action-info{flex:1;min-width:0;}
+.acc-action-title{font-weight:700;font-size:.87em;color:var(--ink);}
+.acc-action-sub{font-size:.74em;color:var(--ink3);margin-top:2px;}
+.acc-action-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.acc-action-amt{font-family:'Sora',sans-serif;font-weight:800;font-size:.92em;}
+.acc-empty{text-align:center;padding:16px 12px;font-size:.82em;color:var(--ink3);display:flex;align-items:center;justify-content:center;gap:7px;}
+/* ═══ REDESIGNED MANAGEMENT OVERVIEW ═══ */
+.mgmt-ov-acc{background:linear-gradient(135deg,#0c4a6e,#0e7490);border-radius:16px;padding:22px;margin-bottom:18px;color:#fff;}
+.mgmt-ov-acc-title{font-family:'Sora',sans-serif;font-size:.76em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;opacity:.75;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.mgmt-ov-acc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:700px){.mgmt-ov-acc-grid{grid-template-columns:repeat(2,1fr);}}
+.moag-cell{background:rgba(255,255,255,.12);border-radius:10px;padding:14px 12px;cursor:pointer;transition:.18s;}
+.moag-cell:hover{background:rgba(255,255,255,.22);transform:translateY(-2px);}
+.moag-lbl{font-size:.7em;font-weight:600;opacity:.8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;}
+.moag-val{font-family:'Sora',sans-serif;font-size:1.35em;font-weight:800;line-height:1;}
+.mgmt-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;}
+@media(max-width:1000px){.mgmt-kpi-row{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.mgmt-kpi-row{grid-template-columns:repeat(2,1fr);}}
+.mgmt-mini-kpi{background:#fff;border-radius:12px;padding:14px 13px;border:1px solid var(--line);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:11px;}
+.mgmt-mini-kpi:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);transform:translateY(-1px);}
+.mgmt-mini-kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.88em;flex-shrink:0;}
+.mgmt-mini-kpi-val{font-family:'Sora',sans-serif;font-size:1.4em;font-weight:800;line-height:1;}
+.mgmt-mini-kpi-lbl{font-size:.68em;color:var(--ink3);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.3px;}
+.mgmt-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:700px){.mgmt-two-col{grid-template-columns:1fr;}}
+.mgmt-sec-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+.mgmt-sec-hdr{padding:13px 17px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:var(--bg);}
+.mgmt-sec-title{font-family:'Sora',sans-serif;font-weight:700;font-size:.86em;display:flex;align-items:center;gap:8px;color:var(--ink);}
+.mgmt-sec-body{padding:12px 15px;}
+.mgmt-row-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);gap:8px;}
+.mgmt-row-item:last-child{border-bottom:none;}
+/* ═══ MGMT VIEW TABS REDESIGN ═══ */
+.mv-tab-strip{display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:18px;overflow-x:auto;}
+.mv-tab-btn{display:flex;align-items:center;gap:7px;padding:11px 18px;border:none;background:none;cursor:pointer;font-family:'Inter',sans-serif;font-weight:600;font-size:.83em;color:var(--ink3);border-bottom:3px solid transparent;margin-bottom:-2px;transition:.15s;white-space:nowrap;}
+.mv-tab-btn:hover{color:var(--acc);background:#f0fdfa;border-radius:8px 8px 0 0;}
+.mv-tab-btn.active{color:var(--svc);border-bottom-color:var(--svc);}
+.mv-tab-btn[data-t="adv"].active{color:var(--amber);border-bottom-color:var(--amber);}
+.mv-tab-btn[data-t="inc"].active{color:#7c3aed;border-bottom-color:#7c3aed;}
+.mv-tab-btn[data-t="svc"].active{color:var(--green);border-bottom-color:var(--green);}
+
 .rpt-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;border-bottom:2px solid var(--line);padding-bottom:0;}
 .rpt-tab{border:none;background:none;padding:10px 15px;font-family:'Inter',sans-serif;font-weight:600;font-size:.82em;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-2px;transition:.15s;display:flex;align-items:center;gap:5px;white-space:nowrap;}
 .rpt-tab:hover{color:var(--acc);background:var(--acc-l);border-radius:8px 8px 0 0;}
@@ -540,25 +595,54 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="page" id="page-overview">
   <div class="ph"><div><h2><span class="phi" style="background:linear-gradient(135deg,var(--mgmt),#9333ea)"><i class="fas fa-eye"></i></span><span class="sora">Management Overview</span></h2><p>Live combined view — read only</p></div>
   <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="renderMgmt();"><i class="fas fa-sync"></i> Refresh</button><button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button></div></div>
-  <!-- Combined hero module cards -->
-  <div class="mgmt-hero">
-    <div class="mgmt-module-card mmc-acc">
-      <div class="mmc-label"><i class="fas fa-file-invoice-dollar"></i> Accounts — Outstanding &amp; Collection</div>
-      <div class="mmc-row" id="mgmt-acc-row"></div>
+
+  <!-- Accounts Financial Panel -->
+  <div class="mgmt-ov-acc">
+    <div class="mgmt-ov-acc-title"><i class="fas fa-file-invoice-dollar"></i> Accounts — Outstanding &amp; Collection</div>
+    <div class="mgmt-ov-acc-grid" id="mgmt-acc-row"></div>
+  </div>
+
+  <!-- Service KPI mini row -->
+  <div class="mgmt-kpi-row" id="mgmt-order-stats"></div>
+
+  <!-- Two-column info cards -->
+  <div class="mgmt-two-col">
+    <div class="mgmt-sec-card">
+      <div class="mgmt-sec-hdr">
+        <div class="mgmt-sec-title"><div style="width:28px;height:28px;background:#fff7ed;border-radius:7px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-clipboard-list" style="color:var(--orange);font-size:.85em;"></i></div>Order Checklist Status</div>
+      </div>
+      <div class="mgmt-sec-body" id="mgmt-orders"></div>
+    </div>
+    <div class="mgmt-sec-card">
+      <div class="mgmt-sec-hdr">
+        <div class="mgmt-sec-title"><div style="width:28px;height:28px;background:#fff1f2;border-radius:7px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-circle-exclamation" style="color:var(--red);font-size:.85em;"></i></div>Overdue Invoices</div>
+      </div>
+      <div class="mgmt-sec-body" id="mgmt-overdue"></div>
     </div>
   </div>
-  <!-- Order Status Summary -->
-  <div class="stats" id="mgmt-order-stats"></div>
-  <div class="sec-grid">
-    <div class="card"><div class="card-title"><i class="fas fa-clipboard-list" style="color:var(--orange)"></i>Order Checklist Status</div><div id="mgmt-orders"></div></div>
-    <div class="card"><div class="card-title"><i class="fas fa-circle-exclamation" style="color:var(--red)"></i>Overdue Invoices</div><div id="mgmt-overdue"></div></div>
+
+  <div class="mgmt-two-col">
+    <div class="mgmt-sec-card">
+      <div class="mgmt-sec-hdr">
+        <div class="mgmt-sec-title"><div style="width:28px;height:28px;background:#f0fdfa;border-radius:7px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-headset" style="color:var(--svc);font-size:.85em;"></i></div>Pending / Escalated Service Calls</div>
+      </div>
+      <div class="mgmt-sec-body" id="mgmt-svc-calls"></div>
+    </div>
+    <div class="mgmt-sec-card">
+      <div class="mgmt-sec-hdr">
+        <div class="mgmt-sec-title"><div style="width:28px;height:28px;background:#fef2f2;border-radius:7px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-ranking-star" style="color:var(--red);font-size:.85em;"></i></div>Top Customers — Outstanding</div>
+      </div>
+      <div class="mgmt-sec-body" id="mgmt-acc-chart"></div>
+    </div>
   </div>
-  <div class="sec-grid">
-    <div class="card"><div class="card-title"><i class="fas fa-headset" style="color:var(--svc)"></i>Pending / Escalated Service Calls</div><div id="mgmt-svc-calls"></div></div>
-    <div class="card"><div class="card-title"><i class="fas fa-chart-bar" style="color:var(--red)"></i>Top Customers — Outstanding</div><div id="mgmt-acc-chart"></div></div>
+
+  <!-- Aging Analysis -->
+  <div class="mgmt-sec-card" style="margin-bottom:16px;">
+    <div class="mgmt-sec-hdr">
+      <div class="mgmt-sec-title"><div style="width:28px;height:28px;background:#eff6ff;border-radius:7px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-chart-bar" style="color:#3b82f6;font-size:.85em;"></i></div>Aging Analysis</div>
+    </div>
+    <div class="mgmt-sec-body"><div class="aging-row" id="mgmt-aging"></div></div>
   </div>
-  <div class="sdiv" style="margin-top:0;">Aging Analysis</div>
-  <div class="aging-row" id="mgmt-aging"></div>
 </div>
 
 <!-- ════ MARKETING: BILL ENTRY ════ -->
@@ -1225,34 +1309,87 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ ACCOUNTS: PENDING INBOX ════ -->
 <div class="page" id="page-acc-dashboard">
 <div class="ph">
-  <div><h2><span class="phi" style="background:var(--acc)"><i class="fas fa-gauge-high"></i></span><span class="sora">Accounts Dashboard</span></h2><p>All items sent by Service awaiting your action</p></div>
+  <div><h2><span class="phi" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9)"><i class="fas fa-gauge-high"></i></span><span class="sora">Accounts Dashboard</span></h2><p>Pending actions from Service — awaiting your review</p></div>
   <button class="btn btn-outline btn-sm" onclick="renderAccDashboard()"><i class="fas fa-sync"></i> Refresh</button>
 </div>
-<div class="stats" id="pendingStats"></div>
-<!-- Service Conveyance Claims -->
-<div class="sdiv" style="display:flex;align-items:center;justify-content:space-between;">
-  <span><i class="fas fa-car-side" style="color:var(--svc);margin-right:7px;"></i>Service Conveyance Claims <span id="pend-conv-cnt" style="background:var(--svc);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;"></span></span>
+
+<!-- KPI Hero Row -->
+<div class="acc-hero" id="accKpiRow">
+  <div class="acc-kpi" style="background:linear-gradient(135deg,#0c4a6e,#0369a1);color:#fff;">
+    <div class="acc-kpi-glow" style="background:#fff;"></div>
+    <div class="acc-kpi-icon" style="background:rgba(255,255,255,.18);color:#fff;"><i class="fas fa-inbox"></i></div>
+    <div class="acc-kpi-val" id="kpi-total">0</div>
+    <div class="acc-kpi-lbl">Total Pending</div>
+  </div>
+  <div class="acc-kpi" style="background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;">
+    <div class="acc-kpi-glow" style="background:#fff;"></div>
+    <div class="acc-kpi-icon" style="background:rgba(255,255,255,.18);color:#fff;"><i class="fas fa-car-side"></i></div>
+    <div class="acc-kpi-val" id="kpi-conv">0</div>
+    <div class="acc-kpi-lbl">Conveyance</div>
+  </div>
+  <div class="acc-kpi" style="background:linear-gradient(135deg,#92400e,#d97706);color:#fff;">
+    <div class="acc-kpi-glow" style="background:#fff;"></div>
+    <div class="acc-kpi-icon" style="background:rgba(255,255,255,.18);color:#fff;"><i class="fas fa-hand-holding-dollar"></i></div>
+    <div class="acc-kpi-val" id="kpi-adv">0</div>
+    <div class="acc-kpi-lbl">Adv. Requests</div>
+  </div>
+  <div class="acc-kpi" style="background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;">
+    <div class="acc-kpi-glow" style="background:#fff;"></div>
+    <div class="acc-kpi-icon" style="background:rgba(255,255,255,.18);color:#fff;"><i class="fas fa-gift"></i></div>
+    <div class="acc-kpi-val" id="kpi-inc">0</div>
+    <div class="acc-kpi-lbl">Incentives</div>
+  </div>
+  <div class="acc-kpi" style="background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;">
+    <div class="acc-kpi-glow" style="background:#fff;"></div>
+    <div class="acc-kpi-icon" style="background:rgba(255,255,255,.18);color:#fff;"><i class="fas fa-clipboard-list"></i></div>
+    <div class="acc-kpi-val" id="kpi-ord">0</div>
+    <div class="acc-kpi-lbl">Orders</div>
+  </div>
+</div>
+
+<!-- Conveyance Claims -->
+<div class="acc-section-hdr" style="background:linear-gradient(90deg,#f0fdfa,#e0f2fe);">
+  <div style="display:flex;align-items:center;gap:9px;">
+    <div style="width:32px;height:32px;background:var(--svc);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85em;"><i class="fas fa-car-side"></i></div>
+    <div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.88em;color:var(--svc);">Service Conveyance Claims</div><div style="font-size:.72em;color:var(--ink3);">Pending approval</div></div>
+    <span id="pend-conv-cnt" style="background:var(--svc);color:#fff;border-radius:20px;padding:2px 10px;font-size:.71em;font-weight:700;"></span>
+  </div>
   <button class="btn btn-svc btn-sm" onclick="goPage('acc-conveyance')"><i class="fas fa-arrow-right"></i> View All</button>
 </div>
-<div id="pend-conv-list"></div>
-<!-- Service Advance Requests -->
-<div class="sdiv" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
-  <span><i class="fas fa-hand-holding-dollar" style="color:var(--svc);margin-right:7px;"></i>Service Advance Requests <span id="pend-adv-cnt" style="background:var(--amber);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;"></span></span>
+<div class="acc-section-body" id="pend-conv-list"></div>
+
+<!-- Advance Requests -->
+<div class="acc-section-hdr" style="background:linear-gradient(90deg,#fffbeb,#fef9c3);">
+  <div style="display:flex;align-items:center;gap:9px;">
+    <div style="width:32px;height:32px;background:#d97706;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85em;"><i class="fas fa-hand-holding-dollar"></i></div>
+    <div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.88em;color:#92400e;">Service Advance Requests</div><div style="font-size:.72em;color:var(--ink3);">Waiting for approval</div></div>
+    <span id="pend-adv-cnt" style="background:#d97706;color:#fff;border-radius:20px;padding:2px 10px;font-size:.71em;font-weight:700;"></span>
+  </div>
   <button class="btn btn-outline btn-sm" onclick="goPage('acc-conveyance')"><i class="fas fa-arrow-right"></i> View All</button>
 </div>
-<div id="pend-adv-list"></div>
+<div class="acc-section-body" id="pend-adv-list"></div>
+
 <!-- Incentive Entries -->
-<div class="sdiv" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
-  <span><i class="fas fa-gift" style="color:#7c3aed;margin-right:7px;"></i>Incentive Entries <span id="pend-inc-cnt" style="background:#7c3aed;color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;"></span></span>
+<div class="acc-section-hdr" style="background:linear-gradient(90deg,#faf5ff,#f3e8ff);">
+  <div style="display:flex;align-items:center;gap:9px;">
+    <div style="width:32px;height:32px;background:#7c3aed;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85em;"><i class="fas fa-gift"></i></div>
+    <div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.88em;color:#6d28d9;">Incentive Entries</div><div style="font-size:.72em;color:var(--ink3);">Pending review & send to Mgmt</div></div>
+    <span id="pend-inc-cnt" style="background:#7c3aed;color:#fff;border-radius:20px;padding:2px 10px;font-size:.71em;font-weight:700;"></span>
+  </div>
   <button class="btn btn-outline btn-sm" onclick="goPage('acc-incentives')"><i class="fas fa-arrow-right"></i> View All</button>
 </div>
-<div id="pend-inc-list"></div>
-<!-- Pending Orders from Marketing -->
-<div class="sdiv" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
-  <span><i class="fas fa-clipboard-list" style="color:var(--orange);margin-right:7px;"></i>Pending Orders from Marketing <span id="pend-ord-cnt" style="background:var(--orange);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72em;margin-left:6px;"></span></span>
+<div class="acc-section-body" id="pend-inc-list"></div>
+
+<!-- Pending Orders -->
+<div class="acc-section-hdr" style="background:linear-gradient(90deg,#fff7ed,#ffedd5);">
+  <div style="display:flex;align-items:center;gap:9px;">
+    <div style="width:32px;height:32px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.85em;"><i class="fas fa-clipboard-list"></i></div>
+    <div><div style="font-family:'Sora',sans-serif;font-weight:700;font-size:.88em;color:var(--orange);">Pending Orders from Service</div><div style="font-size:.72em;color:var(--ink3);">Awaiting billing</div></div>
+    <span id="pend-ord-cnt" style="background:var(--orange);color:#fff;border-radius:20px;padding:2px 10px;font-size:.71em;font-weight:700;"></span>
+  </div>
   <button class="btn btn-outline btn-sm" onclick="goPage('acc-orders')"><i class="fas fa-arrow-right"></i> View All</button>
 </div>
-<div id="pend-ord-list"></div>
+<div class="acc-section-body" id="pend-ord-list"></div>
 </div>
 
 <!-- ════ ACCOUNTS: CONVEYANCE APPROVAL ════ -->
@@ -1300,21 +1437,24 @@ tbody tr:last-child td{border-bottom:none;}
 <div id="accConvRejected"></div>
 </div>
 
-<!-- ════ MANAGEMENT: INCENTIVE REVIEW ════ -->
-<!-- ════ MGMT: VIEW ALL (Conveyance, Incentives, Advances) ════ -->
+<!-- ════ MGMT: DETAIL INFO (Conveyance · Advances · Incentives · Service Calls) ════ -->
 <div class="page" id="page-mgmt-view">
 <div class="ph">
-  <div><h2><span class="phi" style="background:var(--mgmt)"><i class="fas fa-table-list"></i></span><span class="sora">Detail Info — Service Activity</span></h2><p>Conveyance claims, incentives and advances across all engineers</p></div>
+  <div><h2><span class="phi" style="background:var(--mgmt)"><i class="fas fa-table-list"></i></span><span class="sora">Detail Info — Service Activity</span></h2><p>Conveyance claims, incentives, advances and service calls across all engineers</p></div>
   <button class="btn btn-outline btn-sm" onclick="renderMgmtView()"><i class="fas fa-sync"></i> Refresh</button>
 </div>
-<!-- Stats -->
-<div class="stats" id="mgmtViewStats"></div>
-<!-- Sub-tabs -->
-<div style="display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--line);flex-wrap:wrap;" id="mgmtViewTabs">
-  <button class="btn btn-ghost" id="mvt-conv" onclick="mgmtViewTab('conv')" style="border-radius:0;border-bottom:3px solid var(--svc);font-weight:700;color:var(--svc);padding:10px 18px;"><i class="fas fa-car-side"></i> Conveyance</button>
-  <button class="btn btn-ghost" id="mvt-adv" onclick="mgmtViewTab('adv')" style="border-radius:0;border-bottom:3px solid transparent;padding:10px 18px;"><i class="fas fa-hand-holding-dollar"></i> Advances</button>
-  <button class="btn btn-ghost" id="mvt-inc" onclick="mgmtViewTab('inc')" style="border-radius:0;border-bottom:3px solid transparent;padding:10px 18px;"><i class="fas fa-gift"></i> Incentives</button>
+
+<!-- Summary KPI strip -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;" id="mgmtViewStats"></div>
+
+<!-- Tab Strip (redesigned) -->
+<div class="mv-tab-strip">
+  <button class="mv-tab-btn active" data-t="conv" onclick="mgmtViewTab('conv')"><i class="fas fa-car-side"></i> Conveyance</button>
+  <button class="mv-tab-btn" data-t="adv" onclick="mgmtViewTab('adv')"><i class="fas fa-hand-holding-dollar"></i> Advances</button>
+  <button class="mv-tab-btn" data-t="inc" onclick="mgmtViewTab('inc')"><i class="fas fa-gift"></i> Incentives</button>
+  <button class="mv-tab-btn" data-t="svc" onclick="mgmtViewTab('svc')"><i class="fas fa-headset"></i> Service Calls</button>
 </div>
+
 <!-- Filters -->
 <div class="filt-row" id="mgmtViewFilters">
   <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
@@ -3379,61 +3519,96 @@ function copyReminder(){const t=g('remText');t.select();try{document.execCommand
 // MANAGEMENT OVERVIEW
 // ════════════════════════════════════════════════════════════════
 function renderMgmt(){
-  // Accounts
+  // ── Accounts financial numbers ──────────────────────────
   const tOut=D.ac_invoices.reduce((a,i)=>a+getOut(i.id),0);
   const tPaid=D.ac_payments.filter(p=>p.mode!=='Advance Applied').reduce((a,p)=>a+p.amount,0);
   const odCnt=D.ac_invoices.filter(i=>getSt(i.id)==='overdue').length;
   const tAdv=D.ac_advances.reduce((a,x)=>a+x.amount,0);
   const tUsed=D.ac_payments.filter(p=>p.mode==='Advance Applied').reduce((a,p)=>a+p.amount,0);
-  g('mgmt-acc-row').innerHTML=`<div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('acc-outstanding')" title="Click for details"><div class="mmc-stat-label">Outstanding</div><div class="mmc-stat-value">${fmt(tOut)}</div></div><div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('acc-collected')" title="Click for details"><div class="mmc-stat-label">Collected</div><div class="mmc-stat-value">${fmt(tPaid)}</div></div><div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('acc-overdue')" title="Click for details"><div class="mmc-stat-label">Overdue</div><div class="mmc-stat-value">${odCnt}</div></div><div class="mmc-stat mgmt-stat-clickable" onclick="showMgmtDetail('acc-advance')" title="Click for details"><div class="mmc-stat-label">Advance Bal</div><div class="mmc-stat-value">${fmt(Math.max(0,tAdv-tUsed))}</div></div>`;
-  // Order + service stats
-  const pCnt=D.orders.filter(o=>o.status==='pending').length,bCnt=D.orders.filter(o=>o.status==='billed').length;
-  const svcPend=D.svc_calls.filter(c=>c.status==='pending').length,svcEsc=D.svc_calls.filter(c=>c.status==='escalated').length,svcComp=D.svc_calls.filter(c=>c.status==='completed').length;
+  g('mgmt-acc-row').innerHTML=`
+    <div class="moag-cell" onclick="showMgmtDetail('acc-outstanding')">
+      <div class="moag-lbl">Outstanding</div><div class="moag-val">${fmt(tOut)}</div>
+    </div>
+    <div class="moag-cell" onclick="showMgmtDetail('acc-collected')">
+      <div class="moag-lbl">Collected</div><div class="moag-val">${fmt(tPaid)}</div>
+    </div>
+    <div class="moag-cell" onclick="showMgmtDetail('acc-overdue')">
+      <div class="moag-lbl">Overdue</div><div class="moag-val">${odCnt}</div>
+    </div>
+    <div class="moag-cell" onclick="showMgmtDetail('acc-advance')">
+      <div class="moag-lbl">Advance Bal</div><div class="moag-val">${fmt(Math.max(0,tAdv-tUsed))}</div>
+    </div>`;
+
+  // ── Service / Order KPIs ──────────────────────────────
+  const pCnt=D.orders.filter(o=>o.status==='pending').length;
+  const bCnt=D.orders.filter(o=>o.status==='billed').length;
+  const svcPend=D.svc_calls.filter(c=>c.status==='pending').length;
+  const svcInProg=D.svc_calls.filter(c=>c.status==='in-progress').length;
+  const svcEsc=D.svc_calls.filter(c=>c.status==='escalated').length;
+  const svcComp=D.svc_calls.filter(c=>c.status==='completed').length;
   const convPend=D.svc_conveyance.filter(c=>c.status==='pending').length;
-  g('mgmt-order-stats').innerHTML=`<div class="stat s-orange" style="cursor:pointer" onclick="showMgmtDetail('orders-pending')"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Pending Orders</div><div class="stat-value">${pCnt}</div><div class="stat-sub">Awaiting billing</div></div><div class="stat s-green" style="cursor:pointer" onclick="showMgmtDetail('orders-billed')"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed Orders</div><div class="stat-value">${bCnt}</div></div><div class="stat s-amber" style="cursor:pointer" onclick="showMgmtDetail('svc-pending')"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-headset"></i></div><div class="stat-label">Service Pending</div><div class="stat-value">${svcPend}</div></div><div class="stat s-red" style="cursor:pointer" onclick="showMgmtDetail('svc-escalated')"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-label">Escalated Calls</div><div class="stat-value">${svcEsc}</div></div><div class="stat s-green" style="cursor:pointer" onclick="showMgmtDetail('svc-completed')"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check"></i></div><div class="stat-label">Calls Completed</div><div class="stat-value">${svcComp}</div></div><div class="stat s-amber" style="cursor:pointer" onclick="showMgmtDetail('conv-pending')"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-car"></i></div><div class="stat-label">Conv. Pending</div><div class="stat-value">${convPend}</div></div>`;
-  // Orders
+
+  const mkpi=(icon,bg,color,label,val,sub,click)=>`
+    <div class="mgmt-mini-kpi" onclick="${click}" style="cursor:pointer;">
+      <div class="mgmt-mini-kpi-icon" style="background:${bg};color:${color};">${icon}</div>
+      <div><div class="mgmt-mini-kpi-val" style="color:${color};">${val}</div><div class="mgmt-mini-kpi-lbl">${label}</div>${sub?`<div style="font-size:.68em;color:var(--ink3);">${sub}</div>`:''}</div>
+    </div>`;
+  g('mgmt-order-stats').innerHTML=
+    mkpi('<i class="fas fa-clipboard-list"></i>','#fff7ed','var(--orange)','Pending Orders',pCnt,'Awaiting billing',`showMgmtDetail('orders-pending')`)+
+    mkpi('<i class="fas fa-check-circle"></i>','#f0fdf4','var(--green)','Billed Orders',bCnt,'','showMgmtDetail(\'orders-billed\')')+
+    mkpi('<i class="fas fa-headset"></i>','#f0fdfa','var(--svc)','Service Pending',svcPend,'','showMgmtDetail(\'svc-pending\')')+
+    mkpi('<i class="fas fa-spinner"></i>','#fffbeb','#d97706','In Progress',svcInProg,'','showMgmtDetail(\'svc-pending\')')+
+    mkpi('<i class="fas fa-triangle-exclamation"></i>','#fff1f2','var(--red)','Escalated',svcEsc,'','showMgmtDetail(\'svc-escalated\')')+
+    mkpi('<i class="fas fa-circle-check"></i>','#f0fdf4','var(--green)','Completed',svcComp,'All time','showMgmtDetail(\'svc-completed\')');
+
+  // ── Recent Orders ────────────────────────────────────
   const recentOrders=[...D.orders].reverse().slice(0,5);
-  g('mgmt-orders').innerHTML=!recentOrders.length?'<div class="empty" style="padding:14px"><i class="fas fa-clipboard-list"></i><p>No orders yet</p></div>':recentOrders.map(o=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:6px;"><div><div style="font-weight:700;font-size:.86em;"><span class="tag tag-orange">${esc(o.orderNo)}</span> ${esc(o.customer)}</div><div style="font-size:.73em;color:var(--ink3);margin-top:2px;">${o.date} · ${o.items.length} item(s)</div></div><div>${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}</div></div>`).join('');
-  // Overdue
+  g('mgmt-orders').innerHTML=!recentOrders.length
+    ?'<div class="empty" style="padding:14px"><i class="fas fa-clipboard-list"></i><p>No orders yet</p></div>'
+    :recentOrders.map(o=>`<div class="mgmt-row-item">
+        <div><div style="font-weight:700;font-size:.85em;">${esc(o.orderNo)} <span style="font-size:.82em;color:var(--ink3);font-weight:400;">· ${esc(o.customer)}</span></div>
+        <div style="font-size:.73em;color:var(--ink3);">${o.date} · ${o.items.length} item(s)</div></div>
+        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
+      </div>`).join('');
+
+  // ── Overdue Invoices ─────────────────────────────────
   const odInvs=D.ac_invoices.filter(i=>getSt(i.id)==='overdue').sort((a,b)=>daysOD(b)-daysOD(a)).slice(0,5);
-  g('mgmt-overdue').innerHTML=odInvs.length?odInvs.map(inv=>`<div class="od-row"><div class="od-badge">${daysOD(inv)}d</div><div class="od-info"><div class="od-inv"><span class="tag tag-acc">${esc(inv.no)}</span></div><div class="od-cust">${esc(inv.custName)}</div></div><div class="od-amt">${fmt(getOut(inv.id))}</div></div>`).join(''):'<div class="empty" style="padding:14px"><i class="fas fa-circle-check"></i><p>No overdue! 🎉</p></div>';
-  // Service calls panel (in mgmt view)
+  g('mgmt-overdue').innerHTML=odInvs.length
+    ?odInvs.map(inv=>`<div class="mgmt-row-item">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="background:#fef2f2;color:var(--red);font-weight:800;font-size:.76em;border-radius:6px;padding:3px 8px;">${daysOD(inv)}d</span>
+          <div><div style="font-weight:700;font-size:.84em;">${esc(inv.no)}</div><div style="font-size:.73em;color:var(--ink3);">${esc(inv.custName)}</div></div>
+        </div>
+        <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--red);font-size:.88em;">${fmt(getOut(inv.id))}</div>
+      </div>`).join('')
+    :'<div class="empty" style="padding:14px"><i class="fas fa-circle-check"></i><p>No overdue! 🎉</p></div>';
+
+  // ── Pending / Escalated Service Calls ─────────────────
+  const pendingCalls=D.svc_calls.filter(c=>c.status==='pending'||c.status==='escalated'||c.status==='in-progress').sort((a,b)=>b.priority==='urgent'?1:-1).slice(0,6);
   const mgmtSvcEl=g('mgmt-svc-calls');
-  if(mgmtSvcEl){
-    const pendingCalls=D.svc_calls.filter(c=>c.status==='pending'||c.status==='escalated').sort((a,b)=>b.priority==='urgent'?1:-1).slice(0,6);
-    mgmtSvcEl.innerHTML=!pendingCalls.length?'<div class="empty" style="padding:14px"><i class="fas fa-headset"></i><p>No pending calls 🎉</p></div>':pendingCalls.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);gap:8px;flex-wrap:wrap;"><div><div style="font-size:.85em;font-weight:700;">${esc(c.no)} <span style="color:${svcStatusColor(c.status)};font-size:.82em;">● ${c.status.replace('-',' ')}</span></div><div style="font-size:.74em;color:var(--ink3);">${esc(c.customer)} — ${c.engineer?'Eng: '+esc(c.engineer):'Unassigned'}</div></div>${svcPriorityBadge(c.priority)}</div>`).join('');
-  }
-  // Charts
+  if(mgmtSvcEl) mgmtSvcEl.innerHTML=!pendingCalls.length
+    ?'<div class="empty" style="padding:14px"><i class="fas fa-headset"></i><p>No pending calls 🎉</p></div>'
+    :pendingCalls.map(c=>`<div class="mgmt-row-item">
+        <div>
+          <div style="font-size:.84em;font-weight:700;">${esc(c.no)} <span style="color:${svcStatusColor(c.status)};font-size:.82em;margin-left:4px;">● ${c.status.replace('-',' ')}</span></div>
+          <div style="font-size:.74em;color:var(--ink3);">${esc(c.customer)}${c.engineer?' · '+esc(c.engineer):' · Unassigned'}</div>
+        </div>
+        ${svcPriorityBadge(c.priority)}
+      </div>`).join('');
+
+  // ── Top Customers Outstanding ─────────────────────────
   const accC=D.ac_customers.map(c=>({name:c.name,val:D.ac_invoices.filter(i=>i.custName===c.name).reduce((a,i)=>a+getOut(i.id),0)})).filter(x=>x.val>0).sort((a,b)=>b.val-a.val).slice(0,6);
-  const accChartEl=g('mgmt-acc-chart');if(accChartEl)accChartEl.innerHTML=barChart(accC,'var(--red)');
-  // Aging
+  const accChartEl=g('mgmt-acc-chart');
+  if(accChartEl) accChartEl.innerHTML=accC.length?barChart(accC,'var(--red)'):'<div class="empty" style="padding:14px"><i class="fas fa-chart-bar"></i><p>No outstanding</p></div>';
+
+  // ── Aging Analysis ────────────────────────────────────
   const buckets=[{a:0,n:0},{a:0,n:0},{a:0,n:0},{a:0,n:0}];
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{const od=daysOD(i),out=getOut(i.id);const idx=od<=30?0:od<=60?1:od<=90?2:3;buckets[idx].a+=out;buckets[idx].n++;});
   g('mgmt-aging').innerHTML=['0-30 Days','31-60 Days','61-90 Days','90+ Days'].map((l,i)=>`<div class="ac ac${i}"><div class="ac-label">${l}</div><div class="ac-value">${fmt(buckets[i].a)}</div><div class="ac-cnt">${buckets[i].n} inv</div></div>`).join('');
 
-  // Conveyance pending panel
-  const convPanEl=g('mgmt-conv-panel');
-  if(convPanEl){
-    const pendConv=D.svc_conveyance.filter(c=>c.status==='pending').sort((a,b)=>b.createdAt?.localeCompare(a.createdAt||'')||0).slice(0,8);
-    const pendAdv=D.svc_conv_advances.filter(a=>a.status==='pending');
-    if(!pendConv.length&&!pendAdv.length){
-      convPanEl.innerHTML='<div class="empty" style="padding:14px"><i class="fas fa-check-circle" style="color:var(--green)"></i><p>No pending conveyance claims 🎉</p></div>';
-    } else {
-      let html='';
-      if(pendConv.length) html+=pendConv.map(c=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);gap:6px;flex-wrap:wrap;">
-        <div><span class="tag tag-svc">${esc(c.no)}</span> <span style="font-size:.83em;font-weight:700;">${esc(c.engineer)}</span>
-        <div style="font-size:.74em;color:var(--ink3);">${c.date} ${c.callRef?'· Call: '+esc(c.callRef):''}</div></div>
-        <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);">${fmt(c.totalAmt)}</div>
-      </div>`).join('');
-      if(pendAdv.length) html+=`<div style="font-size:.76em;font-weight:700;color:var(--amber);padding:7px 0 3px;">⚠ ${pendAdv.length} Advance Request(s) Pending</div>`;
-      convPanEl.innerHTML=html;
-    }
-  }
-
-  // Incentive summary moved to Detail Info page
-
   updateSvcBadge();updateOutBadge();updateConvBadge();updateMgmtIncBadge();
 }
+
 
 // ════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════
@@ -6404,70 +6579,81 @@ function renderAccDashboard(){
   const ords=D.orders.filter(o=>o.status==='pending');
   const total=convs.length+advs.length+incs.length+ords.length;
 
-  const s=g('pendingStats');
-  if(s) s.innerHTML=`
-    <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Pending</div><div class="stat-value">${total}</div></div>
-    <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Conveyance</div><div class="stat-value">${convs.length}</div></div>
-    <div class="stat s-orange"><div class="stat-bar"></div><div class="stat-label">Adv. Requests</div><div class="stat-value">${advs.length}</div></div>
-    <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">Incentives</div><div class="stat-value">${incs.length}</div></div>
-    <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Orders</div><div class="stat-value">${ords.length}</div></div>`;
+  // KPI counters
+  ['total','conv','adv','inc','ord'].forEach((k,i)=>{
+    const el=g('kpi-'+k);
+    if(el) el.textContent=[total,convs.length,advs.length,incs.length,ords.length][i];
+  });
+  const badge=(id,n)=>{const el=g(id);if(el)el.textContent=n>0?n:'';};
+  badge('pend-conv-cnt',convs.length);badge('pend-adv-cnt',advs.length);
+  badge('pend-inc-cnt',incs.length);badge('pend-ord-cnt',ords.length);
 
-  const cc=g('pend-conv-cnt');if(cc)cc.textContent=convs.length||'';
-  const ac=g('pend-adv-cnt');if(ac)ac.textContent=advs.length||'';
-  const ic=g('pend-inc-cnt');if(ic)ic.textContent=incs.length||'';
-  const oc=g('pend-ord-cnt');if(oc)oc.textContent=ords.length||'';
+  const emptyMsg=(msg)=>`<div class="acc-empty"><i class="fas fa-check-circle" style="color:var(--green);font-size:1.1em;"></i> ${msg}</div>`;
 
-  // Conveyance Claims
+  // ── Conveyance Claims ──────────────────────────────────────
   const cl=g('pend-conv-list');
-  if(cl) cl.innerHTML=!convs.length?'<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.82em;background:var(--bg);border-radius:8px;">No pending conveyance claims ✓</div>':
-    convs.map(c=>`<div class="conv-card" style="border-left:3px solid var(--svc);">
-      <div style="flex:1;"><strong style="color:var(--svc);">${esc(c.no)}</strong> <span style="font-size:.8em;color:var(--ink3);">· ${c.date} · ${esc(c.engineer)}</span>
-      ${c.callRef?`<span style="font-size:.78em;color:var(--ink3);margin-left:6px;">Call: ${esc(c.callRef)}</span>`:''}
-      <div style="font-size:.77em;margin-top:3px;">Travel: ${fmt(c.travelAmt)} | Food: ${fmt(c.foodAmt)} | Other: ${fmt(c.otherAmt)}</div></div>
-      <div style="flex-shrink:0;text-align:right;">
-        <div style="font-weight:800;color:var(--svc);margin-bottom:6px;">${fmt(c.totalAmt)}</div>
+  if(cl) cl.innerHTML=!convs.length?emptyMsg('No pending conveyance claims'):
+    convs.map(c=>`<div class="acc-action-card">
+      <div class="acc-action-icon" style="background:#e0f2fe;color:var(--svc);"><i class="fas fa-car-side"></i></div>
+      <div class="acc-action-info">
+        <div class="acc-action-title">${esc(c.no)} &nbsp;<span style="font-size:.8em;font-weight:400;color:var(--ink3);">${c.date} · ${esc(c.engineer)}</span></div>
+        <div class="acc-action-sub">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}${c.callRef?' &nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
+      </div>
+      <div class="acc-action-right">
+        <div class="acc-action-amt" style="color:var(--svc);">${fmt(c.totalAmt)}</div>
         <div style="display:flex;gap:5px;">
           <button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}');renderAccDashboard();"><i class="fas fa-check"></i> Approve</button>
           <button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}');renderAccDashboard();"><i class="fas fa-times"></i></button>
         </div>
       </div></div>`).join('');
 
-  // Advance Requests
+  // ── Advance Requests ──────────────────────────────────────
   const al=g('pend-adv-list');
-  if(al) al.innerHTML=!advs.length?'<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.82em;background:var(--bg);border-radius:8px;">No pending advance requests ✓</div>':
-    advs.map(a=>`<div class="conv-card" style="border-left:3px solid var(--amber);">
-      <div style="flex:1;"><strong style="color:var(--amber);">${esc(a.no)}</strong> <span style="font-size:.8em;color:var(--ink3);">· ${a.date} · ${esc(a.engineer)}</span>
-      ${a.purpose?`<div style="font-size:.77em;color:var(--ink3);margin-top:2px;">${esc(a.purpose)}</div>`:''}
-      ${a.callRef?`<div style="font-size:.77em;color:var(--ink3);">Call: ${esc(a.callRef)}</div>`:''}</div>
-      <div style="flex-shrink:0;text-align:right;">
-        <div style="font-weight:800;color:var(--amber);margin-bottom:6px;">${fmt(a.amount)}</div>
+  if(al) al.innerHTML=!advs.length?emptyMsg('No pending advance requests'):
+    advs.map(a=>`<div class="acc-action-card">
+      <div class="acc-action-icon" style="background:#fef9c3;color:#92400e;"><i class="fas fa-hand-holding-dollar"></i></div>
+      <div class="acc-action-info">
+        <div class="acc-action-title">${esc(a.no)} &nbsp;<span style="font-size:.8em;font-weight:400;color:var(--ink3);">${a.date} · ${esc(a.engineer)}</span></div>
+        <div class="acc-action-sub">${a.purpose?esc(a.purpose):'—'}${a.callRef?' &nbsp;·&nbsp; Call: '+esc(a.callRef):''}</div>
+      </div>
+      <div class="acc-action-right">
+        <div class="acc-action-amt" style="color:#d97706;">${fmt(a.amount)}</div>
         <div style="display:flex;gap:5px;">
           <button class="btn btn-success btn-sm" onclick="approveConvAdv('${a.id}');renderAccDashboard();"><i class="fas fa-check"></i> Approve</button>
           <button class="btn btn-danger btn-sm" onclick="rejectConvAdv('${a.id}');renderAccDashboard();"><i class="fas fa-times"></i></button>
         </div>
       </div></div>`).join('');
 
-  // Incentive Entries
+  // ── Incentive Entries ──────────────────────────────────────
   const il=g('pend-inc-list');
-  if(il) il.innerHTML=!incs.length?'<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.82em;background:var(--bg);border-radius:8px;">No pending incentive entries ✓</div>':
-    incs.map(e=>`<div class="conv-card" style="border-left:3px solid #7c3aed;">
-      <div style="flex:1;"><strong style="color:#6d28d9;">${esc(e.no)}</strong> <span style="font-size:.8em;color:var(--ink3);">· ${e.date} · ${esc(e.engineerName)}</span>
-      <div style="font-size:.78em;margin-top:2px;">${esc(e.customer)} ${e.product?'· '+esc(e.product):''}</div>
-      <div style="font-size:.77em;margin-top:2px;">Sale: ${fmt(e.saleAmt)} | Purchase: ${fmt(e.purchaseAmt)} | <strong style="color:${e.profit>=0?'var(--green)':'var(--red)'};">P/L: ${fmt(e.profit)}</strong></div></div>
-      <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        <input type="number" placeholder="Suggest %" style="width:90px;padding:5px 7px;border-radius:7px;border:1.5px solid #c4b5fd;font-size:.82em;" id="pi-pct-${e.id}" oninput="const a=(parseFloat(this.value)||0)*${e.profit}/100;const ai=g('pi-amt-${e.id}');if(ai)ai.value=a.toFixed(2);">
-        <input type="number" placeholder="Suggest ₹" style="width:90px;padding:5px 7px;border-radius:7px;border:1.5px solid #c4b5fd;font-size:.82em;" id="pi-amt-${e.id}">
+  if(il) il.innerHTML=!incs.length?emptyMsg('No pending incentive entries'):
+    incs.map(e=>`<div class="acc-action-card">
+      <div class="acc-action-icon" style="background:#f3e8ff;color:#7c3aed;"><i class="fas fa-gift"></i></div>
+      <div class="acc-action-info">
+        <div class="acc-action-title" style="color:#6d28d9;">${esc(e.no)} &nbsp;<span style="font-size:.8em;font-weight:400;color:var(--ink3);">${e.date} · ${esc(e.engineerName)}</span></div>
+        <div class="acc-action-sub">${esc(e.customer)}${e.product?' — '+esc(e.product):''}</div>
+        <div style="font-size:.73em;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;">
+          <span>Sale: <strong style="color:var(--acc);">${fmt(e.saleAmt)}</strong></span>
+          <span>Purchase: <strong style="color:var(--amber);">${fmt(e.purchaseAmt)}</strong></span>
+          <span>P/L: <strong style="color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</strong></span>
+        </div>
+      </div>
+      <div class="acc-action-right">
+        <input type="number" placeholder="₹ Suggest" style="width:90px;padding:5px 7px;border-radius:7px;border:1.5px solid #c4b5fd;font-size:.82em;" id="pi-amt-${e.id}">
         <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="pendSendIncToMgmt('${e.id}')"><i class="fas fa-user-tie"></i> → Mgmt</button>
       </div></div>`).join('');
 
-  // Pending Orders
+  // ── Pending Orders ──────────────────────────────────────
   const ol=g('pend-ord-list');
-  if(ol) ol.innerHTML=!ords.length?'<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.82em;background:var(--bg);border-radius:8px;">No pending orders ✓</div>':
-    ords.map(o=>`<div class="conv-card" style="border-left:3px solid var(--orange);">
-      <div style="flex:1;"><strong style="color:var(--orange);">${esc(o.orderNo)}</strong> <span style="font-size:.8em;color:var(--ink3);">· ${o.date} · ${esc(o.customer)}</span>
-      <div style="font-size:.77em;color:var(--ink3);margin-top:2px;">${o.items.length} item(s) ${o.notes?'· '+esc(o.notes):''}</div></div>
-      <div style="flex-shrink:0;text-align:right;">
-        <div style="font-weight:800;color:var(--orange);margin-bottom:6px;">${fmt(o.total)}</div>
+  if(ol) ol.innerHTML=!ords.length?emptyMsg('No pending orders'):
+    ords.map(o=>`<div class="acc-action-card">
+      <div class="acc-action-icon" style="background:#ffedd5;color:var(--orange);"><i class="fas fa-clipboard-list"></i></div>
+      <div class="acc-action-info">
+        <div class="acc-action-title">${esc(o.orderNo)} &nbsp;<span style="font-size:.8em;font-weight:400;color:var(--ink3);">${o.date} · ${esc(o.customer)}</span></div>
+        <div class="acc-action-sub">${o.items.length} item(s)${o.notes?' · '+esc(o.notes):''}</div>
+      </div>
+      <div class="acc-action-right">
+        <div class="acc-action-amt" style="color:var(--orange);">${fmt(o.total)}</div>
         <button class="btn btn-outline btn-sm" onclick="goPage('acc-orders')"><i class="fas fa-arrow-right"></i> Bill It</button>
       </div></div>`).join('');
 
@@ -6705,14 +6891,12 @@ function downloadFYArchive(fy){
 let _mvTab='conv';
 function mgmtViewTab(tab){
   _mvTab=tab;
-  ['conv','adv','inc'].forEach(t=>{
-    const b=g('mvt-'+t);if(!b)return;
-    const isActive=t===tab;
-    const colors={conv:'var(--svc)',adv:'var(--amber)',inc:'#7c3aed'};
-    b.style.borderBottomColor=isActive?colors[t]:'transparent';
-    b.style.color=isActive?colors[t]:'var(--ink3)';
-    b.style.fontWeight=isActive?'700':'400';
+  document.querySelectorAll('.mv-tab-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.t===tab);
   });
+  // Show/hide status filter (not relevant for service calls)
+  const statSel=g('mvStat');
+  if(statSel) statSel.style.display=tab==='svc'?'none':'';
   renderMgmtView();
 }
 
@@ -6945,52 +7129,35 @@ function updateMgmtViewBadge(){
 function renderMgmtView(){
   updateMgmtViewBadge();
   const eng=g('mvEng')?.value||'',stat=g('mvStat')?.value||'',from=g('mvFrom')?.value||'',to=g('mvTo')?.value||'';
-  // Populate engineer filter
   const engs=D.users.filter(u=>u.role==='service'&&u.active!==false).map(u=>u.name);
   const engSel=g('mvEng');
   if(engSel){const p=engSel.value;engSel.innerHTML='<option value="">All Engineers</option>'+engs.map(e=>`<option ${p===e?'selected':''}>${esc(e)}</option>`).join('');if(p)engSel.value=p;}
 
-  // Stats across all
   const pendConv=D.svc_conveyance.filter(c=>c.status==='pending').length;
   const pendAdv=D.svc_conv_advances.filter(a=>a.status==='pending').length;
   const pendInc=(D.svc_incentives||[]).filter(e=>e.status==='mgmt-review').length;
-  g('mgmtViewStats').innerHTML=`
-    <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Conv. Pending</div><div class="stat-value">${pendConv}</div></div>
-    <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Adv. Pending</div><div class="stat-value">${pendAdv}</div></div>
-    <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">Inc. For Review</div><div class="stat-value">${pendInc}</div></div>`;
+  const totalCalls=D.svc_calls.length;
+  const mkpiS=(icon,bg,color,lbl,val)=>`<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;"><div style="width:36px;height:36px;background:${bg};border-radius:9px;display:flex;align-items:center;justify-content:center;color:${color};font-size:.9em;">${icon}</div><div><div style="font-family:'Sora',sans-serif;font-size:1.45em;font-weight:800;color:${color};line-height:1;">${val}</div><div style="font-size:.7em;color:var(--ink3);font-weight:600;text-transform:uppercase;">${lbl}</div></div></div>`;
+  g('mgmtViewStats').innerHTML=
+    mkpiS('<i class="fas fa-car-side"></i>','#e0f2fe','var(--svc)','Conv. Pending',pendConv)+
+    mkpiS('<i class="fas fa-hand-holding-dollar"></i>','#fef9c3','#92400e','Adv. Pending',pendAdv)+
+    mkpiS('<i class="fas fa-gift"></i>','#f3e8ff','#7c3aed','Inc. For Review',pendInc)+
+    mkpiS('<i class="fas fa-headset"></i>','#f0fdf4','var(--green)','Total Svc Calls',totalCalls);
 
   const body=g('mgmtViewBody');if(!body)return;
-
-  const filter=(arr,dateKey,engKey)=>{
-    let r=[...arr];
-    if(eng) r=r.filter(x=>x[engKey]===eng);
-    if(stat) r=r.filter(x=>x.status===stat);
-    if(from) r=r.filter(x=>(x[dateKey]||'')>=from);
-    if(to) r=r.filter(x=>(x[dateKey]||'')<=to);
-    return r.reverse();
-  };
+  const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected',settled:'#e0f2fe|#0369a1|Settled',completed:'#f0fdf4|#15803d|Completed','in-progress':'#fff7ed|#c2410c|In Progress',escalated:'#fee2e2|#991b1b|Escalated'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.72em;font-weight:700;">'+lbl+'</span>';};
+  const filter=(arr,dateKey,engKey)=>{let r=[...arr];if(eng) r=r.filter(x=>x[engKey]===eng);if(stat) r=r.filter(x=>x.status===stat);if(from) r=r.filter(x=>(x[dateKey]||'')>=from);if(to) r=r.filter(x=>(x[dateKey]||'')<=to);return r.sort((a,b)=>(b[dateKey]||'').localeCompare(a[dateKey]||''));};
 
   if(_mvTab==='conv'){
-    // Show ALL claims including drafts so management always has visibility
-    const allConv=[...D.svc_conveyance];
-    let rows=allConv;
+    let rows=[...D.svc_conveyance];
     if(eng) rows=rows.filter(x=>x.engineer===eng);
     if(stat) rows=rows.filter(x=>x.status===stat);
     if(from) rows=rows.filter(x=>(x.date||'')>=from);
     if(to) rows=rows.filter(x=>(x.date||'')<=to);
     rows=rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected',settled:'#e0f2fe|#0369a1|Settled'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.72em;font-weight:700;">'+lbl+'</span>';};
-    body.innerHTML=!rows.length?'<div class="empty"><i class="fas fa-car-side"></i><p>No conveyance claims yet.<br><small>Engineers generate claims in Service → Conveyance, then submit</small></p></div>':
-      `<div class="tw"><table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th><th>View</th></tr></thead><tbody>
-      ${rows.map(c=>`<tr>
-        <td><strong style="color:var(--svc);">${esc(c.no)}</strong></td>
-        <td>${c.date}</td><td>${esc(c.engineer)}</td><td style="font-size:.8em;">${esc(c.callRef||'—')}</td>
-        <td style="font-size:.8em;">${esc(c.location||'—')}</td>
-        <td class="amt">${fmt(c.travelAmt)}</td><td class="amt">${fmt(c.foodAmt)}</td><td class="amt">${fmt(c.otherAmt)}</td>
-        <td class="amt" style="font-weight:700;">${fmt(c.totalAmt)}</td>
-        <td>${sbg(c.status)}</td>
-        <td><button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 8px;" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button></td>
-      </tr>`).join('')}
+    body.innerHTML=!rows.length?'<div class="empty"><i class="fas fa-car-side"></i><p>No conveyance claims found</p></div>':
+      `<div class="tw"><table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map(c=>`<tr><td><strong style="color:var(--svc);">${esc(c.no)}</strong></td><td>${c.date}</td><td>${esc(c.engineer)}</td><td style="font-size:.8em;">${esc(c.callRef||'—')}</td><td style="font-size:.8em;">${esc(c.location||'—')}</td><td class="amt">${fmt(c.travelAmt)}</td><td class="amt">${fmt(c.foodAmt)}</td><td class="amt">${fmt(c.otherAmt)}</td><td class="amt" style="font-weight:700;">${fmt(c.totalAmt)}</td><td>${sbg(c.status)}</td><td><button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 8px;" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i></button></td></tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="8" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,c)=>s+c.totalAmt,0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
@@ -6998,46 +7165,32 @@ function renderMgmtView(){
     const convAdvs=filter(D.svc_conv_advances,'date','engineer');
     body.innerHTML=!convAdvs.length?'<div class="empty"><i class="fas fa-hand-holding-dollar"></i><p>No advance requests found</p></div>':
       `<div class="tw"><table><thead><tr><th>Adv No</th><th>Date</th><th>Engineer</th><th>Purpose</th><th>Call Ref</th><th>Amount</th><th>Mode</th><th>Status</th></tr></thead><tbody>
-      ${convAdvs.map(a=>`<tr>
-        <td><strong style="color:var(--amber);">${esc(a.no)}</strong></td>
-        <td>${a.date}</td><td>${esc(a.engineer)}</td>
-        <td style="font-size:.82em;">${esc(a.purpose||'—')}</td>
-        <td style="font-size:.8em;">${esc(a.callRef||'—')}</td>
-        <td class="amt" style="font-weight:700;">${fmt(a.amount)}</td>
-        <td style="font-size:.8em;">${esc(a.mode||'—')}</td>
-        <td><span class="st-badge ${a.status==='approved'?'st-billed':a.status==='rejected'?'st-cancelled':'st-pending'}">${a.status}</span></td>
-      </tr>`).join('')}
+      ${convAdvs.map(a=>`<tr><td><strong style="color:var(--amber);">${esc(a.no)}</strong></td><td>${a.date}</td><td>${esc(a.engineer)}</td><td style="font-size:.82em;">${esc(a.purpose||'—')}</td><td style="font-size:.8em;">${esc(a.callRef||'—')}</td><td class="amt" style="font-weight:700;">${fmt(a.amount)}</td><td style="font-size:.8em;">${esc(a.mode||'—')}</td><td>${sbg(a.status)}</td></tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(convAdvs.reduce((s,a)=>s+a.amount,0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
   } else if(_mvTab==='inc'){
     const incs=filter(D.svc_incentives||[],'date','engineerName');
     body.innerHTML=!incs.length?'<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries found</p></div>':
-      `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Incentive</th><th>Status</th><th>Action</th></tr></thead><tbody>
-      ${incs.map(e=>`<tr>
-        <td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td>
-        <td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.82em;">${esc(e.customer)}</td>
-        <td style="font-size:.8em;">${esc(e.product||'—')}</td>
-        <td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td>
-        <td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td>
-        <td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td>
-        <td><span class="st-badge ${e.status==='approved'||e.status==='settled'?'st-billed':e.status==='rejected'?'st-cancelled':'st-pending'}">${e.status==='mgmt-review'?'For Review':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1)}</span></td>
-        <td>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 8px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
-            ${e.status==='mgmt-review'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 8px;font-size:.72em;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" style="padding:3px 8px;font-size:.72em;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button>`:''}
-            ${e.status==='approved'?`<span style="font-size:.72em;color:var(--green);"><i class="fas fa-check-circle"></i> ${esc(e.approvedBy||'')}</span>`:''}
-            ${e.status==='settled'?`<span style="font-size:.72em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled</span>`:''}
-          </div>
-        </td>
-      </tr>`).join('')}
-      <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td>
-      <td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.saleAmt,0))}</td>
-      <td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.purchaseAmt,0))}</td>
-      <td class="amt" style="padding:9px 12px;color:${incs.reduce((s,e)=>s+e.profit,0)>=0?'var(--green)':'var(--red)'};">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td>
-      <td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td></td><td></td></tr>
+      `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Expense</th><th>Net P/L</th><th>Incentive</th><th>Status</th><th></th></tr></thead><tbody>
+      ${incs.map(e=>`<tr><td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.82em;">${esc(e.customer)}</td><td style="font-size:.8em;">${esc(e.product||'—')}</td><td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td><td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td><td class="amt" style="font-size:.8em;">${e.expType?esc(e.expType)+' '+fmt(e.expAmt||0):'—'}</td><td class="amt" style="font-weight:700;color:${(e.netProfit||e.profit)>=0?'var(--green)':'var(--red)'};">${fmt(e.netProfit||e.profit)}</td><td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td><td>${sbg(e.status==='mgmt-review'?'pending':e.status)}</td><td><div style="display:flex;gap:4px;">${e.status==='mgmt-review'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 7px;font-size:.72em;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" style="padding:3px 7px;font-size:.72em;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button>`:''}<button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 7px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i></button></div></td></tr>`).join('')}
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.saleAmt,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.purchaseAmt,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td><td></td><td></td><td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
+  } else if(_mvTab==='svc'){
+    let calls=[...D.svc_calls];
+    if(eng) calls=calls.filter(x=>x.engineer===eng);
+    if(from) calls=calls.filter(x=>(x.date||x.datetime?.slice(0,10)||'')>=from);
+    if(to) calls=calls.filter(x=>(x.date||x.datetime?.slice(0,10)||'')<=to);
+    calls=calls.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    const byEng={};calls.forEach(c=>{const e=c.engineer||'Unassigned';if(!byEng[e])byEng[e]={name:e,total:0,completed:0,pending:0,escalated:0,inProg:0,conv:0};byEng[e].total++;if(c.status==='completed')byEng[e].completed++;else if(c.status==='escalated')byEng[e].escalated++;else if(c.status==='in-progress')byEng[e].inProg++;else byEng[e].pending++;if(c.convRows?.length||c.convKm)byEng[e].conv++;});
+    const sumHtml=Object.values(byEng).sort((a,b)=>b.total-a.total).map(e=>`<div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0;"><i class="fas fa-user-gear"></i></div><div style="flex:1;min-width:120px;"><div style="font-weight:700;font-size:.88em;">${esc(e.name)}</div><div style="font-size:.73em;color:var(--ink3);">${e.total} calls · ${e.conv} with conveyance</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span style="font-size:.75em;background:#f0fdf4;color:var(--green);border-radius:6px;padding:3px 8px;font-weight:700;">${e.completed} done</span>${e.pending?`<span style="font-size:.75em;background:#fffbeb;color:#92400e;border-radius:6px;padding:3px 8px;font-weight:700;">${e.pending} pending</span>`:''} ${e.inProg?`<span style="font-size:.75em;background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 8px;font-weight:700;">${e.inProg} in-prog</span>`:''} ${e.escalated?`<span style="font-size:.75em;background:#fef2f2;color:var(--red);border-radius:6px;padding:3px 8px;font-weight:700;">${e.escalated} esc</span>`:''}</div></div>`).join('');
+    body.innerHTML=`${Object.keys(byEng).length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:16px;">${sumHtml}</div>`:''}`+
+      (!calls.length?'<div class="empty"><i class="fas fa-headset"></i><p>No service calls found</p></div>':
+      `<div class="tw"><table><thead><tr><th>Call No</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Issue</th><th>Product</th><th>Priority</th><th>Status</th><th>Conv.</th><th>Resolution</th></tr></thead><tbody>
+      ${calls.map(c=>{const ca=c.convRows?.reduce((s,r)=>s+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0);return `<tr><td><strong style="color:var(--svc);">${esc(c.no)}</strong></td><td style="font-size:.82em;">${c.date||c.datetime?.slice(0,10)||'—'}</td><td style="font-size:.83em;">${esc(c.customer)}</td><td style="font-size:.83em;">${esc(c.engineer||'—')}</td><td><span style="font-size:.72em;background:#e0f2fe;color:#0369a1;border-radius:5px;padding:2px 7px;font-weight:700;">${esc(c.callType||'—')}</span></td><td style="font-size:.8em;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.issue||'')}">${esc(c.issue||'—')}</td><td style="font-size:.8em;">${esc(c.product||'—')}</td><td>${svcPriorityBadge(c.priority)}</td><td>${sbg(c.status)}</td><td class="amt" style="font-size:.82em;">${ca>0?fmt(ca):'—'}</td><td style="font-size:.78em;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink3);" title="${esc(c.resolution||'')}">${esc(c.resolution||'—')}</td></tr>`;}).join('')}
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="9" style="text-align:right;padding:9px 12px;">Total Conv.</td><td class="amt" style="padding:9px 12px;">${fmt(calls.reduce((s,c)=>{return s+(c.convRows?.reduce((a,r)=>a+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0));},0))}</td><td></td></tr>
+      </tbody></table></div>`);
   }
 }
 
@@ -7045,10 +7198,10 @@ function exportMgmtView(){
   const rows=[];
   if(_mvTab==='conv'){D.svc_conveyance.forEach(c=>rows.push({'No':c.no,'Date':c.date,'Engineer':c.engineer,'Call Ref':c.callRef||'','Location':c.location||'','Travel':c.travelAmt,'Food':c.foodAmt,'Other':c.otherAmt,'Total':c.totalAmt,'Status':c.status}));}
   else if(_mvTab==='adv'){D.svc_conv_advances.forEach(a=>rows.push({'No':a.no,'Date':a.date,'Engineer':a.engineer,'Purpose':a.purpose||'','Call Ref':a.callRef||'','Amount':a.amount,'Mode':a.mode||'','Status':a.status}));}
-  else if(_mvTab==='inc'){(D.svc_incentives||[]).forEach(e=>rows.push({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt,'Purchase':e.purchaseAmt,'P/L':e.profit,'Incentive':e.approvedAmt||0,'Status':e.status}));}
-  else{(D.salary_advances||[]).forEach(a=>rows.push({'Employee':a.empName,'Role':a.empRole||'','Date':a.date,'Purpose':a.purpose,'Given':a.amount,'Recovered':a.amount-(a.balance||0),'Balance':a.balance||0,'Monthly Plan':a.monthlyRecovery||0,'Status':a.status}));}
+  else if(_mvTab==='inc'){(D.svc_incentives||[]).forEach(e=>rows.push({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt,'Purchase':e.purchaseAmt,'Expense Type':e.expType||'','Expense':e.expAmt||0,'P/L':e.profit,'Net P/L':e.netProfit||e.profit,'Incentive':e.approvedAmt||0,'Status':e.status}));}
+  else if(_mvTab==='svc'){D.svc_calls.forEach(c=>{const ca=c.convRows?.reduce((a,r)=>a+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0);rows.push({'Call No':c.no,'Date':c.date||c.datetime?.slice(0,10)||'','Customer':c.customer,'Engineer':c.engineer||'','Type':c.callType||'','Issue':c.issue||'','Product':c.product||'','Priority':c.priority||'','Status':c.status,'Conv.Amt':ca,'Resolution':c.resolution||''});});}
   if(!rows.length){alert('No data to export');return;}
-  xlsxExport([{name:'View All',rows}],`acenet_mgmt_${_mvTab}_${today()}`);
+  xlsxExport([{name:'Detail Info',rows}],`acenet_mgmt_${_mvTab}_${today()}`);
 }
 
 // ════════════════════════════════════════════════════════════════
