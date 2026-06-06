@@ -5803,7 +5803,7 @@ function viewConvClaimDetails(id){
         <div style="font-size:.78em;color:var(--svc);font-weight:700;">${tAmt>0?fmt(tAmt):'—'}</div>
         ${fAmt>0?`<div style="font-size:.72em;color:var(--amber);">Food: ${fmt(fAmt)}</div>`:''}
         ${oAmt>0?`<div style="font-size:.72em;color:var(--ink3);">Other: ${fmt(oAmt)}</div>`:''}
-        <div style="font-size:.75em;font-weight:800;color:#0e7490;border-top:1px solid #e0f2fe;margin-top:2px;padding-top:2px;">${fmt(total)}</div>
+        ${(fAmt>0||oAmt>0)?`<div style="font-size:.75em;font-weight:800;color:#0e7490;border-top:1px solid #e0f2fe;margin-top:2px;padding-top:2px;">Total: ${fmt(total)}</div>`:''}
       </td>
     </tr>`;
   }).join('');
