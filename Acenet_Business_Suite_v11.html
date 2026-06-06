@@ -5971,6 +5971,31 @@ function convModalMinimize(){
   if(header) header.style.borderRadius='16px 16px 0 0';
 }
 
+function accIncModalMaximize(){
+  const box=g('accIncViewBox'),modal=g('accIncViewModal'),hdr=g('accIncViewHeader');
+  if(!box)return;
+  box.style.maxWidth='100%';box.style.width='100%';box.style.maxHeight='100vh';box.style.height='100vh';box.style.borderRadius='0';
+  modal.style.padding='0';if(hdr)hdr.style.borderRadius='0';
+}
+function accIncModalMinimize(){
+  const box=g('accIncViewBox'),modal=g('accIncViewModal'),hdr=g('accIncViewHeader');
+  if(!box)return;
+  box.style.maxWidth='560px';box.style.width='100%';box.style.maxHeight='88vh';box.style.height='';box.style.borderRadius='16px';
+  modal.style.padding='16px';if(hdr)hdr.style.borderRadius='16px 16px 0 0';
+}
+function svcIncModalMaximize(){
+  const box=g('incViewBox'),modal=g('incViewModal'),hdr=g('incViewHeader');
+  if(!box)return;
+  box.style.maxWidth='100%';box.style.width='100%';box.style.maxHeight='100vh';box.style.height='100vh';box.style.borderRadius='0';
+  modal.style.padding='0';if(hdr)hdr.style.borderRadius='0';
+}
+function svcIncModalMinimize(){
+  const box=g('incViewBox'),modal=g('incViewModal'),hdr=g('incViewHeader');
+  if(!box)return;
+  box.style.maxWidth='560px';box.style.width='100%';box.style.maxHeight='88vh';box.style.height='';box.style.borderRadius='16px';
+  modal.style.padding='16px';if(hdr)hdr.style.borderRadius='16px 16px 0 0';
+}
+
 function draftModalMaximize(){
   const box=g('draftViewBox');
   const modal=g('draftViewModal');
@@ -6056,38 +6081,43 @@ function viewAccInc(id){
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="accIncViewModal" onclick="if(event.target.id==='accIncViewModal')this.remove();">
-    <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
+    <div id="accIncViewBox" style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);transition:all .25s ease;">
+      <div id="accIncViewHeader" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
         <div>
-          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(e.no)}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; ${stLabel}</div>
+          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.1em;">${esc(e.no)}</div>
+          <div style="color:rgba(255,255,255,.85);font-size:.82em;margin-top:3px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; <strong>${stLabel}</strong></div>
         </div>
-        <button onclick="g('accIncViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;"><i class="fas fa-times"></i></button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button title="Minimize" onclick="accIncModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
+          <button title="Maximize" onclick="accIncModalMaximize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-expand"></i></button>
+          <button title="Close" onclick="g('accIncViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(200,50,50,.55)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-times"></i></button>
+        </div>
       </div>
-      <div style="padding:18px 20px;">
-        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Customer</div><div style="font-weight:700;font-size:.85em;">${esc(e.customer)}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Product</div><div style="font-weight:700;font-size:.85em;">${esc(e.product||'—')}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">GST Type</div><div style="font-size:.83em;">${e.gstType||'—'}</div></div>
+      <div style="padding:20px 22px;">
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;font-size:.95em;">${esc(e.customer)}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;">
-          <div style="background:#f0f9ff;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.1em;">${fmt(e.saleAmt)}</div></div>
-          <div style="background:#fffbeb;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.1em;">${fmt(e.purchaseAmt)}</div></div>
-          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.1em;">${fmt(e.gstAmt)}</div></div>`:''}
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.1em;">${fmt(e.profit)}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
+          <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
+          <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
+          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
+          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
         </div>
-        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.1em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.78em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
-        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
-        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
-        ${e.suggestedPct||e.suggestedAmt?`<div style="background:#faf5ff;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:#7c3aed;"><i class="fas fa-percentage"></i> Suggested by Accounts: ${e.suggestedPct?e.suggestedPct+'%':''} ${e.suggestedAmt?'= '+fmt(e.suggestedAmt):''}</div>`:''}
-        ${e.sentToMgmtBy?`<div style="font-size:.76em;color:var(--amber);margin-bottom:8px;"><i class="fas fa-paper-plane"></i> Sent to Mgmt by ${esc(e.sentToMgmtBy)}</div>`:''}
-        ${isAccounts&&e.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);"><button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="g('accIncViewModal').remove();settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button></div>`:''}
-        ${isMgmt&&(e.status==='pending'||e.status==='mgmt-review')?`<div style="padding-top:10px;border-top:1px solid var(--line);"><div style="font-size:.75em;color:var(--ink3);text-align:center;"><i class="fas fa-eye"></i> Management view — use Detail Info table to Approve / Reject</div></div>`:''}
+        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.82em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
+        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
+        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+        ${e.suggestedPct||e.suggestedAmt?`<div style="background:#faf5ff;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:#7c3aed;"><i class="fas fa-percentage"></i> Suggested by Accounts: ${e.suggestedPct?e.suggestedPct+'%':''} ${e.suggestedAmt?'= '+fmt(e.suggestedAmt):''}</div>`:''}
+        ${e.sentToMgmtBy?`<div style="font-size:.82em;color:var(--amber);margin-bottom:8px;"><i class="fas fa-paper-plane"></i> Sent to Mgmt by ${esc(e.sentToMgmtBy)}</div>`:''}
+        ${isAccounts&&e.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px;border-top:1px solid var(--line);"><button class="btn btn-sm" style="background:var(--acc);color:#fff;font-size:.9em;padding:8px 16px;" onclick="g('accIncViewModal').remove();settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button></div>`:''}
+        ${isMgmt&&(e.status==='pending'||e.status==='mgmt-review')?`<div style="padding-top:12px;border-top:1px solid var(--line);"><div style="font-size:.82em;color:var(--ink3);text-align:center;"><i class="fas fa-eye"></i> Management view — use Detail Info table to Approve / Reject</div></div>`:''}
       </div>
     </div>
   </div>`;
   document.body.insertAdjacentHTML('beforeend',html);
 }
+
 function rejectConvClaim(id){
   const reason=prompt('Reason for rejection (optional):');
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
@@ -6651,32 +6681,36 @@ function viewSvcInc(id){
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status==='draft'?'Draft':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="incViewModal" onclick="if(event.target.id==='incViewModal')this.remove();">
-    <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;">
+    <div id="incViewBox" style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);transition:all .25s ease;">
+      <div id="incViewHeader" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
         <div>
-          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(e.no)}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; ${stLabel}</div>
+          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.1em;">${esc(e.no)}</div>
+          <div style="color:rgba(255,255,255,.85);font-size:.82em;margin-top:3px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; <strong>${stLabel}</strong></div>
         </div>
-        <button onclick="g('incViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;"><i class="fas fa-times"></i></button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button title="Minimize" onclick="svcIncModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
+          <button title="Maximize" onclick="svcIncModalMaximize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-expand"></i></button>
+          <button title="Close" onclick="g('incViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(200,50,50,.55)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-times"></i></button>
+        </div>
       </div>
-      <div style="padding:18px 20px;">
-        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Customer</div><div style="font-weight:700;font-size:.85em;">${esc(e.customer)}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Product</div><div style="font-weight:700;font-size:.85em;">${esc(e.product||'—')}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">GST Type</div><div style="font-size:.83em;">${e.gstType||'—'}</div></div>
+      <div style="padding:20px 22px;">
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;font-size:.95em;">${esc(e.customer)}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px;">
-          <div style="background:#f0f9ff;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.1em;">${fmt(e.saleAmt)}</div></div>
-          <div style="background:#fffbeb;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.1em;">${fmt(e.purchaseAmt)}</div></div>
-          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.1em;">${fmt(e.gstAmt)}</div></div>`:''}
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:12px;text-align:center;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.1em;">${fmt(e.profit)}</div></div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
+          <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
+          <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
+          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
+          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
         </div>
-        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.1em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.78em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
-        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:.8em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
-        ${(e.status==='draft'||e.status==='pending')?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--line);">
-          <button class="btn btn-outline btn-sm" onclick="g('incViewModal').remove();editDraftInc('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn btn-sm" style="background:#0e7490;color:#fff;" onclick="g('incViewModal').remove();showSvcIncForm()"><i class="fas fa-plus-circle"></i> Add Another Entry</button>
-          ${e.status==='draft'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="g('incViewModal').remove();sendDraftInc('${e.id}')"><i class="fas fa-paper-plane"></i> Send</button>`:''}
+        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.82em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
+        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+        ${(e.status==='draft'||e.status==='pending')?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);">
+          <button class="btn btn-outline btn-sm" style="font-size:.88em;padding:7px 14px;" onclick="g('incViewModal').remove();editDraftInc('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn btn-sm" style="background:#0e7490;color:#fff;font-size:.88em;padding:7px 14px;" onclick="g('incViewModal').remove();showSvcIncForm()"><i class="fas fa-plus-circle"></i> Add Another Entry</button>
+          ${e.status==='draft'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;font-size:.88em;padding:7px 14px;" onclick="g('incViewModal').remove();sendDraftInc('${e.id}')"><i class="fas fa-paper-plane"></i> Send</button>`:''}
         </div>`:''}
       </div>
     </div>
