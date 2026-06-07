@@ -2127,6 +2127,7 @@ tbody tr:last-child td{border-bottom:none;}
     <button class="rpt-tab on" onclick="switchRptTab('rpt-outstanding',this)"><i class="fas fa-exclamation-circle" style="color:var(--red);"></i> Outstanding by Customer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-collection',this)"><i class="fas fa-hand-holding-dollar" style="color:var(--green);"></i> Collection by Customer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-incentive',this)"><i class="fas fa-gift" style="color:#7c3aed;"></i> Incentive by Engineer</button>
+    <button class="rpt-tab" onclick="switchRptTab('rpt-conveyance',this);renderRptConveyance()"><i class="fas fa-car-side" style="color:var(--svc);"></i> Conveyance</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-send-mkt',this)"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send to Service Engineer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-financial',this)"><i class="fas fa-chart-bar" style="color:var(--acc);"></i> Financial Summary</button>
   </div>
@@ -2171,6 +2172,88 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="stats" id="incRptStats"></div>
     <div id="incRptEngSummary" style="margin-bottom:14px;"></div>
     <div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale Amt</th><th>Purchase Amt</th><th>Profit</th><th>Approved Incentive</th><th>Status</th></tr></thead><tbody id="incRptBody"></tbody></table></div>
+  </div>
+
+  <!-- SUB: Conveyance Report -->
+  <div class="rpt-panel" id="rpt-conveyance">
+    <div class="filt-row" style="flex-wrap:wrap;gap:8px;">
+      <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+      <div class="filt-sep"></div>
+      <!-- Date Range -->
+      <div class="filt-date-grp"><i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i><input type="date" id="convRptFrom" onchange="renderRptConveyance()"><span>→</span><input type="date" id="convRptTo" onchange="renderRptConveyance()"></div>
+      <!-- Engineer filter -->
+      <select id="convRptEngineer" onchange="renderRptConveyance()" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.82em;">
+        <option value="">All Engineers</option>
+      </select>
+      <!-- Customer filter -->
+      <select id="convRptCustomer" onchange="renderRptConveyance()" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.82em;">
+        <option value="">All Customers</option>
+      </select>
+      <!-- Status filter -->
+      <select id="convRptStatus" onchange="renderRptConveyance()" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.82em;">
+        <option value="">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+        <option value="settled">Settled</option>
+      </select>
+      <!-- View mode -->
+      <select id="convRptView" onchange="renderRptConveyance()" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.82em;font-weight:700;">
+        <option value="all">All Claims</option>
+        <option value="engineer">Group by Engineer</option>
+        <option value="customer">Group by Customer</option>
+      </select>
+      <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="printConvReport()"><i class="fas fa-print"></i> Print PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="exportConvRptExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+      </div>
+    </div>
+    <!-- Summary Stats -->
+    <div class="stats" id="convRptStats" style="margin-top:10px;"></div>
+    <!-- Engineer summary cards -->
+    <div id="convRptGroupCards" style="margin-bottom:14px;"></div>
+    <!-- Detail Table -->
+    <div class="tw" id="convRptTableWrap">
+      <table id="convRptTable">
+        <thead><tr>
+          <th>Claim No</th><th>Date</th><th>Engineer</th><th>Customer / Call</th>
+          <th class="num">Travel (₹)</th><th class="num">Food (₹)</th><th class="num">Other (₹)</th>
+          <th class="num">Total (₹)</th><th>Status</th><th>Approved By</th>
+        </tr></thead>
+        <tbody id="convRptBody"></tbody>
+      </table>
+    </div>
+    <!-- Advance sub-report -->
+    <div style="margin-top:22px;">
+      <div class="sdiv" style="margin-bottom:10px;"><i class="fas fa-hand-holding-dollar" style="margin-right:6px;color:var(--svc);"></i>Conveyance Advances</div>
+      <div class="filt-row" style="margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <select id="advRptEngineer" onchange="renderRptAdvances()" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.82em;">
+          <option value="">All Engineers</option>
+        </select>
+        <select id="advRptStatus" onchange="renderRptAdvances()" style="padding:6px 10px;border:1.5px solid var(--line);border-radius:8px;font-size:.82em;">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="settled">Settled</option>
+        </select>
+        <div class="filt-date-grp"><i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i><input type="date" id="advRptFrom" onchange="renderRptAdvances()"><span>→</span><input type="date" id="advRptTo" onchange="renderRptAdvances()"></div>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="printAdvReport()"><i class="fas fa-print"></i> Print PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="exportAdvRptExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+        </div>
+      </div>
+      <div class="stats" id="advRptStats"></div>
+      <div class="tw">
+        <table id="advRptTable">
+          <thead><tr>
+            <th>Advance No</th><th>Date</th><th>Engineer</th><th>Purpose</th>
+            <th>Call Ref</th><th class="num">Amount (₹)</th><th>Status</th><th>Approved By</th>
+          </tr></thead>
+          <tbody id="advRptBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <!-- SUB: Send to Service Engineer -->
@@ -2866,7 +2949,7 @@ function goPage(p){
   if(p==='mgmt-view') renderMgmtView();
   if(p==='mgmt-reports') renderMgmtReports();
   if(p==='acc-stock') renderStock();
-  if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();}
+  if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();renderRptConveyance();renderRptAdvances();}
   if(p==='setup') renderSetupPage();
 }
 
@@ -3143,7 +3226,10 @@ function renderOrders(){
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           ${statusHtml}
-          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
+          </div>
         </div>
       </div>
       <div class="order-body">
@@ -3186,6 +3272,8 @@ function orderAccCard(o,showConfirm){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
         ${o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
         <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);margin-top:2px;"><i class="fas fa-eye"></i> View</button>
+          </div>
       </div>
     </div>
     <div class="order-body">
@@ -3229,6 +3317,117 @@ function confirmBillOrder(ordId){
   // Show confirmation toast to marketing
   if(bc)try{bc.postMessage('order_billed');}catch(e){}
   alert(`✓ Order ${o.orderNo} confirmed as billed with ${invNo}!\nMarketing will see this update.`);
+}
+
+function viewOrderModal(id){
+  const o=D.orders.find(x=>x.id===id);if(!o)return;
+  const gstRows=o.gstType==='exclusive'?`
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">Sub-total</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);font-weight:600;">${fmt(o.total/(1+GST_R))}</td></tr>
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">GST @18%</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);font-weight:600;">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:
+    o.gstType==='inclusive'?`
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">Sub-total (before GST @18%)</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);">${fmt(o.total/(1+GST_R))}</td></tr>
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">GST @18% (included)</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:'';
+  const statusBadge=o.status==='billed'
+    ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`
+    :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+    :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`;
+  const isSource=o.source==='service'?'SERVICE ORDER':'MARKETING ORDER';
+  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="ordViewModal" onclick="if(event.target.id==='ordViewModal')this.remove();">
+    <div id="ordViewBox" style="background:#fff;border-radius:16px;max-width:680px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.32);transition:all .25s ease;">
+      <div id="ordViewHeader" style="background:linear-gradient(135deg,#ea580c,#f97316);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
+        <div>
+          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.15em;"><i class="fas fa-clipboard-list" style="margin-right:8px;opacity:.85;"></i>${esc(o.orderNo)}</div>
+          <div style="color:rgba(255,255,255,.85);font-size:.82em;margin-top:4px;">${o.date} &nbsp;·&nbsp; <strong>${esc(o.customer)}</strong> &nbsp;·&nbsp; ${isSource}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${statusBadge}
+          <button title="Minimize" onclick="ordModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.95em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
+          <button title="Maximize" onclick="ordModalMaximize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.95em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-expand"></i></button>
+          <button title="Close" onclick="g('ordViewModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.95em;transition:.15s;" onmouseover="this.style.background='rgba(200,50,50,.55)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+      <div style="padding:22px 24px;">
+        <!-- Order Meta -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="flex:1;min-width:130px;background:#fff7ed;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#c2410c;margin-bottom:4px;">Order Total</div>
+            <div style="font-weight:800;font-size:1.4em;color:var(--orange);">${fmt(o.total)}</div>
+          </div>
+          <div style="flex:1;min-width:130px;background:#f8fafc;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Items</div>
+            <div style="font-weight:800;font-size:1.2em;color:var(--ink);">${o.items.length}</div>
+          </div>
+          ${o.gstType&&o.gstType!=='none'?`<div style="flex:1;min-width:130px;background:#eff6ff;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;">GST</div><div style="font-weight:700;font-size:.95em;color:#1d4ed8;">${o.gstType==='exclusive'?'+18% GST':'18% Incl.'}</div></div>`:''}
+          ${o.supplier?`<div style="flex:1;min-width:130px;background:#f0fdf4;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;margin-bottom:4px;">Supplier</div><div style="font-weight:700;font-size:.92em;">${esc(o.supplier)}</div></div>`:''}
+        </div>
+        <!-- Items Table -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;letter-spacing:.04em;">Order Items</div>
+          <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--line);">
+            <table style="width:100%;border-collapse:collapse;font-size:.88em;">
+              <thead><tr style="background:#ea580c;">
+                <th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">Material</th>
+                <th style="padding:10px 14px;text-align:center;color:#fff;font-weight:700;">Qty</th>
+                <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Rate</th>
+                ${o.source==='service'?`<th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">Exp.Type</th><th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Expense</th>`:''}
+                <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Amount</th>
+              </tr></thead>
+              <tbody>
+                ${o.items.map((it,i)=>`<tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#fff':'#fafafa'};">
+                  <td style="padding:10px 14px;font-weight:600;">${esc(it.material||it.name||'')}</td>
+                  <td style="padding:10px 14px;text-align:center;">${it.qty}</td>
+                  <td style="padding:10px 14px;text-align:right;">${fmt(it.rate)}</td>
+                  ${o.source==='service'?`<td style="padding:10px 14px;font-size:.85em;color:var(--ink3);">${it.expType?esc(it.expType):'—'}</td><td style="padding:10px 14px;text-align:right;">${it.expAmt?fmt(it.expAmt):'—'}</td>`:''}
+                  <td style="padding:10px 14px;text-align:right;font-weight:700;color:var(--orange);">${fmt(it.amount)}</td>
+                </tr>`).join('')}
+              </tbody>
+              <tfoot>
+                ${gstRows}
+                <tr style="background:#fff7ed;border-top:2px solid #fed7aa;">
+                  <td colspan="${o.source==='service'?5:3}" style="padding:11px 14px;font-weight:800;font-size:.95em;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td>
+                  <td style="padding:11px 14px;text-align:right;font-weight:800;font-size:1.1em;color:var(--orange);">${fmt(o.total)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+        <!-- DC Info (service orders) -->
+        ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 16px;margin-bottom:14px;">
+          <div style="font-weight:700;color:#0369a1;margin-bottom:8px;font-size:.9em;"><i class="fas fa-truck" style="margin-right:6px;"></i>Delivery Challan</div>
+          <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:.88em;">
+            ${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''}
+            ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''}
+            ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''}
+            ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''}
+            ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''}
+            ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}
+          </div>
+          ${o.dc.remarks?`<div style="color:var(--ink3);margin-top:6px;font-size:.85em;">${esc(o.dc.remarks)}</div>`:''}
+        </div>`:''}
+        <!-- Modified notice -->
+        ${o.modified?`<div style="background:#fff7ed;border-left:4px solid #fb923c;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:.88em;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:6px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
+        <!-- Notes -->
+        ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.88em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
+        <!-- Billed info -->
+        ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+  // Remove any existing order modal before opening
+  const existing=g('ordViewModal');if(existing)existing.remove();
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+function ordModalMaximize(){
+  const box=g('ordViewBox'),modal=g('ordViewModal'),hdr=g('ordViewHeader');
+  if(!box)return;
+  box.style.maxWidth='100%';box.style.width='100%';box.style.maxHeight='100vh';box.style.height='100vh';box.style.borderRadius='0';
+  modal.style.padding='0';if(hdr)hdr.style.borderRadius='0';
+}
+function ordModalMinimize(){
+  const box=g('ordViewBox'),modal=g('ordViewModal'),hdr=g('ordViewHeader');
+  if(!box)return;
+  box.style.maxWidth='680px';box.style.width='100%';box.style.maxHeight='88vh';box.style.height='';box.style.borderRadius='16px';
+  modal.style.padding='16px';if(hdr)hdr.style.borderRadius='16px 16px 0 0';
 }
 
 function toggleOrder(id,prefix){
@@ -4230,6 +4429,243 @@ function exportConvReport(){
     'Total (₹)':(c.totalAmt||0).toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''
   }));
   xlsxExport([{name:'Conveyance Claims',rows},{name:'Advance Requests',rows:D.svc_conv_advances.map(a=>({'Adv ID':a.no,'Date':a.date,'Engineer':a.engineer,'Amount (₹)':a.amount.toFixed(2),'Purpose':a.purpose||'','Call Ref':a.callRef||'','Status':a.status,'Approved By':a.approvedBy||''}))}],'acenet_conveyance_'+today());
+}
+
+// ── Accounts Reports → Conveyance tab ──────────────────────────
+function populateConvRptDropdowns(){
+  const engineers=[...new Set((D.svc_conveyance||[]).map(c=>c.engineer).filter(Boolean))].sort();
+  const customers=[...new Set((D.svc_conveyance||[]).flatMap(c=>(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean).map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?sc.customer:null;}).filter(Boolean)))].sort();
+  const advEngineers=[...new Set((D.svc_conv_advances||[]).map(a=>a.engineer).filter(Boolean))].sort();
+  ['convRptEngineer','advRptEngineer'].forEach((id,i)=>{
+    const el=g(id);if(!el)return;
+    const list=i===0?engineers:advEngineers;
+    const existing=el.value;
+    el.innerHTML='<option value="">All Engineers</option>'+list.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('');
+    if(existing)el.value=existing;
+  });
+  const custEl=g('convRptCustomer');
+  if(custEl){const existing=custEl.value;custEl.innerHTML='<option value="">All Customers</option>'+customers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(existing)custEl.value=existing;}
+}
+
+function getConvRptFiltered(){
+  const from=g('convRptFrom')?.value||'';
+  const to=g('convRptTo')?.value||'';
+  const eng=g('convRptEngineer')?.value||'';
+  const cust=g('convRptCustomer')?.value||'';
+  const status=g('convRptStatus')?.value||'';
+  return (D.svc_conveyance||[]).filter(c=>{
+    if(from&&c.date<from)return false;
+    if(to&&c.date>to)return false;
+    if(eng&&c.engineer!==eng)return false;
+    if(status&&c.status!==status)return false;
+    if(cust){
+      const refs=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim());
+      const custs=refs.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';});
+      if(!custs.some(cu=>cu===cust))return false;
+    }
+    return true;
+  });
+}
+
+function renderRptConveyance(){
+  populateConvRptDropdowns();
+  const data=getConvRptFiltered();
+  const view=g('convRptView')?.value||'all';
+  const totalTravel=data.reduce((s,c)=>s+(c.travelAmt||0),0);
+  const totalFood=data.reduce((s,c)=>s+(c.foodAmt||0),0);
+  const totalOther=data.reduce((s,c)=>s+(c.otherAmt||0),0);
+  const totalAmt=data.reduce((s,c)=>s+(c.totalAmt||0),0);
+  const approved=data.filter(c=>c.status==='approved'||c.status==='settled');
+  const pending=data.filter(c=>c.status==='pending');
+  // Stats
+  const statsEl=g('convRptStats');
+  if(statsEl) statsEl.innerHTML=`
+    <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div class="stat-label">Claims</div><div class="stat-value">${data.length}</div></div>
+    <div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Approved/Settled</div><div class="stat-value">${approved.length}</div></div>
+    <div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div>
+    <div class="stat s-svc"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-car-side"></i></div><div class="stat-label">Total Amount</div><div class="stat-value">${fmt(totalAmt)}</div></div>`;
+  // Group cards
+  const groupEl=g('convRptGroupCards');
+  if(groupEl){
+    if(view==='engineer'){
+      const byEng={};
+      data.forEach(c=>{const e=c.engineer||'Unknown';if(!byEng[e])byEng[e]={travel:0,food:0,other:0,total:0,count:0};byEng[e].travel+=(c.travelAmt||0);byEng[e].food+=(c.foodAmt||0);byEng[e].other+=(c.otherAmt||0);byEng[e].total+=(c.totalAmt||0);byEng[e].count++;});
+      groupEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">${Object.entries(byEng).sort((a,b)=>b[1].total-a[1].total).map(([eng,s])=>`
+        <div style="background:#f0fdfa;border:1px solid #99f6e4;border-radius:12px;padding:14px 18px;min-width:200px;flex:1;">
+          <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#0e7490;margin-bottom:8px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(eng)}</div>
+          <div style="font-weight:800;font-size:1.15em;color:#0e7490;margin-bottom:6px;">${fmt(s.total)}</div>
+          <div style="font-size:.78em;color:var(--ink3);display:flex;gap:12px;">
+            <span>🚗 ${fmt(s.travel)}</span><span>🍴 ${fmt(s.food)}</span><span>📦 ${fmt(s.other)}</span><span>${s.count} claims</span>
+          </div>
+        </div>`).join('')}</div>`;
+    } else if(view==='customer'){
+      const byCust={};
+      data.forEach(c=>{
+        const refs=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+        const custs=[...new Set(refs.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'Unknown';}))];
+        custs.forEach(cu=>{if(!byCust[cu])byCust[cu]={travel:0,food:0,other:0,total:0,count:0};byCust[cu].travel+=(c.travelAmt||0)/custs.length;byCust[cu].food+=(c.foodAmt||0)/custs.length;byCust[cu].other+=(c.otherAmt||0)/custs.length;byCust[cu].total+=(c.totalAmt||0)/custs.length;byCust[cu].count++;});
+      });
+      groupEl.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">${Object.entries(byCust).sort((a,b)=>b[1].total-a[1].total).map(([cu,s])=>`
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 18px;min-width:200px;flex:1;">
+          <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:8px;"><i class="fas fa-building" style="margin-right:5px;"></i>${esc(cu)}</div>
+          <div style="font-weight:800;font-size:1.15em;color:#1d4ed8;margin-bottom:6px;">${fmt(s.total)}</div>
+          <div style="font-size:.78em;color:var(--ink3);display:flex;gap:12px;">
+            <span>🚗 ${fmt(s.travel)}</span><span>🍴 ${fmt(s.food)}</span><span>📦 ${fmt(s.other)}</span><span>${s.count} claims</span>
+          </div>
+        </div>`).join('')}</div>`;
+    } else {
+      groupEl.innerHTML='';
+    }
+  }
+  // Detail table rows
+  const tbody=g('convRptBody');
+  if(!tbody)return;
+  if(!data.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink3);">No conveyance claims match the selected filters.</td></tr>';return;}
+  tbody.innerHTML=data.map(c=>{
+    const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+    const custs=[...new Set(calls.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';}).filter(Boolean))];
+    const stColor=c.status==='approved'||c.status==='settled'?'var(--green)':c.status==='rejected'?'var(--red)':'var(--amber)';
+    return `<tr>
+      <td><strong style="color:var(--svc);">${esc(c.no)}</strong></td>
+      <td>${c.date}</td>
+      <td>${esc(c.engineer)}</td>
+      <td><div style="font-size:.82em;">${custs.length?custs.map(cu=>esc(cu)).join(', '):'—'}</div><div style="font-size:.72em;color:var(--ink3);">${calls.join(', ')}</div></td>
+      <td class="num">${fmt(c.travelAmt||0)}</td>
+      <td class="num" style="color:var(--amber);">${(c.foodAmt||0)>0?fmt(c.foodAmt):'—'}</td>
+      <td class="num" style="color:var(--ink3);">${(c.otherAmt||0)>0?fmt(c.otherAmt):'—'}</td>
+      <td class="num" style="font-weight:800;color:var(--svc);">${fmt(c.totalAmt||0)}</td>
+      <td><span style="background:${stColor}1a;color:${stColor};border-radius:6px;padding:2px 9px;font-size:.75em;font-weight:700;text-transform:capitalize;">${c.status}</span></td>
+      <td style="font-size:.82em;color:var(--ink3);">${c.approvedBy||'—'}</td>
+    </tr>`;
+  }).join('');
+  // Footer totals row
+  tbody.innerHTML+=`<tr style="background:#f0fdfa;border-top:2px solid #99f6e4;">
+    <td colspan="4" style="font-weight:800;padding:10px 12px;">TOTAL (${data.length} claims)</td>
+    <td class="num" style="font-weight:800;">${fmt(totalTravel)}</td>
+    <td class="num" style="font-weight:800;color:var(--amber);">${totalFood>0?fmt(totalFood):'—'}</td>
+    <td class="num" style="font-weight:800;">${totalOther>0?fmt(totalOther):'—'}</td>
+    <td class="num" style="font-weight:800;font-size:1em;color:var(--svc);">${fmt(totalAmt)}</td>
+    <td colspan="2"></td>
+  </tr>`;
+}
+
+function renderRptAdvances(){
+  populateConvRptDropdowns();
+  const eng=g('advRptEngineer')?.value||'';
+  const status=g('advRptStatus')?.value||'';
+  const from=g('advRptFrom')?.value||'';
+  const to=g('advRptTo')?.value||'';
+  const data=(D.svc_conv_advances||[]).filter(a=>{
+    if(eng&&a.engineer!==eng)return false;
+    if(status&&a.status!==status)return false;
+    if(from&&a.date<from)return false;
+    if(to&&a.date>to)return false;
+    return true;
+  });
+  const totalAmt=data.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const approved=data.filter(a=>a.status==='approved'||a.status==='settled').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const pending=data.filter(a=>a.status==='pending').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const statsEl=g('advRptStats');
+  if(statsEl) statsEl.innerHTML=`
+    <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div class="stat-label">Advances</div><div class="stat-value">${data.length}</div></div>
+    <div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved)}</div></div>
+    <div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(pending)}</div></div>
+    <div class="stat s-svc"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div><div class="stat-label">Total</div><div class="stat-value">${fmt(totalAmt)}</div></div>`;
+  const tbody=g('advRptBody');if(!tbody)return;
+  if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink3);">No advance records match the selected filters.</td></tr>';return;}
+  tbody.innerHTML=data.map(a=>{
+    const stColor=a.status==='approved'||a.status==='settled'?'var(--green)':a.status==='rejected'?'var(--red)':'var(--amber)';
+    return `<tr>
+      <td><strong style="color:var(--svc);">${esc(a.no||'—')}</strong></td>
+      <td>${a.date}</td>
+      <td>${esc(a.engineer)}</td>
+      <td style="font-size:.85em;">${esc(a.purpose||'—')}</td>
+      <td style="font-size:.82em;color:var(--svc);">${esc(a.callRef||'—')}</td>
+      <td class="num" style="font-weight:800;color:var(--svc);">${fmt(parseFloat(a.amount)||0)}</td>
+      <td><span style="background:${stColor}1a;color:${stColor};border-radius:6px;padding:2px 9px;font-size:.75em;font-weight:700;text-transform:capitalize;">${a.status}</span></td>
+      <td style="font-size:.82em;color:var(--ink3);">${a.approvedBy||'—'}</td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML+=`<tr style="background:#f0fdfa;border-top:2px solid #99f6e4;">
+    <td colspan="5" style="font-weight:800;padding:10px 12px;">TOTAL (${data.length} advances)</td>
+    <td class="num" style="font-weight:800;font-size:1em;color:var(--svc);">${fmt(totalAmt)}</td>
+    <td colspan="2"></td>
+  </tr>`;
+}
+
+function printConvReport(){
+  const data=getConvRptFiltered();
+  const view=g('convRptView')?.value||'all';
+  const eng=g('convRptEngineer')?.value||'All Engineers';
+  const cust=g('convRptCustomer')?.value||'All Customers';
+  const from=g('convRptFrom')?.value||'';const to=g('convRptTo')?.value||'';
+  const totalAmt=data.reduce((s,c)=>s+(c.totalAmt||0),0);
+  const totalTravel=data.reduce((s,c)=>s+(c.travelAmt||0),0);
+  const totalFood=data.reduce((s,c)=>s+(c.foodAmt||0),0);
+  const totalOther=data.reduce((s,c)=>s+(c.otherAmt||0),0);
+  const filterDesc=`Engineer: ${eng} | Customer: ${cust}${from?' | From: '+from:''}${to?' | To: '+to:''}`;
+  const rows=data.map(c=>{
+    const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+    const custs=[...new Set(calls.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';}).filter(Boolean))];
+    return `<tr><td>${esc(c.no)}</td><td>${c.date}</td><td>${esc(c.engineer)}</td><td>${custs.join(', ')||'—'}</td><td>${calls.join(', ')}</td><td style="text-align:right;">${fmt(c.travelAmt||0)}</td><td style="text-align:right;">${fmt(c.foodAmt||0)}</td><td style="text-align:right;">${fmt(c.otherAmt||0)}</td><td style="text-align:right;font-weight:700;">${fmt(c.totalAmt||0)}</td><td>${c.status}</td><td>${c.approvedBy||'—'}</td></tr>`;
+  }).join('');
+  openPrintWindow('Conveyance Claims Report',`
+    <p class="sub">${filterDesc}</p>
+    <p style="font-size:10px;margin-bottom:10px;">Total: <strong>${fmt(totalAmt)}</strong> &nbsp;|&nbsp; Travel: ${fmt(totalTravel)} &nbsp;|&nbsp; Food: ${fmt(totalFood)} &nbsp;|&nbsp; Other: ${fmt(totalOther)} &nbsp;|&nbsp; Claims: ${data.length}</p>
+    <table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Call Ref</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th><th>Approved By</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="11" style="text-align:center;">No data</td></tr>'}</tbody>
+    <tfoot><tr style="background:#e0f2fe;"><td colspan="5" style="font-weight:700;padding:7px 9px;">TOTAL</td><td style="text-align:right;font-weight:700;">${fmt(totalTravel)}</td><td style="text-align:right;font-weight:700;">${fmt(totalFood)}</td><td style="text-align:right;font-weight:700;">${fmt(totalOther)}</td><td style="text-align:right;font-weight:800;">${fmt(totalAmt)}</td><td colspan="2"></td></tr></tfoot>
+    </table>`);
+}
+
+function printAdvReport(){
+  const eng=g('advRptEngineer')?.value||'';
+  const status=g('advRptStatus')?.value||'';
+  const from=g('advRptFrom')?.value||'';const to=g('advRptTo')?.value||'';
+  const data=(D.svc_conv_advances||[]).filter(a=>{
+    if(eng&&a.engineer!==eng)return false;
+    if(status&&a.status!==status)return false;
+    if(from&&a.date<from)return false;
+    if(to&&a.date>to)return false;
+    return true;
+  });
+  const totalAmt=data.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const filterDesc=`Engineer: ${eng||'All'} | Status: ${status||'All'}${from?' | From: '+from:''}${to?' | To: '+to:''}`;
+  const rows=data.map(a=>`<tr><td>${esc(a.no||'—')}</td><td>${a.date}</td><td>${esc(a.engineer)}</td><td>${esc(a.purpose||'—')}</td><td>${esc(a.callRef||'—')}</td><td style="text-align:right;font-weight:700;">${fmt(parseFloat(a.amount)||0)}</td><td>${a.status}</td><td>${a.approvedBy||'—'}</td></tr>`).join('');
+  openPrintWindow('Conveyance Advances Report',`
+    <p class="sub">${filterDesc}</p>
+    <p style="font-size:10px;margin-bottom:10px;">Total Amount: <strong>${fmt(totalAmt)}</strong> &nbsp;|&nbsp; Records: ${data.length}</p>
+    <table><thead><tr><th>Advance No</th><th>Date</th><th>Engineer</th><th>Purpose</th><th>Call Ref</th><th>Amount</th><th>Status</th><th>Approved By</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="8" style="text-align:center;">No data</td></tr>'}</tbody>
+    <tfoot><tr style="background:#e0f2fe;"><td colspan="5" style="font-weight:700;padding:7px 9px;">TOTAL</td><td style="text-align:right;font-weight:800;">${fmt(totalAmt)}</td><td colspan="2"></td></tr></tfoot>
+    </table>`);
+}
+
+function exportConvRptExcel(){
+  const data=getConvRptFiltered();
+  const rows=data.map(c=>{
+    const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+    const custs=[...new Set(calls.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';}).filter(Boolean))];
+    return {'Claim No':c.no,'Date':c.date,'Engineer':c.engineer,'Customer':custs.join(', ')||'—','Call Ref':calls.join(', '),
+      'Travel (₹)':(c.travelAmt||0).toFixed(2),'Food (₹)':(c.foodAmt||0).toFixed(2),'Other (₹)':(c.otherAmt||0).toFixed(2),
+      'Total (₹)':(c.totalAmt||0).toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''};
+  });
+  xlsxExport([{name:'Conveyance Claims',rows}],'acenet_conv_report_'+today());
+}
+
+function exportAdvRptExcel(){
+  const eng=g('advRptEngineer')?.value||'';
+  const status=g('advRptStatus')?.value||'';
+  const from=g('advRptFrom')?.value||'';const to=g('advRptTo')?.value||'';
+  const data=(D.svc_conv_advances||[]).filter(a=>{
+    if(eng&&a.engineer!==eng)return false;
+    if(status&&a.status!==status)return false;
+    if(from&&a.date<from)return false;
+    if(to&&a.date>to)return false;
+    return true;
+  });
+  const rows=data.map(a=>({'Advance No':a.no||'—','Date':a.date,'Engineer':a.engineer,'Purpose':a.purpose||'—','Call Ref':a.callRef||'—','Amount (₹)':(parseFloat(a.amount)||0).toFixed(2),'Status':a.status,'Approved By':a.approvedBy||''}));
+  xlsxExport([{name:'Conv Advances',rows}],'acenet_adv_report_'+today());
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -6371,7 +6807,11 @@ function renderSvcOrders(){
           <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span>${o.supplier?`<span><i class="fas fa-truck"></i>${esc(o.supplier)}</span>`:''}<span><i class="fas fa-layer-group"></i>${o.items.length} item(s)</span>${o.callType?`<span><span class="call-type-badge-${o.callType==='AMC'?'amc':o.callType==='ASC'?'asc':'per'}">${o.callType}</span></span>`:''}${o.orderFrom?`<span><i class="fas fa-arrow-right-to-bracket"></i>${esc(o.orderFrom)}</span>`:''}${o.oralConf?'<span style="color:var(--svc);font-size:.72em;"><i class="fas fa-phone"></i> Oral✓</span>':''}${o.writeConf?'<span style="color:#0369a1;font-size:.72em;"><i class="fas fa-file-signature"></i> Written✓</span>':''}${o.urgent?'<span style="color:var(--amber);font-size:.72em;font-weight:700;"><i class="fas fa-bolt"></i> URGENT</span>':''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          ${statusHtml}<div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
+          ${statusHtml}
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
+          </div>
         </div>
       </div>
       <div class="order-body" id="soc-body-${o.id}" style="display:none;">
@@ -7663,6 +8103,7 @@ function switchRptTab(tabId,btn){
   if(tabId==='rpt-outstanding') renderRptOutstanding();
   if(tabId==='rpt-collection') renderRptCollection();
   if(tabId==='rpt-incentive') renderRptIncentive();
+  if(tabId==='rpt-conveyance'){renderRptConveyance();renderRptAdvances();}
   if(tabId==='rpt-send-mkt'){renderSentMktHistory();populateSmktEngDropdown();}
   if(tabId==='rpt-stock') renderStockReport();
   if(tabId==='rpt-financial') renderAccFinancialRpt();
