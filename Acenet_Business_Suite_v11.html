@@ -3319,6 +3319,21 @@ function confirmBillOrder(ordId){
   alert(`✓ Order ${o.orderNo} confirmed as billed with ${invNo}!\nMarketing will see this update.`);
 }
 
+function confirmBillFromModal(ordId){
+  const inp=g('modal-bill-inp-'+ordId);
+  const invNo=(inp?.value||'').trim();
+  if(!invNo){alert('Please enter the invoice/bill number');inp?.focus();return;}
+  const o=D.orders.find(x=>x.id===ordId);if(!o)return;
+  o.status='billed';o.invoiceNo=invNo;o.billedDate=today();
+  saveData('sync');
+  renderAccOrders();
+  if(bc)try{bc.postMessage('order_billed');}catch(e){}
+  // Update the modal to show billed state
+  const modal=g('ordViewModal');
+  if(modal)modal.remove();
+  showSuccessToast(`✓ Order ${o.orderNo} confirmed as billed with invoice ${invNo}`,'var(--green)');
+}
+
 function viewOrderModal(id){
   const o=D.orders.find(x=>x.id===id);if(!o)return;
   const gstRows=o.gstType==='exclusive'?`
@@ -3349,16 +3364,20 @@ function viewOrderModal(id){
       <div style="padding:22px 24px;">
         <!-- Order Meta -->
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-          <div style="flex:1;min-width:130px;background:#fff7ed;border-radius:10px;padding:12px 14px;">
+          <div style="flex:1;min-width:150px;background:#fff7ed;border-radius:10px;padding:12px 14px;">
             <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#c2410c;margin-bottom:4px;">Order Total</div>
             <div style="font-weight:800;font-size:1.4em;color:var(--orange);">${fmt(o.total)}</div>
           </div>
-          <div style="flex:1;min-width:130px;background:#f8fafc;border-radius:10px;padding:12px 14px;">
+          <div style="flex:2;min-width:180px;background:#f0f9ff;border-radius:10px;padding:12px 14px;">
+            <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;"><i class="fas fa-building" style="margin-right:4px;"></i>Customer</div>
+            <div style="font-weight:800;font-size:1em;color:#1d4ed8;">${esc(o.customer)}</div>
+          </div>
+          <div style="flex:1;min-width:90px;background:#f8fafc;border-radius:10px;padding:12px 14px;">
             <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Items</div>
             <div style="font-weight:800;font-size:1.2em;color:var(--ink);">${o.items.length}</div>
           </div>
-          ${o.gstType&&o.gstType!=='none'?`<div style="flex:1;min-width:130px;background:#eff6ff;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;">GST</div><div style="font-weight:700;font-size:.95em;color:#1d4ed8;">${o.gstType==='exclusive'?'+18% GST':'18% Incl.'}</div></div>`:''}
-          ${o.supplier?`<div style="flex:1;min-width:130px;background:#f0fdf4;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;margin-bottom:4px;">Supplier</div><div style="font-weight:700;font-size:.92em;">${esc(o.supplier)}</div></div>`:''}
+          ${o.gstType&&o.gstType!=='none'?`<div style="flex:1;min-width:100px;background:#eff6ff;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;">GST</div><div style="font-weight:700;font-size:.95em;color:#1d4ed8;">${o.gstType==='exclusive'?'+18% GST':'18% Incl.'}</div></div>`:''}
+          ${o.supplier?`<div style="flex:1;min-width:130px;background:#f0fdf4;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;margin-bottom:4px;"><i class="fas fa-truck" style="margin-right:4px;"></i>Supplier</div><div style="font-weight:700;font-size:.92em;">${esc(o.supplier)}</div></div>`:''}
         </div>
         <!-- Items Table -->
         <div style="margin-bottom:16px;">
@@ -3410,6 +3429,18 @@ function viewOrderModal(id){
         ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.88em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
         <!-- Billed info -->
         ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
+        <!-- Accounts: Confirm Bill action for pending orders -->
+        ${o.status==='pending'?`
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-top:4px;">
+          <div style="font-weight:800;font-size:.95em;color:#c2410c;margin-bottom:6px;"><i class="fas fa-file-invoice" style="margin-right:7px;"></i>Confirm Bill Number</div>
+          <div style="font-size:.82em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="modal-bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-modal-inv-${o.id}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #fed7aa;border-radius:8px;font-size:.88em;font-family:'Inter',sans-serif;">
+            <datalist id="dl-modal-inv-${o.id}">${(D.ac_invoices||[]).map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
+            <button class="btn btn-success" onclick="confirmBillFromModal('${o.id}')" style="padding:9px 18px;font-size:.88em;white-space:nowrap;"><i class="fas fa-check-circle"></i> Confirm Billed</button>
+          </div>
+          <div style="margin-top:10px;font-size:.78em;color:var(--ink3);"><i class="fas fa-lightbulb" style="color:var(--amber);margin-right:5px;"></i>Tip: First create the invoice in the Invoices tab, then confirm here.</div>
+        </div>`:''}
       </div>
     </div>
   </div>`;
