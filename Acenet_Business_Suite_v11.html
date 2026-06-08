@@ -2949,7 +2949,7 @@ function goPage(p){
   if(p==='mgmt-view') renderMgmtView();
   if(p==='mgmt-reports') renderMgmtReports();
   if(p==='acc-stock') renderStock();
-  if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();renderRptConveyance();renderRptAdvances();}
+  if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();renderRptConveyance();renderRptAdvances();populateConvRptDropdowns();renderSentMktHistory();}
   if(p==='setup') renderSetupPage();
 }
 
@@ -4433,18 +4433,50 @@ function exportConvReport(){
 
 // ── Accounts Reports → Conveyance tab ──────────────────────────
 function populateConvRptDropdowns(){
-  const engineers=[...new Set((D.svc_conveyance||[]).map(c=>c.engineer).filter(Boolean))].sort();
-  const customers=[...new Set((D.svc_conveyance||[]).flatMap(c=>(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean).map(ref=>{const sc=D.svc_calls.find(x=>x.no===ref);return sc?sc.customer:null;}).filter(Boolean)))].sort();
-  const advEngineers=[...new Set((D.svc_conv_advances||[]).map(a=>a.engineer).filter(Boolean))].sort();
+  // Engineers — from users with role=service + any already in conveyance/advance data
+  const engFromUsers=(D.users||[]).filter(u=>u.role==='service'&&u.active!==false).map(u=>u.name);
+  const engFromConv=(D.svc_conveyance||[]).map(c=>c.engineer).filter(Boolean);
+  const engineers=[...new Set([...engFromUsers,...engFromConv])].filter(Boolean).sort();
+  const advEngFromConv=(D.svc_conv_advances||[]).map(a=>a.engineer).filter(Boolean);
+  const advEngineers=[...new Set([...engFromUsers,...advEngFromConv])].filter(Boolean).sort();
+
+  // Customers — from svc_calls + ac_customers + any linked in conveyance
+  const custFromCalls=(D.svc_calls||[]).map(c=>c.customer).filter(Boolean);
+  const custFromAcc=(D.ac_customers||[]).map(c=>c.name).filter(Boolean);
+  const custFromConv=(D.svc_conveyance||[]).flatMap(c=>{
+    const refs=(c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+    return refs.map(r=>{const sc=(D.svc_calls||[]).find(x=>x.no===r);return sc?sc.customer:null;}).filter(Boolean);
+  });
+  const customers=[...new Set([...custFromCalls,...custFromAcc,...custFromConv])].filter(Boolean).sort();
+
   ['convRptEngineer','advRptEngineer'].forEach((id,i)=>{
     const el=g(id);if(!el)return;
     const list=i===0?engineers:advEngineers;
     const existing=el.value;
     el.innerHTML='<option value="">All Engineers</option>'+list.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('');
-    if(existing)el.value=existing;
+    if(existing&&list.includes(existing))el.value=existing;
   });
   const custEl=g('convRptCustomer');
-  if(custEl){const existing=custEl.value;custEl.innerHTML='<option value="">All Customers</option>'+customers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(existing)custEl.value=existing;}
+  if(custEl){
+    const existing=custEl.value;
+    custEl.innerHTML='<option value="">All Customers</option>'+customers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(existing&&customers.includes(existing))custEl.value=existing;
+  }
+
+  // Also fix Send-to-Engineer dropdowns using same broad sources
+  const smktSel=g('smktEngineer');
+  if(smktSel){
+    const ex=smktSel.value;
+    smktSel.innerHTML='<option value="">-- All Engineers --</option>'+engineers.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('');
+    if(ex&&engineers.includes(ex))smktSel.value=ex;
+  }
+  const smktCust=g('smktCustomer');
+  if(smktCust){
+    const ex=smktCust.value;
+    const smktCusts=[...new Set([...custFromAcc,...(D.ac_invoices||[]).map(i=>i.custName),...custFromCalls])].filter(Boolean).sort();
+    smktCust.innerHTML='<option value="">-- All Customers --</option>'+smktCusts.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    if(ex&&smktCusts.includes(ex))smktCust.value=ex;
+  }
 }
 
 function getConvRptFiltered(){
@@ -8298,13 +8330,8 @@ function exportStockReportExcel(){
 
 // ── Send to Service Engineer ─────────────────────────────────────────────
 function populateSmktEngDropdown(){
-  const sel=g('smktEngineer');if(!sel)return;
-  const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
-  sel.innerHTML='<option value="">-- All Engineers --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
-  // Populate customer dropdown
-  const csel=g('smktCustomer');if(!csel)return;
-  const custs=[...new Set([...D.ac_customers.map(c=>c.name),...D.ac_invoices.map(i=>i.custName)])].filter(Boolean).sort();
-  csel.innerHTML='<option value="">-- All Customers --</option>'+custs.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  // Delegate to shared function which populates both conveyance AND smkt dropdowns
+  populateConvRptDropdowns();
 }
 function generateMktReport(){
   const from=g('smktFrom')?.value,to=g('smktTo')?.value||today();
