@@ -1157,9 +1157,9 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg" style="margin-bottom:12px;">
         <label>Contract Type</label>
         <div style="display:flex;gap:6px;margin-top:4px;">
-          <button type="button" class="call-type-btn active" id="acct-amc" onclick="setAccCustType('AMC')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-shield-halved"></i> AMC</button>
-          <button type="button" class="call-type-btn" id="acct-asc" onclick="setAccCustType('ASC')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-wrench"></i> ASC</button>
-          <button type="button" class="call-type-btn" id="acct-percall" onclick="setAccCustType('Per Call')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-phone"></i> Per Call</button>
+          <button type="button" class="call-type-btn active" id="acct-amc" data-type="AMC" onclick="setAccCustType('AMC')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-shield-halved"></i> AMC</button>
+          <button type="button" class="call-type-btn" id="acct-asc" data-type="ASC" onclick="setAccCustType('ASC')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-wrench"></i> ASC</button>
+          <button type="button" class="call-type-btn" id="acct-percall" data-type="Per Call" onclick="setAccCustType('Per Call')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-phone"></i> Per Call</button>
         </div>
         <input type="hidden" id="acContractType" value="AMC">
       </div>
@@ -3863,9 +3863,8 @@ function printAccBills(){
 // ════════════════════════════════════════════════════════════════
 function setAccCustType(type){
   g('acContractType').value=type;
-  [{id:'acct-amc',val:'AMC'},{id:'acct-asc',val:'ASC'},{id:'acct-percall',val:'Per Call'}].forEach(o=>{
-    const btn=g(o.id);if(!btn)return;
-    btn.classList.toggle('active',o.val===type);
+  document.querySelectorAll('#acct-amc,#acct-asc,#acct-percall').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.type===type);
   });
 }
 function saveAccCust(){
@@ -3896,7 +3895,7 @@ function renderAccCusts(){
   const ctIcon={AMC:'fa-shield-halved',ASC:'fa-wrench','Per Call':'fa-phone'};
   el.innerHTML=cs.map(c=>{const out=D.ac_invoices.filter(i=>i.custName===c.name).reduce((a,i)=>a+getOut(i.id),0),advBal=getAdvBal(c.name);
     const ct=c.contractType||'AMC';
-    return`<div class="cust-card" onclick="viewAccCust('${c.id}')">
+    return`<div class="cust-card">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;">
         <div>
           <div style="font-weight:700;font-size:.89em;">${esc(c.name)}</div>
@@ -3905,7 +3904,11 @@ function renderAccCusts(){
         </div>
         <div style="text-align:right;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:${out>0?'var(--red)':'var(--green)'};">${out>0?fmt(out):'Cleared'}</div>${advBal>0?`<div style="font-size:.73em;color:var(--acc);">Adv: ${fmt(advBal)}</div>`:''}</div>
       </div>
-      <div style="display:flex;gap:6px;margin-top:8px;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editAccCust('${c.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delAccCust('${c.id}')"><i class="fas fa-trash"></i></button></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-outline btn-sm" onclick="viewAccCust('${c.id}')"><i class="fas fa-eye"></i></button>
+        <button class="btn btn-outline btn-sm" onclick="editAccCust('${c.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="delAccCust('${c.id}')"><i class="fas fa-trash"></i></button>
+      </div>
     </div>`;}).join('');
 }
 function editAccCust(cid){const c=D.ac_customers.find(x=>x.id===cid);if(!c)return;g('acName').value=c.name;g('acPhone').value=c.phone;g('acEmail').value=c.email;g('acGstin').value=c.gstin;g('acCity').value=c.city;if(g('acAddress'))g('acAddress').value=c.address||'';setAccCustType(c.contractType||'AMC');g('acEditId').value=c.id;g('acSaveTxt').textContent='Update';g('acCancelBtn').style.display='inline-flex';}
