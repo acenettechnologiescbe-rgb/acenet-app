@@ -1152,7 +1152,17 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg" style="margin-bottom:9px;"><label>Phone</label><input type="tel" id="acPhone" placeholder="Mobile"></div>
       <div class="fg" style="margin-bottom:9px;"><label>Email</label><input type="email" id="acEmail" placeholder="email@example.com"></div>
       <div class="fg" style="margin-bottom:9px;"><label>GSTIN</label><input type="text" id="acGstin" placeholder="Optional"></div>
-      <div class="fg" style="margin-bottom:12px;"><label>City</label><input type="text" id="acCity" placeholder="City"></div>
+      <div class="fg" style="margin-bottom:9px;"><label>City</label><input type="text" id="acCity" placeholder="City"></div>
+      <div class="fg" style="margin-bottom:9px;"><label>Full Address</label><textarea id="acAddress" rows="2" placeholder="Street, Area, Pincode..." style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea></div>
+      <div class="fg" style="margin-bottom:12px;">
+        <label>Contract Type</label>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button type="button" class="call-type-btn active" id="acct-amc" onclick="setAccCustType('AMC')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-shield-halved"></i> AMC</button>
+          <button type="button" class="call-type-btn" id="acct-asc" onclick="setAccCustType('ASC')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-wrench"></i> ASC</button>
+          <button type="button" class="call-type-btn" id="acct-percall" onclick="setAccCustType('Per Call')" style="flex:1;font-size:.78em;padding:6px 4px;"><i class="fas fa-phone"></i> Per Call</button>
+        </div>
+        <input type="hidden" id="acContractType" value="AMC">
+      </div>
       <input type="hidden" id="acEditId">
       <div class="btn-row"><button class="btn btn-acc" onclick="saveAccCust()"><i class="fas fa-save"></i> <span id="acSaveTxt">Add</span></button><button class="btn btn-outline" onclick="cancelAccCust()" id="acCancelBtn" style="display:none;"><i class="fas fa-times"></i></button></div>
     </div>
@@ -2426,13 +2436,9 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="msg-body" id="msgBody"></div>
   <div class="msg-compose" id="msgComposeArea" style="display:none;">
     <div class="fg" style="margin-bottom:8px;">
-      <label style="font-size:.75em;">To (Role)</label>
+      <label style="font-size:.75em;">To (Person)</label>
       <select id="msgTo" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.83em;">
         <option value="">-- Select recipient --</option>
-        <option value="management">👑 Management</option>
-        <option value="accounts">💼 Accounts Team</option>
-        
-        <option value="service">🔧 Service Team</option>
       </select>
     </div>
     <div class="fg" style="margin-bottom:8px;">
@@ -3337,11 +3343,11 @@ function confirmBillFromModal(ordId){
 function viewOrderModal(id){
   const o=D.orders.find(x=>x.id===id);if(!o)return;
   const gstRows=o.gstType==='exclusive'?`
-    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">Sub-total</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);font-weight:600;">${fmt(o.total/(1+GST_R))}</td></tr>
-    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">GST @18%</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);font-weight:600;">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.97em;">Sub-total</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);font-weight:600;">${fmt(o.total/(1+GST_R))}</td></tr>
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.97em;">GST @18%</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);font-weight:600;">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:
     o.gstType==='inclusive'?`
-    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">Sub-total (before GST @18%)</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);">${fmt(o.total/(1+GST_R))}</td></tr>
-    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.85em;">GST @18% (included)</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:'';
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.97em;">Sub-total (before GST @18%)</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);">${fmt(o.total/(1+GST_R))}</td></tr>
+    <tr style="background:#f8fafc;"><td colspan="3" style="padding:9px 14px;color:var(--ink3);font-size:.97em;">GST @18% (included)</td><td style="padding:9px 14px;text-align:right;color:var(--ink3);">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:'';
   const statusBadge=o.status==='billed'
     ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`
     :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
@@ -3352,7 +3358,7 @@ function viewOrderModal(id){
       <div id="ordViewHeader" style="background:linear-gradient(135deg,#ea580c,#f97316);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
         <div>
           <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.15em;"><i class="fas fa-clipboard-list" style="margin-right:8px;opacity:.85;"></i>${esc(o.orderNo)}</div>
-          <div style="color:rgba(255,255,255,.85);font-size:.82em;margin-top:4px;">${o.date} &nbsp;·&nbsp; <strong>${esc(o.customer)}</strong> &nbsp;·&nbsp; ${isSource}</div>
+          <div style="color:rgba(255,255,255,.85);font-size:.95em;margin-top:4px;">${o.date} &nbsp;·&nbsp; <strong>${esc(o.customer)}</strong> &nbsp;·&nbsp; ${isSource}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           ${statusBadge}
@@ -3365,25 +3371,25 @@ function viewOrderModal(id){
         <!-- Order Meta -->
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
           <div style="flex:1;min-width:150px;background:#fff7ed;border-radius:10px;padding:12px 14px;">
-            <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#c2410c;margin-bottom:4px;">Order Total</div>
+            <div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#c2410c;margin-bottom:4px;">Order Total</div>
             <div style="font-weight:800;font-size:1.4em;color:var(--orange);">${fmt(o.total)}</div>
           </div>
           <div style="flex:2;min-width:180px;background:#f0f9ff;border-radius:10px;padding:12px 14px;">
-            <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;"><i class="fas fa-building" style="margin-right:4px;"></i>Customer</div>
+            <div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;"><i class="fas fa-building" style="margin-right:4px;"></i>Customer</div>
             <div style="font-weight:800;font-size:1em;color:#1d4ed8;">${esc(o.customer)}</div>
           </div>
           <div style="flex:1;min-width:90px;background:#f8fafc;border-radius:10px;padding:12px 14px;">
-            <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Items</div>
+            <div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:4px;">Items</div>
             <div style="font-weight:800;font-size:1.2em;color:var(--ink);">${o.items.length}</div>
           </div>
-          ${o.gstType&&o.gstType!=='none'?`<div style="flex:1;min-width:100px;background:#eff6ff;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;">GST</div><div style="font-weight:700;font-size:.95em;color:#1d4ed8;">${o.gstType==='exclusive'?'+18% GST':'18% Incl.'}</div></div>`:''}
-          ${o.supplier?`<div style="flex:1;min-width:130px;background:#f0fdf4;border-radius:10px;padding:12px 14px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;margin-bottom:4px;"><i class="fas fa-truck" style="margin-right:4px;"></i>Supplier</div><div style="font-weight:700;font-size:.92em;">${esc(o.supplier)}</div></div>`:''}
+          ${o.gstType&&o.gstType!=='none'?`<div style="flex:1;min-width:100px;background:#eff6ff;border-radius:10px;padding:12px 14px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#1d4ed8;margin-bottom:4px;">GST</div><div style="font-weight:700;font-size:.95em;color:#1d4ed8;">${o.gstType==='exclusive'?'+18% GST':'18% Incl.'}</div></div>`:''}
+          ${o.supplier?`<div style="flex:1;min-width:130px;background:#f0fdf4;border-radius:10px;padding:12px 14px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;margin-bottom:4px;"><i class="fas fa-truck" style="margin-right:4px;"></i>Supplier</div><div style="font-weight:700;font-size:.92em;">${esc(o.supplier)}</div></div>`:''}
         </div>
         <!-- Items Table -->
         <div style="margin-bottom:16px;">
-          <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;letter-spacing:.04em;">Order Items</div>
+          <div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;letter-spacing:.04em;">Order Items</div>
           <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--line);">
-            <table style="width:100%;border-collapse:collapse;font-size:.88em;">
+            <table style="width:100%;border-collapse:collapse;font-size:.98em;">
               <thead><tr style="background:#ea580c;">
                 <th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">Material</th>
                 <th style="padding:10px 14px;text-align:center;color:#fff;font-weight:700;">Qty</th>
@@ -3396,7 +3402,7 @@ function viewOrderModal(id){
                   <td style="padding:10px 14px;font-weight:600;">${esc(it.material||it.name||'')}</td>
                   <td style="padding:10px 14px;text-align:center;">${it.qty}</td>
                   <td style="padding:10px 14px;text-align:right;">${fmt(it.rate)}</td>
-                  ${o.source==='service'?`<td style="padding:10px 14px;font-size:.85em;color:var(--ink3);">${it.expType?esc(it.expType):'—'}</td><td style="padding:10px 14px;text-align:right;">${it.expAmt?fmt(it.expAmt):'—'}</td>`:''}
+                  ${o.source==='service'?`<td style="padding:10px 14px;font-size:.97em;color:var(--ink3);">${it.expType?esc(it.expType):'—'}</td><td style="padding:10px 14px;text-align:right;">${it.expAmt?fmt(it.expAmt):'—'}</td>`:''}
                   <td style="padding:10px 14px;text-align:right;font-weight:700;color:var(--orange);">${fmt(it.amount)}</td>
                 </tr>`).join('')}
               </tbody>
@@ -3413,7 +3419,7 @@ function viewOrderModal(id){
         <!-- DC Info (service orders) -->
         ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px 16px;margin-bottom:14px;">
           <div style="font-weight:700;color:#0369a1;margin-bottom:8px;font-size:.9em;"><i class="fas fa-truck" style="margin-right:6px;"></i>Delivery Challan</div>
-          <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:.88em;">
+          <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:.98em;">
             ${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''}
             ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''}
             ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''}
@@ -3421,25 +3427,25 @@ function viewOrderModal(id){
             ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''}
             ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}
           </div>
-          ${o.dc.remarks?`<div style="color:var(--ink3);margin-top:6px;font-size:.85em;">${esc(o.dc.remarks)}</div>`:''}
+          ${o.dc.remarks?`<div style="color:var(--ink3);margin-top:6px;font-size:.97em;">${esc(o.dc.remarks)}</div>`:''}
         </div>`:''}
         <!-- Modified notice -->
-        ${o.modified?`<div style="background:#fff7ed;border-left:4px solid #fb923c;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:.88em;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:6px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
+        ${o.modified?`<div style="background:#fff7ed;border-left:4px solid #fb923c;padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:.98em;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:6px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
         <!-- Notes -->
-        ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.88em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
+        ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.98em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
         <!-- Billed info -->
         ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
         <!-- Accounts: Confirm Bill action for pending orders -->
         ${o.status==='pending'?`
         <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-top:4px;">
           <div style="font-weight:800;font-size:.95em;color:#c2410c;margin-bottom:6px;"><i class="fas fa-file-invoice" style="margin-right:7px;"></i>Confirm Bill Number</div>
-          <div style="font-size:.82em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
+          <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <input type="text" id="modal-bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-modal-inv-${o.id}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #fed7aa;border-radius:8px;font-size:.88em;font-family:'Inter',sans-serif;">
+            <input type="text" id="modal-bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-modal-inv-${o.id}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #fed7aa;border-radius:8px;font-size:.98em;font-family:'Inter',sans-serif;">
             <datalist id="dl-modal-inv-${o.id}">${(D.ac_invoices||[]).map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
-            <button class="btn btn-success" onclick="confirmBillFromModal('${o.id}')" style="padding:9px 18px;font-size:.88em;white-space:nowrap;"><i class="fas fa-check-circle"></i> Confirm Billed</button>
+            <button class="btn btn-success" onclick="confirmBillFromModal('${o.id}')" style="padding:9px 18px;font-size:.98em;white-space:nowrap;"><i class="fas fa-check-circle"></i> Confirm Billed</button>
           </div>
-          <div style="margin-top:10px;font-size:.78em;color:var(--ink3);"><i class="fas fa-lightbulb" style="color:var(--amber);margin-right:5px;"></i>Tip: First create the invoice in the Invoices tab, then confirm here.</div>
+          <div style="margin-top:10px;font-size:.92em;color:var(--ink3);"><i class="fas fa-lightbulb" style="color:var(--amber);margin-right:5px;"></i>Tip: First create the invoice in the Invoices tab, then confirm here.</div>
         </div>`:''}
       </div>
     </div>
@@ -3661,7 +3667,7 @@ function renderAdvances(){
   g('advCustCount').textContent=custRows.length+' record(s)';
   const tb=g('advBody');if(!tb)return;
   tb.innerHTML=!custRows.length?'<tr><td colspan="9" style="text-align:center;padding:22px;color:var(--ink3);">No customer advance records.</td></tr>':
-    custRows.map(a=>{const bal=getAdvBal(a.custName);return`<tr><td>${a.date}</td><td><strong>${esc(a.custName)}</strong></td><td class="amt at">${fmt(a.amount)}</td><td class="amt ag">${fmt(Math.min(D.ac_payments.filter(p=>p.custName===a.custName&&p.mode==='Advance Applied').reduce((s,p)=>s+p.amount,0),a.amount))}</td><td class="amt ${bal>0?'at':'ag'}">${fmt(bal)}</td><td>${mTag(a.mode)}</td><td style="font-size:.81em;color:var(--ink3)">${esc(a.refNo||'—')}</td><td style="font-size:.78em;color:var(--ink3);">${esc(a.notes||'—')}</td><td><button class="btn btn-danger btn-sm" onclick="delAdv('${a.id}')"><i class="fas fa-trash"></i></button></td></tr>`;}).join('');
+    custRows.map(a=>{const bal=getAdvBal(a.custName);return`<tr><td>${a.date}</td><td><strong>${esc(a.custName)}</strong></td><td class="amt at">${fmt(a.amount)}</td><td class="amt ag">${fmt(Math.min(D.ac_payments.filter(p=>p.custName===a.custName&&p.mode==='Advance Applied').reduce((s,p)=>s+p.amount,0),a.amount))}</td><td class="amt ${bal>0?'at':'ag'}">${fmt(bal)}</td><td>${mTag(a.mode)}</td><td style="font-size:.94em;color:var(--ink3)">${esc(a.refNo||'—')}</td><td style="font-size:.92em;color:var(--ink3);">${esc(a.notes||'—')}</td><td><button class="btn btn-danger btn-sm" onclick="delAdv('${a.id}')"><i class="fas fa-trash"></i></button></td></tr>`;}).join('');
 
   // Service advances
   const ef=g('advEngFilter')?.value||'';
@@ -3672,7 +3678,7 @@ function renderAdvances(){
   const stBg2={pending:'var(--amber-l)',approved:'var(--green-l)',rejected:'var(--red-l)'};
   const sb=g('svcAdvAccBody');if(!sb)return;
   sb.innerHTML=!svcRows.length?'<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--ink3);">No service advance records.</td></tr>':
-    svcRows.map(a=>`<tr><td>${a.date}</td><td><strong style="color:var(--svc)">${esc(a.engineer)}</strong></td><td class="amt" style="color:var(--svc)">${fmt(a.amount)}</td><td style="font-size:.81em;">${esc(a.purpose||'—')}</td><td style="font-size:.81em;">${esc(a.callRef||'—')}</td><td>${mTag(a.mode||'Cash')}</td><td><span style="padding:3px 8px;border-radius:8px;font-size:.72em;font-weight:700;background:${stBg2[a.status]};color:${stClr[a.status]};">${a.status}</span>${a.approvedBy?`<div style="font-size:.7em;color:var(--green)">✓ ${esc(a.approvedBy)}</div>`:''}</td><td><button class="btn btn-danger btn-sm" onclick="delSvcAdv('${a.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+    svcRows.map(a=>`<tr><td>${a.date}</td><td><strong style="color:var(--svc)">${esc(a.engineer)}</strong></td><td class="amt" style="color:var(--svc)">${fmt(a.amount)}</td><td style="font-size:.94em;">${esc(a.purpose||'—')}</td><td style="font-size:.94em;">${esc(a.callRef||'—')}</td><td>${mTag(a.mode||'Cash')}</td><td><span style="padding:3px 8px;border-radius:8px;font-size:.97em;font-weight:700;background:${stBg2[a.status]};color:${stClr[a.status]};">${a.status}</span>${a.approvedBy?`<div style="font-size:.96em;color:var(--green)">✓ ${esc(a.approvedBy)}</div>`:''}</td><td><button class="btn btn-danger btn-sm" onclick="delSvcAdv('${a.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
 
   // Populate filter dropdowns
   populateAdvanceFilters();
@@ -3855,9 +3861,16 @@ function printAccBills(){
 // ════════════════════════════════════════════════════════════════
 // ACC CUSTOMERS
 // ════════════════════════════════════════════════════════════════
+function setAccCustType(type){
+  g('acContractType').value=type;
+  [{id:'acct-amc',val:'AMC'},{id:'acct-asc',val:'ASC'},{id:'acct-percall',val:'Per Call'}].forEach(o=>{
+    const btn=g(o.id);if(!btn)return;
+    btn.classList.toggle('active',o.val===type);
+  });
+}
 function saveAccCust(){
   const name=g('acName').value.trim();if(!name){alert('Enter name');return;}
-  const obj={id:g('acEditId').value||uid(),name,phone:g('acPhone').value.trim(),email:g('acEmail').value.trim(),gstin:g('acGstin').value.trim(),city:g('acCity').value.trim()};
+  const obj={id:g('acEditId').value||uid(),name,phone:g('acPhone').value.trim(),email:g('acEmail').value.trim(),gstin:g('acGstin').value.trim(),city:g('acCity').value.trim(),address:g('acAddress').value.trim(),contractType:g('acContractType').value||'AMC'};
   if(g('acEditId').value){
     const idx=D.ac_customers.findIndex(c=>c.id===obj.id);
     if(idx>=0){
@@ -3873,22 +3886,29 @@ function saveAccCust(){
   if(!D.pl_customers.includes(name)) D.pl_customers.push(name);
   cancelAccCust();saveData();renderAccCusts();refreshDataLists();
 }
-function cancelAccCust(){g('acName').value='';g('acPhone').value='';g('acEmail').value='';g('acGstin').value='';g('acCity').value='';g('acEditId').value='';g('acSaveTxt').textContent='Add';g('acCancelBtn').style.display='none';g('accCustDetail').style.display='none';}
+function cancelAccCust(){g('acName').value='';g('acPhone').value='';g('acEmail').value='';g('acGstin').value='';g('acCity').value='';if(g('acAddress'))g('acAddress').value='';g('acEditId').value='';if(g('acContractType'))g('acContractType').value='AMC';setAccCustType('AMC');g('acSaveTxt').textContent='Add';g('acCancelBtn').style.display='none';g('accCustDetail').style.display='none';}
 function renderAccCusts(){
   const s=(g('accCustSearch')?.value||'').toLowerCase();
   const cs=D.ac_customers.filter(c=>c.name.toLowerCase().includes(s));
   const el=g('accCustList');if(!el)return;
   if(!cs.length){el.innerHTML='<div class="empty"><i class="fas fa-users"></i><p>No customers.</p></div>';return;}
+  const ctColor={AMC:'var(--acc)',ASC:'var(--svc)','Per Call':'var(--amber)'};
+  const ctIcon={AMC:'fa-shield-halved',ASC:'fa-wrench','Per Call':'fa-phone'};
   el.innerHTML=cs.map(c=>{const out=D.ac_invoices.filter(i=>i.custName===c.name).reduce((a,i)=>a+getOut(i.id),0),advBal=getAdvBal(c.name);
+    const ct=c.contractType||'AMC';
     return`<div class="cust-card" onclick="viewAccCust('${c.id}')">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;">
-        <div><div style="font-weight:700;font-size:.89em;">${esc(c.name)}</div><div style="font-size:.74em;color:var(--ink3);">${c.phone?'📞 '+esc(c.phone):''}${c.city?' · '+esc(c.city):''}</div></div>
+        <div>
+          <div style="font-weight:700;font-size:.89em;">${esc(c.name)}</div>
+          <div style="font-size:.74em;color:var(--ink3);">${c.phone?'📞 '+esc(c.phone):''}${c.city?' · '+esc(c.city):''}</div>
+          <div style="margin-top:3px;"><span style="font-size:.7em;font-weight:700;color:${ctColor[ct]||'var(--ink3)'};background:${ctColor[ct]||'var(--ink3)'}1a;padding:2px 7px;border-radius:10px;"><i class="fas ${ctIcon[ct]||'fa-circle'}"></i> ${ct}</span></div>
+        </div>
         <div style="text-align:right;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:${out>0?'var(--red)':'var(--green)'};">${out>0?fmt(out):'Cleared'}</div>${advBal>0?`<div style="font-size:.73em;color:var(--acc);">Adv: ${fmt(advBal)}</div>`:''}</div>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editAccCust('${c.id}')"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();delAccCust('${c.id}')"><i class="fas fa-trash"></i></button></div>
     </div>`;}).join('');
 }
-function editAccCust(cid){const c=D.ac_customers.find(x=>x.id===cid);if(!c)return;g('acName').value=c.name;g('acPhone').value=c.phone;g('acEmail').value=c.email;g('acGstin').value=c.gstin;g('acCity').value=c.city;g('acEditId').value=c.id;g('acSaveTxt').textContent='Update';g('acCancelBtn').style.display='inline-flex';}
+function editAccCust(cid){const c=D.ac_customers.find(x=>x.id===cid);if(!c)return;g('acName').value=c.name;g('acPhone').value=c.phone;g('acEmail').value=c.email;g('acGstin').value=c.gstin;g('acCity').value=c.city;if(g('acAddress'))g('acAddress').value=c.address||'';setAccCustType(c.contractType||'AMC');g('acEditId').value=c.id;g('acSaveTxt').textContent='Update';g('acCancelBtn').style.display='inline-flex';}
 function delAccCust(cid){if(!confirm('Delete customer?'))return;D.ac_customers=D.ac_customers.filter(c=>c.id!==cid);saveData();renderAccCusts();}
 function viewAccCust(cid){
   const c=D.ac_customers.find(x=>x.id===cid);if(!c)return;
@@ -4878,18 +4898,18 @@ function renderSvcStockView(){
     <thead><tr><th>Item Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Reorder</th><th>Status</th><th>Last Movement</th><th>Actions</th></tr></thead>
     <tbody>${filtered.map(i=>{
       const isOut=i.qty===0,isLow=i.qty>0&&i.qty<=(i.reorder||0);
-      const stLabel=isOut?'<span style="background:#fee2e2;color:#991b1b;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">Out of Stock</span>':isLow?'<span style="background:#fef9c3;color:#92400e;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">⚠ Low</span>':'<span style="background:#dcfce7;color:#166534;border-radius:7px;padding:2px 8px;font-size:.72em;font-weight:700;">✓ OK</span>';
+      const stLabel=isOut?'<span style="background:#fee2e2;color:#991b1b;border-radius:7px;padding:2px 8px;font-size:.97em;font-weight:700;">Out of Stock</span>':isLow?'<span style="background:#fef9c3;color:#92400e;border-radius:7px;padding:2px 8px;font-size:.97em;font-weight:700;">⚠ Low</span>':'<span style="background:#dcfce7;color:#166534;border-radius:7px;padding:2px 8px;font-size:.97em;font-weight:700;">✓ OK</span>';
       return `<tr>
-        <td><strong>${esc(i.name)}</strong><br><span style="font-size:.68em;color:var(--ink4);">${esc(i.stockType||'General')}</span></td>
-        <td><span style="background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 7px;font-size:.73em;">${esc(i.category||'General')}</span></td>
+        <td><strong>${esc(i.name)}</strong><br><span style="font-size:.95em;color:var(--ink4);">${esc(i.stockType||'General')}</span></td>
+        <td><span style="background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 7px;font-size:.87em;">${esc(i.category||'General')}</span></td>
         <td style="font-size:.8em;color:var(--ink3);">${esc(i.unit||'Nos')}</td>
         <td class="num" style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${i.qty??0}</td>
-        <td class="num" style="font-size:.85em;color:var(--ink3);">${i.reorder||0}</td>
+        <td class="num" style="font-size:.97em;color:var(--ink3);">${i.reorder||0}</td>
         <td>${stLabel}</td>
-        <td style="font-size:.75em;color:var(--ink3);">${i.lastMovement||'—'}</td>
+        <td style="font-size:.9em;color:var(--ink3);">${i.lastMovement||'—'}</td>
         <td><div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockIn('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-down"></i> In</button>
-          <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.74em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Out</button>
+          <button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 9px;font-size:.98em;" onclick="quickStockIn('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-down"></i> In</button>
+          <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.98em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Out</button>
         </div></td>
       </tr>`;
     }).join('')}</tbody>
@@ -4899,12 +4919,12 @@ function renderSvcStockView(){
   const txEl=g('svcStockTxns');
   if(txEl) txEl.innerHTML=!txns.length?'<div class="empty"><i class="fas fa-history"></i><p>No transactions yet</p></div>':
     `<div style="overflow-x:auto;"><table class="rpt-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead><tbody>
-    ${txns.map(t=>`<tr><td style="font-size:.78em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
-    <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.73em;font-weight:700;">${t.type==='in'?'▼ Stock In':'▲ Stock Out'}</span></td>
+    ${txns.map(t=>`<tr><td style="font-size:.92em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
+    <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.87em;font-weight:700;">${t.type==='in'?'▼ Stock In':'▲ Stock Out'}</span></td>
     <td class="num" style="font-weight:700;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
-    <td style="font-size:.78em;color:#0369a1;">${esc(t.ref||'—')}</td>
-    <td style="font-size:.78em;color:var(--ink3);">${esc(t.notes||'—')}</td>
-    <td style="font-size:.78em;">${esc(t.by||'—')}</td></tr>`).join('')}
+    <td style="font-size:.92em;color:#0369a1;">${esc(t.ref||'—')}</td>
+    <td style="font-size:.92em;color:var(--ink3);">${esc(t.notes||'—')}</td>
+    <td style="font-size:.92em;">${esc(t.by||'—')}</td></tr>`).join('')}
     </tbody></table></div>`;
 }
 
@@ -5484,7 +5504,7 @@ function renderSvcOutstanding(){
   if(ss)ss.innerHTML=`<div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Total Outstanding</div><div class="stat-value">${fmt(total)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Customers</div><div class="stat-value">${custs.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Urgent 90+d</div><div class="stat-value">${urgent.length}</div></div><div class="stat s-orange"><div class="stat-bar"></div><div class="stat-label">High 60–90d</div><div class="stat-value">${high.length}</div></div>`;
   const renderGrp=(arr,elId)=>{
     const el=g(elId);if(!el)return;
-    if(!arr.length){el.innerHTML='<div style="text-align:center;padding:15px;color:var(--ink3);font-size:.84em;">No customers in this range ✓</div>';return;}
+    if(!arr.length){el.innerHTML='<div style="text-align:center;padding:15px;color:var(--ink3);font-size:.96em;">No customers in this range ✓</div>';return;}
     el.innerHTML=arr.map(c=>{
       const invList=c.invoices.map(i=>`<span class="tag tag-red" style="margin-right:4px;">${esc(i.no)} — ${fmt(i.out)}</span>`).join('');
       return `<div class="out-highlight-card${c.maxDays>90?' urgent':''}">
@@ -5651,12 +5671,12 @@ function renderSvcCalls(){
         </div>
       </div>
       <div class="svc-call-body">
-        <div style="font-size:.83em;margin-bottom:5px;"><strong>Issue:</strong> ${esc(c.issue)}</div>
-        ${c.product?`<div style="font-size:.78em;color:var(--ink3);margin-bottom:4px;"><i class="fas fa-box"></i> ${esc(c.product)}</div>`:''}
-        ${c.phone?`<div style="font-size:.78em;margin-bottom:4px;"><i class="fas fa-phone" style="color:var(--svc)"></i> ${esc(c.contact||'')} ${c.phone?`— <a href="tel:${esc(c.phone)}" style="color:var(--svc);font-weight:700;">${esc(c.phone)}</a>`:''}</div>`:''}
-        ${c.location?`<div style="font-size:.78em;color:var(--ink3);margin-bottom:4px;"><i class="fas fa-location-dot"></i> ${esc(c.location)}</div>`:''}
+        <div style="font-size:.95em;margin-bottom:5px;"><strong>Issue:</strong> ${esc(c.issue)}</div>
+        ${c.product?`<div style="font-size:.92em;color:var(--ink3);margin-bottom:4px;"><i class="fas fa-box"></i> ${esc(c.product)}</div>`:''}
+        ${c.phone?`<div style="font-size:.92em;margin-bottom:4px;"><i class="fas fa-phone" style="color:var(--svc)"></i> ${esc(c.contact||'')} ${c.phone?`— <a href="tel:${esc(c.phone)}" style="color:var(--svc);font-weight:700;">${esc(c.phone)}</a>`:''}</div>`:''}
+        ${c.location?`<div style="font-size:.92em;color:var(--ink3);margin-bottom:4px;"><i class="fas fa-location-dot"></i> ${esc(c.location)}</div>`:''}
         ${c.resolution?`<div style="font-size:.79em;background:var(--green-l);padding:6px 9px;border-radius:7px;color:#065f46;margin-top:5px;"><i class="fas fa-check-circle"></i> ${esc(c.resolution)}</div>`:''}
-        ${c.convFrom||c.convAmt?`<div style="margin-top:6px;font-size:.75em;background:#f0fdfa;border-radius:6px;padding:4px 8px;color:var(--svc);"><i class='fas fa-car-side'></i> ${esc(c.convFrom||'')}${c.convTo?' → '+esc(c.convTo):''} · ${esc(c.convMode||'')}${c.convKm?' · '+c.convKm+'km':''} · ${fmt((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))}</div>`:''}
+        ${c.convFrom||c.convAmt?`<div style="margin-top:6px;font-size:.9em;background:#f0fdfa;border-radius:6px;padding:4px 8px;color:var(--svc);"><i class='fas fa-car-side'></i> ${esc(c.convFrom||'')}${c.convTo?' → '+esc(c.convTo):''} · ${esc(c.convMode||'')}${c.convKm?' · '+c.convKm+'km':''} · ${fmt((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))}</div>`:''}
       </div>
     </div>`).join('');
   // Update datalists
@@ -5690,7 +5710,7 @@ function showConvForm(){
 function addConvItem(data){
   convRC++;const n=convRC;
   const tr=document.createElement('tr');tr.id='cv-'+n;
-  tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.77em;">${n}</td>
+  tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.9em;">${n}</td>
     <td><select class="cvmode" onchange="recalcConv()" style="width:110px;"><option>Auto/Taxi</option><option>Bus</option><option>Train</option><option>Two-wheeler</option><option>Company Vehicle</option><option>Other</option></select></td>
     <td><input type="text" class="cvfrom" placeholder="From…" style="width:90px;"></td>
     <td><input type="text" class="cvto" placeholder="To…" style="width:90px;"></td>
@@ -5737,7 +5757,7 @@ function findCallsForConv(){
   const listEl=g('gcCallsList');
   const genWrap=g('gcGenBtnWrap');
   if(!calls.length){
-    listEl.innerHTML=`<div style="text-align:center;padding:16px;color:var(--ink3);font-size:.83em;background:var(--bg);border-radius:10px;"><i class="fas fa-search" style="display:block;font-size:1.8em;margin-bottom:7px;opacity:.4;"></i>No completed calls found for <strong>${esc(engName)}</strong> between <strong>${from}</strong> and <strong>${to}</strong>.<br><span style="font-size:.9em;">Only calls with status <em>Completed</em> are included.</span></div>`;
+    listEl.innerHTML=`<div style="text-align:center;padding:16px;color:var(--ink3);font-size:.95em;background:var(--bg);border-radius:10px;"><i class="fas fa-search" style="display:block;font-size:1.8em;margin-bottom:7px;opacity:.4;"></i>No completed calls found for <strong>${esc(engName)}</strong> between <strong>${from}</strong> and <strong>${to}</strong>.<br><span style="font-size:.9em;">Only calls with status <em>Completed</em> are included.</span></div>`;
     genWrap.style.display='none';return;
   }
   listEl.innerHTML=`
@@ -5745,7 +5765,7 @@ function findCallsForConv(){
       Found ${calls.length} completed call(s) — select which to include:
     </div>
     <div style="overflow-x:auto;">
-    <table class="itbl" style="font-size:.82em;">
+    <table class="itbl" style="font-size:.95em;">
       <thead><tr>
         <th><input type="checkbox" id="gcCheckAll" onchange="gcToggleAll(this)" title="Select All"></th>
         <th>Call No</th><th>Date</th><th>Customer</th><th>Location</th><th>Product</th><th>Issue</th>
@@ -5855,26 +5875,26 @@ function viewConvDraft(id){
     const total=tAmt+fAmt+oAmt;
     return `<tr style="border-bottom:1px solid #f1f5f9;">
       <td style="padding:8px 10px;vertical-align:top;">
-        <div style="font-weight:700;color:var(--svc);font-size:.82em;">${esc(sc.no)}</div>
-        <div style="font-size:.73em;color:var(--ink3);margin-top:1px;">${esc(sc.date||'')}</div>
+        <div style="font-weight:700;color:var(--svc);font-size:.95em;">${esc(sc.no)}</div>
+        <div style="font-size:.87em;color:var(--ink3);margin-top:1px;">${esc(sc.date||'')}</div>
       </td>
       <td style="padding:8px 10px;vertical-align:top;">
-        <div style="font-size:.82em;font-weight:600;">${esc(sc.customer||'')}</div>
-        <div style="font-size:.73em;color:var(--ink3);">${esc(sc.issue||'')}</div>
+        <div style="font-size:.95em;font-weight:600;">${esc(sc.customer||'')}</div>
+        <div style="font-size:.87em;color:var(--ink3);">${esc(sc.issue||'')}</div>
       </td>
       <td style="padding:8px 10px;vertical-align:top;">
-        <div style="font-size:.78em;">${esc(sc.convMode||'—')}</div>
-        ${sc.convFrom||sc.convTo?`<div style="font-size:.72em;color:var(--ink3);">${esc(sc.convFrom||'')}${sc.convTo?' → '+esc(sc.convTo):''}</div>`:''}
-        ${sc.convKm?`<div style="font-size:.72em;color:var(--ink3);">${sc.convKm} km${sc.convRate?' @ ₹'+sc.convRate:''}</div>`:''}
+        <div style="font-size:.97em;font-weight:600;">${esc(sc.convMode||'—')}</div>
+        ${sc.convFrom||sc.convTo?`<div style="font-size:.80em;color:var(--ink3);">${esc(sc.convFrom||'')}${sc.convTo?' → '+esc(sc.convTo):''}</div>`:''}
+        ${sc.convKm?`<div style="font-size:.80em;color:var(--ink3);">${sc.convKm} km${sc.convRate?' @ ₹'+sc.convRate:''}</div>`:''}
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
-        <div style="font-size:.78em;color:var(--svc);font-weight:700;">${tAmt>0?fmt(tAmt):'—'}</div>
+        <div style="font-size:.92em;color:var(--svc);font-weight:700;">${tAmt>0?fmt(tAmt):'—'}</div>
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
-        <div style="font-size:.78em;color:var(--amber);font-weight:700;">${fAmt>0?fmt(fAmt):'—'}</div>
+        <div style="font-size:.92em;color:var(--amber);font-weight:700;">${fAmt>0?fmt(fAmt):'—'}</div>
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
-        <div style="font-size:.78em;color:var(--ink3);font-weight:700;">${oAmt>0?fmt(oAmt):'—'}</div>
+        <div style="font-size:.92em;color:var(--ink3);font-weight:700;">${oAmt>0?fmt(oAmt):'—'}</div>
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
         <div style="font-size:.8em;font-weight:800;color:#0e7490;">${fmt(total)}</div>
@@ -5884,7 +5904,7 @@ function viewConvDraft(id){
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="draftViewModal" onclick="if(event.target.id==='draftViewModal')this.remove();">
     <div id="draftViewBox" style="background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);transition:all .25s ease;">
       <div id="draftViewHeader" style="background:linear-gradient(135deg,var(--svc),#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
-        <div><div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(c.no)}</div><div style="color:rgba(255,255,255,.75);font-size:.75em;margin-top:2px;">Draft Conveyance Claim</div></div>
+        <div><div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(c.no)}</div><div style="color:rgba(255,255,255,.75);font-size:.9em;margin-top:2px;">Draft Conveyance Claim</div></div>
         <div style="display:flex;align-items:center;gap:8px;">
           <button title="Minimize" onclick="draftModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
           <button title="Maximize" onclick="draftModalMaximize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-expand"></i></button>
@@ -5893,34 +5913,34 @@ function viewConvDraft(id){
       </div>
       <div style="padding:18px 20px;">
         <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Date</div><div style="font-weight:700;font-size:.85em;">${c.date}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Engineer</div><div style="font-weight:700;font-size:.85em;">${esc(c.engineer)}</div></div>
-          <div style="flex:1;min-width:120px;"><div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Calls</div><div style="font-weight:700;font-size:.85em;">${esc(refs)}</div></div>
+          <div style="flex:1;min-width:120px;"><div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Date</div><div style="font-weight:700;font-size:.97em;">${c.date}</div></div>
+          <div style="flex:1;min-width:120px;"><div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Engineer</div><div style="font-weight:700;font-size:.97em;">${esc(c.engineer)}</div></div>
+          <div style="flex:1;min-width:120px;"><div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:2px;">Calls</div><div style="font-weight:700;font-size:.97em;">${esc(refs)}</div></div>
         </div>
         ${callDetailRows?`<div style="margin-bottom:14px;">
-          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;letter-spacing:.05em;">Per-Call Conveyance Breakdown <span style="font-weight:400;text-transform:none;color:var(--ink3);">(as entered by you)</span></div>
+          <div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;letter-spacing:.05em;">Per-Call Conveyance Breakdown <span style="font-weight:400;text-transform:none;color:var(--ink3);">(as entered by you)</span></div>
           <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--line);">
-            <table style="width:100%;border-collapse:collapse;font-size:.78em;">
+            <table style="width:100%;border-collapse:collapse;font-size:.92em;">
               <thead><tr style="background:#0e7490;">
-                <th style="padding:8px 10px;text-align:left;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Call</th>
-                <th style="padding:8px 10px;text-align:left;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Customer / Issue</th>
-                <th style="padding:8px 10px;text-align:left;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Mode / Route / KM</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Travel</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Food</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Other</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Total</th>
+                <th style="padding:8px 10px;text-align:left;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Call</th>
+                <th style="padding:8px 10px;text-align:left;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Customer / Issue</th>
+                <th style="padding:8px 10px;text-align:left;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Mode / Route / KM</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Travel</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Food</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Other</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Total</th>
               </tr></thead>
               <tbody>${callDetailRows}</tbody>
             </table>
           </div>
         </div>`:''}
         <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:10px;padding:12px 14px;margin-bottom:12px;">
-          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;">Expense Breakdown</div>
+          <div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;">Expense Breakdown</div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <div><div style="font-size:.72em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:.95em;">${fmt(c.travelAmt)}</div></div>
-            <div><div style="font-size:.72em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:.95em;">${fmt(c.foodAmt)}</div></div>
-            <div><div style="font-size:.72em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:.95em;">${fmt(c.otherAmt)}</div></div>
-            <div style="margin-left:auto;"><div style="font-size:.72em;color:var(--ink3);">Total</div><div style="font-weight:800;color:#0e7490;font-size:1.1em;">${fmt(c.totalAmt)}</div></div>
+            <div><div style="font-size:.97em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:.95em;">${fmt(c.travelAmt)}</div></div>
+            <div><div style="font-size:.97em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:.95em;">${fmt(c.foodAmt)}</div></div>
+            <div><div style="font-size:.97em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:.95em;">${fmt(c.otherAmt)}</div></div>
+            <div style="margin-left:auto;"><div style="font-size:.97em;color:var(--ink3);">Total</div><div style="font-weight:800;color:#0e7490;font-size:1.1em;">${fmt(c.totalAmt)}</div></div>
           </div>
         </div>
         ${c.remarks?`<div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">${esc(c.remarks)}</div>`:''}
@@ -6149,16 +6169,16 @@ function renderConveyance(){
   // Draft list
   const draftEl=g('convDraftList');
   if(draftEl){
-    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.83em;background:var(--bg);border-radius:8px;margin-bottom:10px;">No drafts yet — generate a claim from the service calls below</div>';
+    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.95em;background:var(--bg);border-radius:8px;margin-bottom:10px;">No drafts yet — generate a claim from the service calls below</div>';
     else draftEl.innerHTML=drafts.map(c=>`<div class="conv-card" style="border-left:4px solid var(--svc);background:linear-gradient(135deg,#f0fdfa,#fff);">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <strong style="color:#0e7490;font-size:.9em;">${esc(c.no)}</strong>
-          <span style="background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 9px;font-size:.72em;font-weight:700;">DRAFT</span>
+          <span style="background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 9px;font-size:.97em;font-weight:700;">DRAFT</span>
         </div>
-        <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRefs?'&nbsp;·&nbsp; Calls: '+esc(c.callRefs):c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
-        <div style="font-size:.75em;margin-top:2px;">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
-        <div style="font-size:.74em;color:var(--svc);margin-top:4px;font-style:italic;"><i class="fas fa-arrow-right" style="margin-right:3px;"></i>Click <strong>Submit to Accounts</strong> to send this for approval</div>
+        <div style="font-size:.92em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRefs?'&nbsp;·&nbsp; Calls: '+esc(c.callRefs):c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
+        <div style="font-size:.9em;margin-top:2px;">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
+        <div style="font-size:.98em;color:var(--svc);margin-top:4px;font-style:italic;"><i class="fas fa-arrow-right" style="margin-right:3px;"></i>Click <strong>Submit to Accounts</strong> to send this for approval</div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0e7490;font-size:1.05em;margin-bottom:8px;">${fmt(c.totalAmt)}</div>
@@ -6182,18 +6202,18 @@ function renderConveyance(){
     [...convs].reverse().map(c=>`<div class="conv-card">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status" style="background:${stBg[c.status]||'var(--bg)'};color:${stClr[c.status]||'var(--ink)'};">${c.status}</span></div>
-        <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
-        ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
-        ${c.settledBy?`<div style="font-size:.72em;color:#0369a1;margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)}</div>`:''}
-        ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
+        <div style="font-size:.92em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
+        ${c.approvedBy?`<div style="font-size:.97em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
+        ${c.settledBy?`<div style="font-size:.97em;color:#0369a1;margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)}</div>`:''}
+        ${c.rejectedReason?`<div style="font-size:.97em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
       </div>
-      <div style="text-align:right;flex-shrink:0;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.totalAmt)}</div><div style="font-size:.72em;color:var(--ink3);">Travel: ${fmt(c.travelAmt)} Food: ${fmt(c.foodAmt)}</div></div>
+      <div style="text-align:right;flex-shrink:0;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.totalAmt)}</div><div style="font-size:.97em;color:var(--ink3);">Travel: ${fmt(c.travelAmt)} Food: ${fmt(c.foodAmt)}</div></div>
     </div>`).join('');
 
-  g('convAdvList').innerHTML=!advs.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.84em;">No advance requests</div>':
+  g('convAdvList').innerHTML=!advs.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.96em;">No advance requests</div>':
     [...advs].reverse().map(a=>`<div class="conv-card" style="border-left:4px solid var(--svc);">
-      <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong><span class="conv-status" style="background:${stBg[a.status]||'var(--bg)'};color:${stClr[a.status]||'var(--ink)'};">${a.status}</span></div>
-      <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div></div>
+      <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.98em;">${esc(a.no)}</strong><span class="conv-status" style="background:${stBg[a.status]||'var(--bg)'};color:${stClr[a.status]||'var(--ink)'};">${a.status}</span></div>
+      <div style="font-size:.9em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div></div>
       <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1em;flex-shrink:0;">${fmt(a.amount)}</div>
     </div>`).join('');
 }
@@ -6239,10 +6259,10 @@ function renderAccConveyance(){
   if(sumEl&&Object.keys(engMap).length){
     sumEl.innerHTML=`<div style="display:flex;gap:9px;flex-wrap:wrap;">${Object.values(engMap).map(eng=>`
       <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:12px;padding:10px 14px;min-width:155px;">
-        <div style="font-weight:700;font-size:.83em;color:var(--svc);margin-bottom:4px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(eng.name)}</div>
+        <div style="font-weight:700;font-size:.95em;color:var(--svc);margin-bottom:4px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(eng.name)}</div>
         <div style="font-size:.76em;"><span style="color:var(--ink3);">Total: </span><strong>${fmt(eng.total)}</strong></div>
         <div style="font-size:.76em;"><span style="color:var(--green);">Approved: ${fmt(eng.approved)}</span> &nbsp; <span style="color:var(--amber);">Pending: ${fmt(eng.pending)}</span></div>
-        ${eng.rejected>0?`<div style="font-size:.75em;color:var(--red);">Rejected: ${fmt(eng.rejected)}</div>`:''}
+        ${eng.rejected>0?`<div style="font-size:.9em;color:var(--red);">Rejected: ${fmt(eng.rejected)}</div>`:''}
       </div>`).join('')}
     </div>`;
   } else if(sumEl) sumEl.innerHTML='';
@@ -6255,11 +6275,11 @@ function renderAccConveyance(){
     advActive.map(a=>`<div class="conv-card" style="${a.status==='pending'?'border-left:3px solid var(--amber);':a.status==='approved'?'border-left:3px solid var(--green);':''}">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-          <strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong>
+          <strong style="color:var(--svc);font-size:.98em;">${esc(a.no)}</strong>
           <span class="conv-status cs-${a.status}">${a.status}</span>
         </div>
-        <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')}${a.callRef?' — Call: '+esc(a.callRef):''}</div>
-        ${a.status==='approved'?`<div style="font-size:.73em;color:var(--green);margin-top:2px;"><i class="fas fa-info-circle"></i> Will be deducted when claim is settled</div>`:''}
+        <div style="font-size:.9em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')}${a.callRef?' — Call: '+esc(a.callRef):''}</div>
+        ${a.status==='approved'?`<div style="font-size:.87em;color:var(--green);margin-top:2px;"><i class="fas fa-info-circle"></i> Will be deducted when claim is settled</div>`:''}
       </div>
       <div style="flex-shrink:0;text-align:right;">
         <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);margin-bottom:5px;">${fmt(a.amount)}</div>
@@ -6272,11 +6292,11 @@ function renderAccConveyance(){
     advDeducted.map(a=>`<div class="conv-card" style="border-left:3px solid #0369a1;background:linear-gradient(135deg,#f0f9ff,#fff);">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
-          <strong style="color:var(--svc);font-size:.88em;">${esc(a.no)}</strong>
+          <strong style="color:var(--svc);font-size:.98em;">${esc(a.no)}</strong>
           <span class="conv-status" style="background:#dbeafe;color:#1e40af;">deducted</span>
         </div>
-        <div style="font-size:.77em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')}</div>
-        <div style="font-size:.74em;color:#0369a1;margin-top:3px;"><i class="fas fa-scissors"></i> Deducted from <strong>${esc(a.deductedFrom||'')}</strong>${a.deductedAt?' on '+a.deductedAt.slice(0,10):''} by ${esc(a.deductedBy||'')}</div>
+        <div style="font-size:.9em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; <strong>${esc(a.engineer)}</strong> &nbsp;·&nbsp; ${esc(a.purpose||'')}</div>
+        <div style="font-size:.98em;color:#0369a1;margin-top:3px;"><i class="fas fa-scissors"></i> Deducted from <strong>${esc(a.deductedFrom||'')}</strong>${a.deductedAt?' on '+a.deductedAt.slice(0,10):''} by ${esc(a.deductedBy||'')}</div>
       </div>
       <div style="flex-shrink:0;text-align:right;">
         <div style="font-family:'Sora',sans-serif;font-weight:800;color:#0369a1;">−${fmt(a.amount)}</div>
@@ -6302,16 +6322,16 @@ function convClaimCard(c,context){
   return `<div class="conv-card" style="${borderMap[c.status]||''}">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status ${stMap[c.status]||'cs-pending'}">${c.status}</span></div>
-      <div style="font-size:.78em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong> &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
-      <div style="font-size:.75em;margin-top:3px;color:var(--ink2);">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
-      ${c.remarks?`<div style="font-size:.74em;color:var(--ink3);margin-top:2px;font-style:italic;">"${esc(c.remarks)}"</div>`:''}
-      ${c.approvedBy?`<div style="font-size:.72em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
-      ${c.settledBy?`<div style="font-size:.72em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Adv. deducted: ${fmt(c.advDeducted)} · Net: ${fmt(c.netSettled||0)}`:''}</div>`:''}
-      ${c.rejectedReason?`<div style="font-size:.72em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
+      <div style="font-size:.92em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong> &nbsp;·&nbsp; ${c.callRef?'Call: '+esc(c.callRef):''} &nbsp;·&nbsp; ${esc(c.location||'')}</div>
+      <div style="font-size:.9em;margin-top:3px;color:var(--ink2);">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
+      ${c.remarks?`<div style="font-size:.98em;color:var(--ink3);margin-top:2px;font-style:italic;">"${esc(c.remarks)}"</div>`:''}
+      ${c.approvedBy?`<div style="font-size:.97em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
+      ${c.settledBy?`<div style="font-size:.97em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Adv. deducted: ${fmt(c.advDeducted)} · Net: ${fmt(c.netSettled||0)}`:''}</div>`:''}
+      ${c.rejectedReason?`<div style="font-size:.97em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;text-align:right;">
       <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--svc);margin-bottom:2px;">${fmt(c.totalAmt)}</div>
-      ${c.advDeducted?`<div style="font-size:.72em;color:#0369a1;">Net paid: ${fmt(c.netSettled||0)}</div>`:''}
+      ${c.advDeducted?`<div style="font-size:.97em;color:#0369a1;">Net paid: ${fmt(c.netSettled||0)}</div>`:''}
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-top:5px;">
         <button class="btn btn-outline btn-sm" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button>
         ${context==='pending'?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
@@ -6334,26 +6354,26 @@ function viewConvClaimDetails(id){
     const total=tAmt+fAmt+oAmt;
     return `<tr style="border-bottom:1px solid #f1f5f9;">
       <td style="padding:8px 10px;vertical-align:top;">
-        <div style="font-weight:700;color:var(--svc);font-size:.82em;">${esc(sc.no)}</div>
-        <div style="font-size:.73em;color:var(--ink3);margin-top:1px;">${esc(sc.date||'')}</div>
+        <div style="font-weight:700;color:var(--svc);font-size:.95em;">${esc(sc.no)}</div>
+        <div style="font-size:.87em;color:var(--ink3);margin-top:1px;">${esc(sc.date||'')}</div>
       </td>
       <td style="padding:8px 10px;vertical-align:top;">
-        <div style="font-size:.82em;font-weight:600;">${esc(sc.customer||'')}</div>
-        <div style="font-size:.73em;color:var(--ink3);">${esc(sc.issue||'')}</div>
+        <div style="font-size:.95em;font-weight:600;">${esc(sc.customer||'')}</div>
+        <div style="font-size:.87em;color:var(--ink3);">${esc(sc.issue||'')}</div>
       </td>
       <td style="padding:8px 10px;vertical-align:top;">
-        <div style="font-size:.78em;">${esc(sc.convMode||'—')}</div>
-        ${sc.convFrom||sc.convTo?`<div style="font-size:.72em;color:var(--ink3);">${esc(sc.convFrom||'')}${sc.convTo?' → '+esc(sc.convTo):''}</div>`:''}
-        ${sc.convKm?`<div style="font-size:.72em;color:var(--ink3);">${sc.convKm} km${sc.convRate?' @ ₹'+sc.convRate:''}</div>`:''}
+        <div style="font-size:.97em;font-weight:600;">${esc(sc.convMode||'—')}</div>
+        ${sc.convFrom||sc.convTo?`<div style="font-size:.80em;color:var(--ink3);">${esc(sc.convFrom||'')}${sc.convTo?' → '+esc(sc.convTo):''}</div>`:''}
+        ${sc.convKm?`<div style="font-size:.80em;color:var(--ink3);">${sc.convKm} km${sc.convRate?' @ ₹'+sc.convRate:''}</div>`:''}
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
-        <div style="font-size:.78em;color:var(--svc);font-weight:700;">${tAmt>0?fmt(tAmt):'—'}</div>
+        <div style="font-size:.92em;color:var(--svc);font-weight:700;">${tAmt>0?fmt(tAmt):'—'}</div>
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
-        <div style="font-size:.78em;color:var(--amber);font-weight:700;">${fAmt>0?fmt(fAmt):'—'}</div>
+        <div style="font-size:.92em;color:var(--amber);font-weight:700;">${fAmt>0?fmt(fAmt):'—'}</div>
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
-        <div style="font-size:.78em;color:var(--ink3);font-weight:700;">${oAmt>0?fmt(oAmt):'—'}</div>
+        <div style="font-size:.92em;color:var(--ink3);font-weight:700;">${oAmt>0?fmt(oAmt):'—'}</div>
       </td>
       <td style="padding:8px 10px;text-align:right;vertical-align:top;">
         <div style="font-size:.8em;font-weight:800;color:#0e7490;">${fmt(total)}</div>
@@ -6373,10 +6393,10 @@ function viewConvClaimDetails(id){
       <div style="background:linear-gradient(135deg,#0e7490,#0891b2);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;" id="convDetailHeader">
         <div>
           <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1em;">${esc(c.no)}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:.75em;margin-top:2px;">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong></div>
+          <div style="color:rgba(255,255,255,.8);font-size:.9em;margin-top:2px;">${c.date} &nbsp;·&nbsp; <strong>${esc(c.engineer)}</strong></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:3px 10px;font-size:.75em;font-weight:700;">${c.status.toUpperCase()}</span>
+          <span style="background:rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:3px 10px;font-size:.9em;font-weight:700;">${c.status.toUpperCase()}</span>
           <button title="Minimize" onclick="convModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
           <button title="Maximize" onclick="convModalMaximize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-expand"></i></button>
           <button title="Close" onclick="g('convDetailModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(200,50,50,.55)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-times"></i></button>
@@ -6386,28 +6406,28 @@ function viewConvClaimDetails(id){
 
         <!-- Expense Summary -->
         <div style="background:linear-gradient(135deg,#f0fdfa,#e6fffa);border-radius:12px;padding:14px;margin-bottom:14px;">
-          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;letter-spacing:.05em;">Expense Summary</div>
+          <div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;letter-spacing:.05em;">Expense Summary</div>
           <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
-            <div><div style="font-size:.72em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.travelAmt)}</div></div>
-            <div><div style="font-size:.72em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:1.05em;">${fmt(c.foodAmt)}</div></div>
-            <div><div style="font-size:.72em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:1.05em;">${fmt(c.otherAmt)}</div></div>
-            <div style="margin-left:auto;border-left:2px solid #99f6e4;padding-left:14px;"><div style="font-size:.72em;color:var(--ink3);">CLAIM TOTAL</div><div style="font-weight:900;color:#0e7490;font-size:1.3em;">${fmt(c.totalAmt)}</div></div>
+            <div><div style="font-size:.97em;color:var(--ink3);">Travel</div><div style="font-weight:800;color:var(--svc);font-size:1.05em;">${fmt(c.travelAmt)}</div></div>
+            <div><div style="font-size:.97em;color:var(--ink3);">Food</div><div style="font-weight:800;color:var(--amber);font-size:1.05em;">${fmt(c.foodAmt)}</div></div>
+            <div><div style="font-size:.97em;color:var(--ink3);">Other</div><div style="font-weight:800;color:var(--ink2);font-size:1.05em;">${fmt(c.otherAmt)}</div></div>
+            <div style="margin-left:auto;border-left:2px solid #99f6e4;padding-left:14px;"><div style="font-size:.97em;color:var(--ink3);">CLAIM TOTAL</div><div style="font-weight:900;color:#0e7490;font-size:1.3em;">${fmt(c.totalAmt)}</div></div>
           </div>
         </div>
 
         <!-- Per-call breakdown from service -->
         ${callDetailRows?`<div style="margin-bottom:14px;">
-          <div style="font-size:.68em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;letter-spacing:.05em;">Per-Call Conveyance Breakdown <span style="font-weight:400;text-transform:none;color:var(--ink3);">(as entered by service engineer)</span></div>
+          <div style="font-size:.95em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:7px;letter-spacing:.05em;">Per-Call Conveyance Breakdown <span style="font-weight:400;text-transform:none;color:var(--ink3);">(as entered by service engineer)</span></div>
           <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--line);">
-            <table style="width:100%;border-collapse:collapse;font-size:.78em;">
+            <table style="width:100%;border-collapse:collapse;font-size:.92em;">
               <thead><tr style="background:#0e7490;">
-                <th style="padding:8px 10px;text-align:left;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Call</th>
-                <th style="padding:8px 10px;text-align:left;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Customer / Issue</th>
-                <th style="padding:8px 10px;text-align:left;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Mode / Route / KM</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Travel</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Food</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Other</th>
-                <th style="padding:8px 10px;text-align:right;font-size:.78em;color:#fff;font-weight:700;letter-spacing:.03em;">Total</th>
+                <th style="padding:8px 10px;text-align:left;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Call</th>
+                <th style="padding:8px 10px;text-align:left;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Customer / Issue</th>
+                <th style="padding:8px 10px;text-align:left;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Mode / Route / KM</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Travel</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Food</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Other</th>
+                <th style="padding:8px 10px;text-align:right;font-size:.92em;color:#fff;font-weight:700;letter-spacing:.03em;">Total</th>
               </tr></thead>
               <tbody>${callDetailRows}</tbody>
             </table>
@@ -6416,18 +6436,18 @@ function viewConvClaimDetails(id){
 
         <!-- Advance deduction notice -->
         ${isAccounts&&totalAdv>0&&(c.status==='pending'||c.status==='approved')?`<div style="background:#fef9c3;border-radius:10px;padding:12px 14px;margin-bottom:12px;border-left:3px solid var(--amber);">
-          <div style="font-size:.72em;font-weight:700;color:#92400e;margin-bottom:6px;"><i class="fas fa-coins"></i> Pending Advance Deduction</div>
-          ${pendingAdvances.map(a=>`<div style="font-size:.78em;display:flex;justify-content:space-between;margin-bottom:3px;"><span><strong>${esc(a.no)}</strong> — ${esc(a.purpose||'')}</span><span style="color:var(--amber);font-weight:700;">− ${fmt(a.amount)}</span></div>`).join('')}
-          <div style="border-top:1px solid #fde68a;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-weight:700;font-size:.82em;">
+          <div style="font-size:.97em;font-weight:700;color:#92400e;margin-bottom:6px;"><i class="fas fa-coins"></i> Pending Advance Deduction</div>
+          ${pendingAdvances.map(a=>`<div style="font-size:.92em;display:flex;justify-content:space-between;margin-bottom:3px;"><span><strong>${esc(a.no)}</strong> — ${esc(a.purpose||'')}</span><span style="color:var(--amber);font-weight:700;">− ${fmt(a.amount)}</span></div>`).join('')}
+          <div style="border-top:1px solid #fde68a;margin-top:6px;padding-top:6px;display:flex;justify-content:space-between;font-weight:700;font-size:.95em;">
             <span>Net Payable to Engineer</span>
             <span style="color:${netPayable>=0?'#0e7490':'var(--red)'};">${fmt(Math.max(0,netPayable))}</span>
           </div>
         </div>`:''}
 
         <!-- Status trail -->
-        ${c.approvedBy?`<div style="font-size:.78em;color:var(--green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong>${c.approvedAt?' on '+c.approvedAt.slice(0,10):''}</div>`:''}
-        ${c.settledBy?`<div style="font-size:.78em;color:#0369a1;margin-bottom:6px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Advance deducted: ${fmt(c.advDeducted)}`:''}</div>`:''}
-        ${c.rejectedReason?`<div style="font-size:.78em;color:var(--red);margin-bottom:6px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
+        ${c.approvedBy?`<div style="font-size:.92em;color:var(--green);margin-bottom:6px;"><i class="fas fa-check-circle"></i> Approved by <strong>${esc(c.approvedBy)}</strong>${c.approvedAt?' on '+c.approvedAt.slice(0,10):''}</div>`:''}
+        ${c.settledBy?`<div style="font-size:.92em;color:#0369a1;margin-bottom:6px;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(c.settledBy)}</strong> on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Advance deducted: ${fmt(c.advDeducted)}`:''}</div>`:''}
+        ${c.rejectedReason?`<div style="font-size:.92em;color:var(--red);margin-bottom:6px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
         ${c.remarks?`<div style="font-size:.8em;background:#fffbeb;border-radius:8px;padding:9px 12px;border-left:3px solid var(--amber);margin-bottom:10px;"><i class="fas fa-comment" style="color:var(--amber);margin-right:5px;"></i>${esc(c.remarks)}</div>`:''}
 
         <!-- Actions (Accounts only) -->
@@ -6584,7 +6604,7 @@ function viewAccInc(id){
       <div id="accIncViewHeader" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
         <div>
           <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.1em;">${esc(e.no)}</div>
-          <div style="color:rgba(255,255,255,.85);font-size:.82em;margin-top:3px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; <strong>${stLabel}</strong></div>
+          <div style="color:rgba(255,255,255,.85);font-size:.95em;margin-top:3px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; <strong>${stLabel}</strong></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <button title="Minimize" onclick="accIncModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
@@ -6594,23 +6614,23 @@ function viewAccInc(id){
       </div>
       <div style="padding:20px 22px;">
         <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;font-size:.95em;">${esc(e.customer)}</div></div>
-          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
-          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;font-size:.95em;">${esc(e.customer)}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
-          <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
-          <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
-          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
+          <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
+          <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
+          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
+          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
         </div>
-        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.82em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
-        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
-        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
-        ${e.suggestedPct||e.suggestedAmt?`<div style="background:#faf5ff;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:#7c3aed;"><i class="fas fa-percentage"></i> Suggested by Accounts: ${e.suggestedPct?e.suggestedPct+'%':''} ${e.suggestedAmt?'= '+fmt(e.suggestedAmt):''}</div>`:''}
-        ${e.sentToMgmtBy?`<div style="font-size:.82em;color:var(--amber);margin-bottom:8px;"><i class="fas fa-paper-plane"></i> Sent to Mgmt by ${esc(e.sentToMgmtBy)}</div>`:''}
+        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
+        ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
+        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+        ${e.suggestedPct||e.suggestedAmt?`<div style="background:#faf5ff;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:#7c3aed;"><i class="fas fa-percentage"></i> Suggested by Accounts: ${e.suggestedPct?e.suggestedPct+'%':''} ${e.suggestedAmt?'= '+fmt(e.suggestedAmt):''}</div>`:''}
+        ${e.sentToMgmtBy?`<div style="font-size:.95em;color:var(--amber);margin-bottom:8px;"><i class="fas fa-paper-plane"></i> Sent to Mgmt by ${esc(e.sentToMgmtBy)}</div>`:''}
         ${isAccounts&&e.status==='approved'?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:12px;border-top:1px solid var(--line);"><button class="btn btn-sm" style="background:var(--acc);color:#fff;font-size:.9em;padding:8px 16px;" onclick="g('accIncViewModal').remove();settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button></div>`:''}
-        ${isMgmt&&(e.status==='pending'||e.status==='mgmt-review')?`<div style="padding-top:12px;border-top:1px solid var(--line);"><div style="font-size:.82em;color:var(--ink3);text-align:center;"><i class="fas fa-eye"></i> Management view — use Detail Info table to Approve / Reject</div></div>`:''}
+        ${isMgmt&&(e.status==='pending'||e.status==='mgmt-review')?`<div style="padding-top:12px;border-top:1px solid var(--line);"><div style="font-size:.95em;color:var(--ink3);text-align:center;"><i class="fas fa-eye"></i> Management view — use Detail Info table to Approve / Reject</div></div>`:''}
       </div>
     </div>
   </div>`;
@@ -6947,9 +6967,18 @@ function hideSvcIncForm(){g('svcIncForm').style.display='none';}
 
 function populateSvcIncEngDropdown(){
   const sel=g('incEngineer');if(!sel)return;
-  const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
-  sel.innerHTML='<option value="">-- Select Engineer --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
-  if(D.currentUser?.role==='service') sel.value=D.currentUser.name;
+  if(D.currentUser?.role==='service'){
+    // Service engineers: lock dropdown to their own name
+    sel.innerHTML=`<option value="${esc(D.currentUser.name)}">${esc(D.currentUser.name)}</option>`;
+    sel.value=D.currentUser.name;
+    sel.disabled=true;
+    sel.style.background='var(--bg)';sel.style.cursor='not-allowed';sel.style.opacity='0.8';
+  } else {
+    // Management/Accounts: show all active service engineers
+    const engs=D.users.filter(u=>u.role==='service'&&u.active!==false);
+    sel.innerHTML='<option value="">-- Select Engineer --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
+    sel.disabled=false;sel.style.cursor='';sel.style.opacity='';sel.style.background='';
+  }
 }
 
 function calcIncProfit(){
@@ -7102,11 +7131,11 @@ function renderSvcIncentives(){
   if(sendAllBtn) sendAllBtn.style.display=drafts.length?'inline-flex':'none';
   const draftEl=g('svcIncDraftList');
   if(draftEl){
-    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.83em;">No drafts — use "Save Draft" to collect entries before sending</div>';
+    if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.95em;">No drafts — use "Save Draft" to collect entries before sending</div>';
     else draftEl.innerHTML=drafts.map(e=>`<div class="inc-card" style="border-left:3px solid #c4b5fd;">
       <div class="inc-card-hdr">
         <div>
-          <div class="inc-no"><i class="fas fa-file-pen" style="opacity:.6;margin-right:6px;color:#7c3aed;"></i>${esc(e.no)} <span style="background:#ede9fe;color:#6d28d9;border-radius:8px;padding:1px 8px;font-size:.72em;font-weight:700;">DRAFT</span></div>
+          <div class="inc-no"><i class="fas fa-file-pen" style="opacity:.6;margin-right:6px;color:#7c3aed;"></i>${esc(e.no)} <span style="background:#ede9fe;color:#6d28d9;border-radius:8px;padding:1px 8px;font-size:.97em;font-weight:700;">DRAFT</span></div>
           <div class="inc-meta"><span><i class="fas fa-calendar"></i>${e.date}</span><span><i class="fas fa-user-tie"></i>${esc(e.engineerName)}</span><span><i class="fas fa-building"></i>${esc(e.customer)}</span>${e.product?`<span><i class="fas fa-box"></i>${esc(e.product)}</span>`:''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
@@ -7160,7 +7189,7 @@ function renderSvcIncentives(){
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
           <span class="${stClass}">${stLabel}</span>
           <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.9em;color:${profColor};">P/L: ${fmt(e.profit)}</div>
-          ${e.status==='approved'&&e.approvedAmt?`<div style="font-size:.77em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt)}</div>`:''}
+          ${e.status==='approved'&&e.approvedAmt?`<div style="font-size:.9em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt)}</div>`:''}
           <div style="display:flex;gap:4px;margin-top:2px;">
             <button class="btn btn-outline btn-sm" onclick="viewSvcInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
             ${e.status==='draft'||e.status==='pending'?`<button class="btn btn-outline btn-sm" onclick="editSentInc('${e.id}')"><i class="fas fa-edit"></i></button>`:''}
@@ -7173,8 +7202,8 @@ function renderSvcIncentives(){
         <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${profColor};">${fmt(e.profit)}</div></div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:2px;">Incentive</div><div style="font-weight:700;font-size:.9em;color:var(--green);">${fmt(e.approvedAmt)}</div></div>`:''}
       </div>
-      ${e.approvedBy?`<div style="font-size:.74em;color:var(--green);padding:0 16px 10px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}</div>`:''}
-      ${e.rejectedReason?`<div style="font-size:.74em;color:var(--red);padding:0 16px 10px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+      ${e.approvedBy?`<div style="font-size:.98em;color:var(--green);padding:0 16px 10px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}</div>`:''}
+      ${e.rejectedReason?`<div style="font-size:.98em;color:var(--red);padding:0 16px 10px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -7188,7 +7217,7 @@ function viewSvcInc(id){
       <div id="incViewHeader" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;border-radius:16px 16px 0 0;">
         <div>
           <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.1em;">${esc(e.no)}</div>
-          <div style="color:rgba(255,255,255,.85);font-size:.82em;margin-top:3px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; <strong>${stLabel}</strong></div>
+          <div style="color:rgba(255,255,255,.85);font-size:.95em;margin-top:3px;">${e.date} &nbsp;·&nbsp; ${esc(e.engineerName)} &nbsp;·&nbsp; <strong>${stLabel}</strong></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <button title="Minimize" onclick="svcIncModalMinimize()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:5px 11px;cursor:pointer;font-size:.9em;transition:.15s;" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'"><i class="fas fa-window-minimize"></i></button>
@@ -7198,22 +7227,22 @@ function viewSvcInc(id){
       </div>
       <div style="padding:20px 22px;">
         <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;font-size:.95em;">${esc(e.customer)}</div></div>
-          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
-          <div style="flex:1;min-width:130px;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;font-size:.95em;">${esc(e.customer)}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
+          <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
-          <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
-          <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
-          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
+          <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
+          <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
+          ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
+          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
         </div>
-        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.82em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
-        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.85em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
+        ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
         ${(e.status==='draft'||e.status==='pending')?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);">
-          <button class="btn btn-outline btn-sm" style="font-size:.88em;padding:7px 14px;" onclick="g('incViewModal').remove();editDraftInc('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
-          <button class="btn btn-sm" style="background:#0e7490;color:#fff;font-size:.88em;padding:7px 14px;" onclick="g('incViewModal').remove();showSvcIncForm()"><i class="fas fa-plus-circle"></i> Add Another Entry</button>
-          ${e.status==='draft'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;font-size:.88em;padding:7px 14px;" onclick="g('incViewModal').remove();sendDraftInc('${e.id}')"><i class="fas fa-paper-plane"></i> Send</button>`:''}
+          <button class="btn btn-outline btn-sm" style="font-size:.98em;padding:7px 14px;" onclick="g('incViewModal').remove();editDraftInc('${e.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="btn btn-sm" style="background:#0e7490;color:#fff;font-size:.98em;padding:7px 14px;" onclick="g('incViewModal').remove();showSvcIncForm()"><i class="fas fa-plus-circle"></i> Add Another Entry</button>
+          ${e.status==='draft'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;font-size:.98em;padding:7px 14px;" onclick="g('incViewModal').remove();sendDraftInc('${e.id}')"><i class="fas fa-paper-plane"></i> Send</button>`:''}
         </div>`:''}
       </div>
     </div>
@@ -7308,7 +7337,7 @@ function renderAccIncentives(){
   updateAccIncBadge();
 }
 
-function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.83em;">${t}</div>`;}
+function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.95em;">${t}</div>`;}
 
 function incAccCard(e,context){
   const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
@@ -7317,10 +7346,10 @@ function incAccCard(e,context){
   let actions='';
   if(context==='pending'){
     actions=`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-      <label style="font-size:.73em;color:var(--ink3);">Incentive % or ₹</label>
+      <label style="font-size:.87em;color:var(--ink3);">Incentive % or ₹</label>
       <div style="display:flex;align-items:center;gap:5px;">
-        <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:70px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" oninput="calcIncAmt('${e.id}')" title="Enter %">
-        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
+        <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:70px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" oninput="calcIncAmt('${e.id}')" title="Enter %">
+        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
         <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="sendIncToMgmt('${e.id}')"><i class="fas fa-user-tie"></i> Send to Mgmt</button>
@@ -7328,7 +7357,7 @@ function incAccCard(e,context){
     </div>`;
   } else if(context==='approved'){
     actions=`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-      <div style="font-size:.78em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt||0)}</div>
+      <div style="font-size:.92em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt||0)}</div>
       <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>
     </div>`;
   }
@@ -7338,16 +7367,16 @@ function incAccCard(e,context){
         <strong style="color:#7c3aed;font-size:.9em;">${esc(e.no)}</strong>
         <span class="${stClass}">${stLabel}</span>
       </div>
-      <div style="font-size:.78em;color:var(--ink3);">${e.date} &nbsp;·&nbsp; <strong>${esc(e.engineerName)}</strong> &nbsp;·&nbsp; ${esc(e.customer)}${e.product?' — '+esc(e.product):''}</div>
-      <div style="font-size:.75em;margin-top:4px;display:flex;gap:11px;flex-wrap:wrap;">
+      <div style="font-size:.92em;color:var(--ink3);">${e.date} &nbsp;·&nbsp; <strong>${esc(e.engineerName)}</strong> &nbsp;·&nbsp; ${esc(e.customer)}${e.product?' — '+esc(e.product):''}</div>
+      <div style="font-size:.9em;margin-top:4px;display:flex;gap:11px;flex-wrap:wrap;">
         <span>Sale: <strong style="color:var(--acc);">${fmt(e.saleAmt)}</strong></span>
         <span>Purchase: <strong style="color:var(--amber);">${fmt(e.purchaseAmt)}</strong></span>
         <span>P/L: <strong style="color:${profColor};">${fmt(e.profit)}</strong></span>
         ${e.suggestedPct?`<span>Suggested: <strong style="color:#7c3aed;">${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
       </div>
-      ${e.approvedBy?`<div style="font-size:.73em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
-      ${e.settledBy?`<div style="font-size:.73em;color:var(--acc);margin-top:3px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
-      ${e.rejectedReason?`<div style="font-size:.73em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+      ${e.approvedBy?`<div style="font-size:.87em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
+      ${e.settledBy?`<div style="font-size:.87em;color:var(--acc);margin-top:3px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
+      ${e.rejectedReason?`<div style="font-size:.87em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
       <button class="btn btn-outline btn-sm" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
@@ -8096,7 +8125,7 @@ function renderMgmtView(){
     mkpiS('<i class="fas fa-headset"></i>','#f0fdf4','var(--green)','Total Svc Calls',totalCalls);
 
   const body=g('mgmtViewBody');if(!body)return;
-  const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected',settled:'#e0f2fe|#0369a1|Settled',completed:'#f0fdf4|#15803d|Completed','in-progress':'#fff7ed|#c2410c|In Progress',escalated:'#fee2e2|#991b1b|Escalated'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.72em;font-weight:700;">'+lbl+'</span>';};
+  const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected',settled:'#e0f2fe|#0369a1|Settled',completed:'#f0fdf4|#15803d|Completed','in-progress':'#fff7ed|#c2410c|In Progress',escalated:'#fee2e2|#991b1b|Escalated'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.97em;font-weight:700;">'+lbl+'</span>';};
   const filter=(arr,dateKey,engKey)=>{let r=[...arr];if(eng) r=r.filter(x=>x[engKey]===eng);if(stat) r=r.filter(x=>x.status===stat);if(from) r=r.filter(x=>(x[dateKey]||'')>=from);if(to) r=r.filter(x=>(x[dateKey]||'')<=to);return r.sort((a,b)=>(b[dateKey]||'').localeCompare(a[dateKey]||''));};
 
   if(_mvTab==='conv'){
@@ -8108,7 +8137,7 @@ function renderMgmtView(){
     rows=rows.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     body.innerHTML=!rows.length?'<div class="empty"><i class="fas fa-car-side"></i><p>No conveyance claims found</p></div>':
       `<div class="tw"><table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
-      ${rows.map(c=>`<tr><td><strong style="color:var(--svc);">${esc(c.no)}</strong></td><td>${c.date}</td><td>${esc(c.engineer)}</td><td style="font-size:.8em;">${esc(c.callRef||'—')}</td><td style="font-size:.8em;">${esc(c.location||'—')}</td><td class="amt">${fmt(c.travelAmt)}</td><td class="amt">${fmt(c.foodAmt)}</td><td class="amt">${fmt(c.otherAmt)}</td><td class="amt" style="font-weight:700;">${fmt(c.totalAmt)}</td><td>${sbg(c.status)}</td><td><button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 8px;" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i></button></td></tr>`).join('')}
+      ${rows.map(c=>`<tr><td><strong style="color:var(--svc);">${esc(c.no)}</strong></td><td>${c.date}</td><td>${esc(c.engineer)}</td><td style="font-size:.8em;">${esc(c.callRef||'—')}</td><td style="font-size:.8em;">${esc(c.location||'—')}</td><td class="amt">${fmt(c.travelAmt)}</td><td class="amt">${fmt(c.foodAmt)}</td><td class="amt">${fmt(c.otherAmt)}</td><td class="amt" style="font-weight:700;">${fmt(c.totalAmt)}</td><td>${sbg(c.status)}</td><td><button class="btn btn-outline btn-sm" style="font-size:.97em;padding:3px 8px;" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i></button></td></tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="8" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,c)=>s+c.totalAmt,0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
@@ -8116,7 +8145,7 @@ function renderMgmtView(){
     const convAdvs=filter(D.svc_conv_advances,'date','engineer');
     body.innerHTML=!convAdvs.length?'<div class="empty"><i class="fas fa-hand-holding-dollar"></i><p>No advance requests found</p></div>':
       `<div class="tw"><table><thead><tr><th>Adv No</th><th>Date</th><th>Engineer</th><th>Purpose</th><th>Call Ref</th><th>Amount</th><th>Mode</th><th>Status</th></tr></thead><tbody>
-      ${convAdvs.map(a=>`<tr><td><strong style="color:var(--amber);">${esc(a.no)}</strong></td><td>${a.date}</td><td>${esc(a.engineer)}</td><td style="font-size:.82em;">${esc(a.purpose||'—')}</td><td style="font-size:.8em;">${esc(a.callRef||'—')}</td><td class="amt" style="font-weight:700;">${fmt(a.amount)}</td><td style="font-size:.8em;">${esc(a.mode||'—')}</td><td>${sbg(a.status)}</td></tr>`).join('')}
+      ${convAdvs.map(a=>`<tr><td><strong style="color:var(--amber);">${esc(a.no)}</strong></td><td>${a.date}</td><td>${esc(a.engineer)}</td><td style="font-size:.95em;">${esc(a.purpose||'—')}</td><td style="font-size:.8em;">${esc(a.callRef||'—')}</td><td class="amt" style="font-weight:700;">${fmt(a.amount)}</td><td style="font-size:.8em;">${esc(a.mode||'—')}</td><td>${sbg(a.status)}</td></tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(convAdvs.reduce((s,a)=>s+a.amount,0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
@@ -8124,7 +8153,7 @@ function renderMgmtView(){
     const incs=filter(D.svc_incentives||[],'date','engineerName');
     body.innerHTML=!incs.length?'<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries found</p></div>':
       `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Expense</th><th>Net P/L</th><th>Incentive</th><th>Status</th><th></th></tr></thead><tbody>
-      ${incs.map(e=>`<tr><td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.82em;">${esc(e.customer)}</td><td style="font-size:.8em;">${esc(e.product||'—')}</td><td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td><td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td><td class="amt" style="font-size:.8em;">${e.expType?esc(e.expType)+' '+fmt(e.expAmt||0):'—'}</td><td class="amt" style="font-weight:700;color:${(e.netProfit||e.profit)>=0?'var(--green)':'var(--red)'};">${fmt(e.netProfit||e.profit)}</td><td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td><td>${sbg(e.status==='mgmt-review'?'pending':e.status)}</td><td><div style="display:flex;gap:4px;">${e.status==='mgmt-review'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 7px;font-size:.72em;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" style="padding:3px 7px;font-size:.72em;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button>`:''}<button class="btn btn-outline btn-sm" style="font-size:.72em;padding:3px 7px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i></button></div></td></tr>`).join('')}
+      ${incs.map(e=>`<tr><td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.95em;">${esc(e.customer)}</td><td style="font-size:.8em;">${esc(e.product||'—')}</td><td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td><td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td><td class="amt" style="font-size:.8em;">${e.expType?esc(e.expType)+' '+fmt(e.expAmt||0):'—'}</td><td class="amt" style="font-weight:700;color:${(e.netProfit||e.profit)>=0?'var(--green)':'var(--red)'};">${fmt(e.netProfit||e.profit)}</td><td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td><td>${sbg(e.status==='mgmt-review'?'pending':e.status)}</td><td><div style="display:flex;gap:4px;">${e.status==='mgmt-review'?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 7px;font-size:.97em;" onclick="mgmtApproveInc('${e.id}')"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" style="padding:3px 7px;font-size:.97em;" onclick="rejectIncentive('${e.id}')"><i class="fas fa-times"></i></button>`:''}<button class="btn btn-outline btn-sm" style="font-size:.97em;padding:3px 7px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i></button></div></td></tr>`).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.saleAmt,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.purchaseAmt,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td><td></td><td></td><td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td colspan="2"></td></tr>
       </tbody></table></div>`;
 
@@ -8135,11 +8164,11 @@ function renderMgmtView(){
     if(to) calls=calls.filter(x=>(x.date||x.datetime?.slice(0,10)||'')<=to);
     calls=calls.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     const byEng={};calls.forEach(c=>{const e=c.engineer||'Unassigned';if(!byEng[e])byEng[e]={name:e,total:0,completed:0,pending:0,escalated:0,inProg:0,conv:0};byEng[e].total++;if(c.status==='completed')byEng[e].completed++;else if(c.status==='escalated')byEng[e].escalated++;else if(c.status==='in-progress')byEng[e].inProg++;else byEng[e].pending++;if(c.convRows?.length||c.convKm)byEng[e].conv++;});
-    const sumHtml=Object.values(byEng).sort((a,b)=>b.total-a.total).map(e=>`<div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0;"><i class="fas fa-user-gear"></i></div><div style="flex:1;min-width:120px;"><div style="font-weight:700;font-size:.88em;">${esc(e.name)}</div><div style="font-size:.73em;color:var(--ink3);">${e.total} calls · ${e.conv} with conveyance</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span style="font-size:.75em;background:#f0fdf4;color:var(--green);border-radius:6px;padding:3px 8px;font-weight:700;">${e.completed} done</span>${e.pending?`<span style="font-size:.75em;background:#fffbeb;color:#92400e;border-radius:6px;padding:3px 8px;font-weight:700;">${e.pending} pending</span>`:''} ${e.inProg?`<span style="font-size:.75em;background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 8px;font-weight:700;">${e.inProg} in-prog</span>`:''} ${e.escalated?`<span style="font-size:.75em;background:#fef2f2;color:var(--red);border-radius:6px;padding:3px 8px;font-weight:700;">${e.escalated} esc</span>`:''}</div></div>`).join('');
+    const sumHtml=Object.values(byEng).sort((a,b)=>b.total-a.total).map(e=>`<div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0;"><i class="fas fa-user-gear"></i></div><div style="flex:1;min-width:120px;"><div style="font-weight:700;font-size:.98em;">${esc(e.name)}</div><div style="font-size:.87em;color:var(--ink3);">${e.total} calls · ${e.conv} with conveyance</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span style="font-size:.9em;background:#f0fdf4;color:var(--green);border-radius:6px;padding:3px 8px;font-weight:700;">${e.completed} done</span>${e.pending?`<span style="font-size:.9em;background:#fffbeb;color:#92400e;border-radius:6px;padding:3px 8px;font-weight:700;">${e.pending} pending</span>`:''} ${e.inProg?`<span style="font-size:.9em;background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 8px;font-weight:700;">${e.inProg} in-prog</span>`:''} ${e.escalated?`<span style="font-size:.9em;background:#fef2f2;color:var(--red);border-radius:6px;padding:3px 8px;font-weight:700;">${e.escalated} esc</span>`:''}</div></div>`).join('');
     body.innerHTML=`${Object.keys(byEng).length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:16px;">${sumHtml}</div>`:''}`+
       (!calls.length?'<div class="empty"><i class="fas fa-headset"></i><p>No service calls found</p></div>':
       `<div class="tw"><table><thead><tr><th>Call No</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Issue</th><th>Product</th><th>Priority</th><th>Status</th><th>Conv.</th><th>Resolution</th></tr></thead><tbody>
-      ${calls.map(c=>{const ca=c.convRows?.reduce((s,r)=>s+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0);return `<tr><td><strong style="color:var(--svc);">${esc(c.no)}</strong></td><td style="font-size:.82em;">${c.date||c.datetime?.slice(0,10)||'—'}</td><td style="font-size:.83em;">${esc(c.customer)}</td><td style="font-size:.83em;">${esc(c.engineer||'—')}</td><td><span style="font-size:.72em;background:#e0f2fe;color:#0369a1;border-radius:5px;padding:2px 7px;font-weight:700;">${esc(c.callType||'—')}</span></td><td style="font-size:.8em;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.issue||'')}">${esc(c.issue||'—')}</td><td style="font-size:.8em;">${esc(c.product||'—')}</td><td>${svcPriorityBadge(c.priority)}</td><td>${sbg(c.status)}</td><td class="amt" style="font-size:.82em;">${ca>0?fmt(ca):'—'}</td><td style="font-size:.78em;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink3);" title="${esc(c.resolution||'')}">${esc(c.resolution||'—')}</td></tr>`;}).join('')}
+      ${calls.map(c=>{const ca=c.convRows?.reduce((s,r)=>s+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0);return `<tr><td><strong style="color:var(--svc);">${esc(c.no)}</strong></td><td style="font-size:.95em;">${c.date||c.datetime?.slice(0,10)||'—'}</td><td style="font-size:.95em;">${esc(c.customer)}</td><td style="font-size:.95em;">${esc(c.engineer||'—')}</td><td><span style="font-size:.97em;background:#e0f2fe;color:#0369a1;border-radius:5px;padding:2px 7px;font-weight:700;">${esc(c.callType||'—')}</span></td><td style="font-size:.8em;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(c.issue||'')}">${esc(c.issue||'—')}</td><td style="font-size:.8em;">${esc(c.product||'—')}</td><td>${svcPriorityBadge(c.priority)}</td><td>${sbg(c.status)}</td><td class="amt" style="font-size:.95em;">${ca>0?fmt(ca):'—'}</td><td style="font-size:.92em;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink3);" title="${esc(c.resolution||'')}">${esc(c.resolution||'—')}</td></tr>`;}).join('')}
       <tr style="background:var(--bg);font-weight:700;"><td colspan="9" style="text-align:right;padding:9px 12px;">Total Conv.</td><td class="amt" style="padding:9px 12px;">${fmt(calls.reduce((s,c)=>{return s+(c.convRows?.reduce((a,r)=>a+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0));},0))}</td><td></td></tr>
       </tbody></table></div>`);
   }
@@ -8482,11 +8511,11 @@ function showMgmtDetail(type){
           <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:linear-gradient(135deg,#fff5f5,#fff);border-bottom:1px solid var(--line);cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
             <div>
               <div style="font-weight:700;font-size:.93em;">${esc(name)}</div>
-              <div style="font-size:.75em;color:var(--ink3);margin-top:2px;">${cust?.phone?`<i class="fas fa-phone"></i> ${esc(cust.phone)} &nbsp;·&nbsp; `:''}${c.invoices.length} invoice(s)</div>
+              <div style="font-size:.9em;color:var(--ink3);margin-top:2px;">${cust?.phone?`<i class="fas fa-phone"></i> ${esc(cust.phone)} &nbsp;·&nbsp; `:''}${c.invoices.length} invoice(s)</div>
             </div>
             <div style="text-align:right;">
               <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--red);font-size:.97em;">${fmt(c.out)}</div>
-              <div style="font-size:.73em;color:var(--ink3);">of ${fmt(c.total)}</div>
+              <div style="font-size:.87em;color:var(--ink3);">of ${fmt(c.total)}</div>
             </div>
           </div>
           <div style="display:none;padding:0 0 4px;">
@@ -8509,7 +8538,7 @@ function showMgmtDetail(type){
       </div>`;
       html += mgmtTbl(
         ['Customer','Date','Invoice','Mode','Reference','Amount'],
-        pays.map(p=>`<tr><td><strong>${esc(p.custName)}</strong></td><td>${p.date}</td><td><span class="tag tag-acc">${esc(p.invNo||'—')}</span></td><td>${mTag(p.mode)}</td><td style="font-size:.82em;color:var(--ink3);">${esc(p.refNo||'—')}</td><td class="amt ag"><strong>${fmt(p.amount)}</strong></td></tr>`),
+        pays.map(p=>`<tr><td><strong>${esc(p.custName)}</strong></td><td>${p.date}</td><td><span class="tag tag-acc">${esc(p.invNo||'—')}</span></td><td>${mTag(p.mode)}</td><td style="font-size:.95em;color:var(--ink3);">${esc(p.refNo||'—')}</td><td class="amt ag"><strong>${fmt(p.amount)}</strong></td></tr>`),
         'No collections yet'
       );
       openMgmtDrawer('fa-hand-holding-dollar','Collection Detail',html); break;}
@@ -8602,7 +8631,7 @@ function showMgmtDetail(type){
       </div>`;
       html += mgmtTbl(
         ['Date','Customer / Entry','Expense Amt','Notes'],
-        expEntries.map(e=>`<tr><td>${e.date||'—'}</td><td>${esc(e.c||'—')}</td><td class="amt ar">${fmt(e.expense)}</td><td style="font-size:.82em;color:var(--ink3);">${esc(e.notes||'—')}</td></tr>`),
+        expEntries.map(e=>`<tr><td>${e.date||'—'}</td><td>${esc(e.c||'—')}</td><td class="amt ar">${fmt(e.expense)}</td><td style="font-size:.95em;color:var(--ink3);">${esc(e.notes||'—')}</td></tr>`),
         'No expense entries'
       );
       openMgmtDrawer('fa-receipt','Marketing — Expense Entries',html); break;}
@@ -8629,7 +8658,7 @@ function showMgmtDetail(type){
       let html=`<div class="stats" style="margin-bottom:14px;"><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Billed</div><div class="stat-value">${orders.length}</div></div></div>`;
       html += mgmtTbl(
         ['Order No','Source','Customer','Date','Billed As','Invoice Date','Total'],
-        orders.map(o=>`<tr><td><span class="tag tag-orange">${esc(o.orderNo)}</span></td><td><span style="font-size:.75em;font-weight:700;color:${o.source==='service'?'var(--svc)':'var(--mkt)'}">${(o.source||'marketing').toUpperCase()}</span></td><td><strong>${esc(o.customer)}</strong></td><td>${o.date}</td><td><span class="tag tag-acc">${esc(o.invoiceNo)}</span></td><td>${o.billedDate||'—'}</td><td class="amt">${fmt(o.total)}</td></tr>`),
+        orders.map(o=>`<tr><td><span class="tag tag-orange">${esc(o.orderNo)}</span></td><td><span style="font-size:.9em;font-weight:700;color:${o.source==='service'?'var(--svc)':'var(--mkt)'}">${(o.source||'marketing').toUpperCase()}</span></td><td><strong>${esc(o.customer)}</strong></td><td>${o.date}</td><td><span class="tag tag-acc">${esc(o.invoiceNo)}</span></td><td>${o.billedDate||'—'}</td><td class="amt">${fmt(o.total)}</td></tr>`),
         'No billed orders'
       );
       openMgmtDrawer('fa-check-circle','Billed Orders',html); break;}
@@ -8677,7 +8706,7 @@ function svcCallsDetailHtml(calls, label, cnt, color){
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
         <strong style="color:var(--svc);">${esc(c.no)}</strong>
         ${svcPriorityBadge(c.priority)}
-        <span style="font-size:.78em;color:${svcStatusColor(c.status)};font-weight:700;">● ${c.status}</span>
+        <span style="font-size:.92em;color:${svcStatusColor(c.status)};font-weight:700;">● ${c.status}</span>
       </div>
       <div style="font-size:.8em;font-weight:600;margin-bottom:3px;">${esc(c.customer)}</div>
       <div style="font-size:.76em;color:var(--ink3);">
@@ -8746,14 +8775,26 @@ function showSuccessToast(msg, color){
 }
 
 // ════════════════════════════════════════════════════════════════
-// INTERNAL MESSAGING SYSTEM
+// INTERNAL MESSAGING SYSTEM (individual user-to-user)
 // ════════════════════════════════════════════════════════════════
 let _msgTab='inbox';
+
+function populateMsgToDropdown(){
+  const sel=g('msgTo');if(!sel)return;
+  const myName=D.currentUser?.name;
+  const roleIcon={management:'👑',accounts:'💼',service:'🔧'};
+  // Show all active users except current user
+  const others=(D.users||[]).filter(u=>u.active!==false&&u.name!==myName);
+  const current=sel.value;
+  sel.innerHTML='<option value="">-- Select recipient --</option>'+others.map(u=>`<option value="${esc(u.name)}">${roleIcon[u.role]||'👤'} ${esc(u.name)}</option>`).join('');
+  if(current)sel.value=current;
+}
 
 function toggleMsgPanel(){
   const p=g('msgPanel');
   p.classList.toggle('on');
   if(p.classList.contains('on')){
+    populateMsgToDropdown();
     switchMsgTab('inbox',g('msgtab-inbox'));
   }
 }
@@ -8764,25 +8805,27 @@ function switchMsgTab(tab,btn){
   if(btn)btn.classList.add('on');
   const compose=g('msgComposeArea');
   const body=g('msgBody');
-  if(tab==='compose'){compose.style.display='block';body.style.display='none';}
+  if(tab==='compose'){populateMsgToDropdown();compose.style.display='block';body.style.display='none';}
   else{compose.style.display='none';body.style.display='block';renderMsgBody(tab);}
 }
 
 function renderMsgBody(tab){
   const body=g('msgBody');
   if(!body)return;
-  const myRole=D.currentUser?.role;
   const myName=D.currentUser?.name;
   const msgs=[...(D.messages||[])].reverse();
   let filtered=[];
   if(tab==='inbox'){
-    filtered=msgs.filter(m=>m.toRole===myRole);
-    // Mark all as read
+    // Messages addressed to this specific user by name
+    filtered=msgs.filter(m=>m.toName===myName||(m.toRole&&m.toRole===D.currentUser?.role&&!m.toName));
+    // Mark all inbox messages as read
     let changed=false;
-    (D.messages||[]).forEach(m=>{if(m.toRole===myRole&&!m.read){m.read=true;changed=true;}});
+    (D.messages||[]).forEach(m=>{
+      if((m.toName===myName||(m.toRole&&m.toRole===D.currentUser?.role&&!m.toName))&&!m.read){m.read=true;changed=true;}
+    });
     if(changed){saveData();updateMsgBadge();}
   } else {
-    filtered=msgs.filter(m=>m.fromName===myName||m.fromRole===myRole);
+    filtered=msgs.filter(m=>m.fromName===myName);
   }
   if(!filtered.length){
     body.innerHTML=`<div style="text-align:center;padding:24px;color:var(--ink3);font-size:.83em;"><i class="fas fa-inbox" style="font-size:2em;display:block;margin-bottom:8px;opacity:.3;"></i>${tab==='inbox'?'No messages yet':'No sent messages'}</div>`;
@@ -8791,47 +8834,57 @@ function renderMsgBody(tab){
   const typeLabels={info:'mtb-info',change:'mtb-change',reply:'mtb-reply'};
   const typeNames={info:'Info',change:'Request Change',reply:'Reply'};
   body.innerHTML=filtered.map(m=>{
-    const isMine=m.fromName===myName||m.fromRole===myRole;
     const unread=tab==='inbox'&&!m.read;
     const tClass=typeLabels[m.type]||'mtb-info';
     const tName=typeNames[m.type]||m.type;
     const timeStr=m.at?new Date(m.at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
-    return `<div class="msg-bubble ${isMine&&tab==='sent'?'mine':''} ${unread?'unread':''}">
+    const displayTo=m.toName||m.toRole||'?';
+    return `<div class="msg-bubble ${tab==='sent'?'mine':''} ${unread?'unread':''}">
       <div class="msg-bubble-hdr">
-        <span class="msg-from"><span class="msg-type-badge ${tClass}">${tName}</span>${tab==='inbox'?esc(m.fromName||m.fromRole):('To: '+esc(m.toRole))}</span>
+        <span class="msg-from"><span class="msg-type-badge ${tClass}">${tName}</span>${tab==='inbox'?esc(m.fromName||m.fromRole||'?'):('To: '+esc(displayTo))}</span>
         <span class="msg-time">${timeStr}</span>
       </div>
       <div class="msg-text">${esc(m.text)}</div>
       ${m.ref?`<div class="msg-ref"><i class="fas fa-link" style="margin-right:4px;"></i>Ref: ${esc(m.ref)}</div>`:''}
-      ${tab==='inbox'?`<button class="btn btn-outline btn-sm" style="margin-top:7px;font-size:.72em;" onclick="quickReply('${esc(m.fromRole)}','${esc(m.ref||'')}')"><i class="fas fa-reply"></i> Reply</button>`:''}
+      ${tab==='inbox'?`<button class="btn btn-outline btn-sm" style="margin-top:7px;font-size:.72em;" onclick="quickReplyToUser('${esc(m.fromName||'')}','${esc(m.ref||'')}')"><i class="fas fa-reply"></i> Reply</button>`:''}
     </div>`;
   }).join('');
 }
 
 function sendInternalMsg(){
-  const toRole=g('msgTo').value,type=g('msgType').value,ref=g('msgRef').value.trim(),text=g('msgText').value.trim();
-  if(!toRole){alert('Please select a recipient');return;}
+  const toName=g('msgTo').value,type=g('msgType').value,ref=g('msgRef').value.trim(),text=g('msgText').value.trim();
+  if(!toName){alert('Please select a recipient');return;}
   if(!text){alert('Please type a message');return;}
   if(!D.messages)D.messages=[];
-  D.messages.push({id:uid(),fromRole:D.currentUser?.role,fromName:D.currentUser?.name||'',toRole,type,ref,text,at:new Date().toISOString(),read:false});
+  // Find recipient's role for backward compat
+  const toUser=D.users.find(u=>u.name===toName);
+  D.messages.push({id:uid(),fromRole:D.currentUser?.role,fromName:D.currentUser?.name||'',toName,toRole:toUser?.role||'',type,ref,text,at:new Date().toISOString(),read:false});
   saveData('new_message');
   g('msgTo').value='';g('msgType').value='info';g('msgRef').value='';g('msgText').value='';
   switchMsgTab('sent',g('msgtab-sent'));
-  showSuccessToast('✓ Message sent!','var(--acc)');
+  showSuccessToast('✓ Message sent to '+toName+'!','var(--acc)');
 }
 
 function quickReply(toRole,ref){
+  // Legacy: reply by role — find first user with that role
+  const user=(D.users||[]).find(u=>u.role===toRole&&u.active!==false);
+  quickReplyToUser(user?user.name:toRole,ref);
+}
+
+function quickReplyToUser(toName,ref){
   switchMsgTab('compose',g('msgtab-compose'));
-  g('msgTo').value=toRole;
+  populateMsgToDropdown();
+  setTimeout(()=>{g('msgTo').value=toName;},50);
   g('msgType').value='reply';
   g('msgRef').value=ref||'';
   g('msgText').focus();
 }
 
 function updateMsgBadge(){
+  const myName=D.currentUser?.name;
   const myRole=D.currentUser?.role;
-  if(!myRole)return;
-  const unread=(D.messages||[]).filter(m=>m.toRole===myRole&&!m.read).length;
+  if(!myName)return;
+  const unread=(D.messages||[]).filter(m=>(m.toName===myName||(m.toRole&&m.toRole===myRole&&!m.toName))&&!m.read).length;
   const b=g('msgFabBadge');
   if(!b)return;
   if(unread>0){b.textContent=unread>9?'9+':unread;b.classList.add('on');}
@@ -8842,8 +8895,11 @@ function updateMsgBadge(){
 function openMsgWithRef(toRole,ref,type){
   const p=g('msgPanel');
   if(!p.classList.contains('on'))p.classList.add('on');
+  populateMsgToDropdown();
   switchMsgTab('compose',g('msgtab-compose'));
-  if(toRole)g('msgTo').value=toRole;
+  // Find first user with that role
+  const user=(D.users||[]).find(u=>u.role===toRole&&u.active!==false);
+  setTimeout(()=>{if(user)g('msgTo').value=user.name;else if(toRole)g('msgTo').value=toRole;},50);
   if(ref)g('msgRef').value=ref;
   if(type)g('msgType').value=type;
   g('msgText').focus();
