@@ -1680,7 +1680,8 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="fg"><label>Order Number</label><input type="text" id="svOrdNo" placeholder="SORD-2025-0001" readonly style="background:var(--bg);"></div>
       <div class="fg"><label>Date</label><input type="date" id="svOrdDate"></div>
       <div class="fg"><label>Customer</label>
-        <div class="combo"><input type="text" id="svOrdCust" list="dl-svc-ord-cust" placeholder="Customer…" autocomplete="off"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-ord-cust"></datalist></div>
+        <div class="combo"><input type="text" id="svOrdCust" list="dl-svc-ord-cust" placeholder="Customer…" autocomplete="off" oninput="autoFillOrdCust()" onchange="autoFillOrdCust()" onblur="autoFillOrdCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-ord-cust"></datalist></div>
+        <div id="svOrdCustHint" style="display:none;margin-top:4px;font-size:.78em;font-weight:700;padding:3px 9px;border-radius:7px;"></div>
       </div>
     </div>
     <div class="g3" style="margin-bottom:11px;">
@@ -6784,6 +6785,31 @@ function setOrdCallType(type){
   if(g('svOrdCallType')) g('svOrdCallType').value=type;
   document.querySelectorAll('#svcOrderForm .call-type-btn').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
 }
+
+function autoFillOrdCust(){
+  const input=g('svOrdCust');
+  const hint=g('svOrdCustHint');
+  if(!input)return;
+  const name=input.value.trim();
+  if(!name){if(hint)hint.style.display='none';return;}
+  // Exact match first, then case-insensitive
+  const custs=D.ac_customers||[];
+  const match=custs.find(c=>c.name===name)||custs.find(c=>c.name.toLowerCase()===name.toLowerCase());
+  if(match&&match.contractType){
+    setOrdCallType(match.contractType);
+    if(hint){
+      const ctColor={AMC:'var(--acc)',ASC:'var(--svc)','Per Call':'var(--amber)'};
+      const ctIcon={AMC:'fa-shield-halved',ASC:'fa-wrench','Per Call':'fa-phone'};
+      const ct=match.contractType;
+      hint.style.display='block';
+      hint.style.background=(ctColor[ct]||'var(--ink3)')+'1a';
+      hint.style.color=ctColor[ct]||'var(--ink3)';
+      hint.innerHTML=`<i class="fas ${ctIcon[ct]||'fa-circle'}" style="margin-right:5px;"></i>Auto-set to <strong>${ct}</strong> from customer master`;
+    }
+  } else {
+    if(hint)hint.style.display='none';
+  }
+}
 function showSvcOrderForm(){
   g('svcOrderForm').style.display='block';
   if(g('svOrdEditId')) g('svOrdEditId').value='';
@@ -6791,7 +6817,7 @@ function showSvcOrderForm(){
   if(g('svOrdSendLabel')) g('svOrdSendLabel').textContent='Send to Accounts';
   g('svOrdNo').value=genSvOrdNo();
   g('svOrdDate').value=today();
-  g('svOrdCust').value='';g('svOrdNotes').value='';
+  g('svOrdCust').value='';g('svOrdNotes').value='';if(g('svOrdCustHint'))g('svOrdCustHint').style.display='none';
   if(g('svOrdSupplier'))g('svOrdSupplier').value='';
   if(g('svOrdPurchaseVal'))g('svOrdPurchaseVal').value='';
   if(g('svOrdMargin'))g('svOrdMargin').value='';
