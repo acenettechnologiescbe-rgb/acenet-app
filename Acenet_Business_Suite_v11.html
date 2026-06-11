@@ -8625,36 +8625,27 @@ function renderStockPicker(){
 }
 
 function pickStockItem(itemId, itemName, availableQty, unit){
-  // Add this item as a new row in the Order Items table
-  // First check if item already in order
+  // Check if item already exists — .som is the material input class in svOrdItemsBody
   const rows=[...document.querySelectorAll('#svOrdItemsBody tr')];
-  const existingInput=rows.find(r=>r.querySelector('.om')?.value===itemName);
-  if(existingInput){
-    // Just increment qty
-    const qtyInput=existingInput.querySelector('.oq');
-    if(qtyInput){qtyInput.value=(parseFloat(qtyInput.value)||0)+1;calcSvOrdTotals();}
+  const existingRow=rows.find(r=>r.querySelector('.som')?.value===itemName);
+  if(existingRow){
+    const qtyInput=existingRow.querySelector('.soq');
+    if(qtyInput){qtyInput.value=(parseFloat(qtyInput.value)||0)+1;recalcSvOrd();}
     closeModal('stockPickerModal');
-    showSuccessToast('✓ '+itemName+' quantity increased','var(--green)');
+    showSuccessToast('✓ '+itemName+' qty increased','var(--green)');
     return;
   }
-  // Add as new row
+  // Add as new row then fill material name
   addSvOrdItem();
-  // Fill in the last row's material name
   const allRows=[...document.querySelectorAll('#svOrdItemsBody tr')];
   const lastRow=allRows[allRows.length-1];
   if(lastRow){
-    const matInput=lastRow.querySelector('.om');
-    if(matInput){matInput.value=itemName;}
+    const matInput=lastRow.querySelector('.som');
+    if(matInput){matInput.value=itemName;recalcSvOrd();}
   }
   closeModal('stockPickerModal');
   showSuccessToast('✓ Added: '+itemName,'var(--green)');
 }
-
-// ════════════════════════════════════════════════════════════════
-// STOCK TRANSACTIONS REPORT (per engineer / per customer)
-// ════════════════════════════════════════════════════════════════
-let _stkTxnTab = 'eng';
-
 function switchStkTxnTab(tab){
   _stkTxnTab=tab;
   ['eng','cust','all'].forEach(t=>{
