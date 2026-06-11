@@ -4989,14 +4989,18 @@ function renderSvcStockView(){
   let filtered=items.filter(i=>{
     if(search&&!i.name?.toLowerCase().includes(search)&&!i.category?.toLowerCase().includes(search)) return false;
     if(cat&&i.category!==cat) return false;
-    if(st==='ok'&&!(i.qty>(i.reorder||0))) return false;
-    if(st==='low'&&!(i.qty>0&&i.qty<=(i.reorder||0))) return false;
-    if(st==='out'&&i.qty!==0) return false;
+    const q=stockQty(i.id),reorder=i.reorder||i.reorderLevel||0;
+    if(st==='ok'&&!(q>reorder)) return false;
+    if(st==='low'&&!(q>0&&q<=reorder)) return false;
+    if(st==='out'&&q>0) return false;
     if(stype!=='all'&&(i.stockType||'General')!==stype) return false;
     return true;
   });
-  const total=items.length,inStock=items.filter(i=>i.qty>(i.reorder||0)).length,
-    low=items.filter(i=>i.qty>0&&i.qty<=(i.reorder||0)).length,out=items.filter(i=>i.qty===0).length;
+  // Use stockQty() — same as Accounts — so opening qty + transactions are counted correctly
+  const total=items.length,
+    inStock=items.filter(i=>stockQty(i.id)>(i.reorder||i.reorderLevel||0)).length,
+    low=items.filter(i=>{const q=stockQty(i.id);return q>0&&q<=(i.reorder||i.reorderLevel||0);}).length,
+    out=items.filter(i=>stockQty(i.id)<=0).length;
   g('svcStockStats').innerHTML=`
     <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Items</div><div class="stat-value">${total}</div></div>
     <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">In Stock</div><div class="stat-value">${inStock}</div></div>
@@ -5004,20 +5008,21 @@ function renderSvcStockView(){
     <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Out of Stock</div><div class="stat-value">${out}</div></div>`;
   if(!filtered.length){g('svcStockBody').innerHTML='<div class="empty"><i class="fas fa-boxes-stacked"></i><p>No stock items found.</p></div>';}
   else g('svcStockBody').innerHTML=`<div style="overflow-x:auto;"><table class="rpt-table">
-    <thead><tr><th>Item Name</th><th>Category</th><th>Unit</th><th>Stock</th><th>Reorder</th><th>Status</th><th>Last Movement</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Item Name</th><th>Category</th><th>Unit</th><th>Current Stock</th><th>Reorder</th><th>Status</th><th>Last Movement</th><th>Actions</th></tr></thead>
     <tbody>${filtered.map(i=>{
-      const isOut=i.qty===0,isLow=i.qty>0&&i.qty<=(i.reorder||0);
+      const qty=stockQty(i.id);
+      const reorder=i.reorder||i.reorderLevel||0;
+      const isOut=qty<=0,isLow=qty>0&&qty<=reorder;
       const stLabel=isOut?'<span style="background:#fee2e2;color:#991b1b;border-radius:7px;padding:2px 8px;font-size:.97em;font-weight:700;">Out of Stock</span>':isLow?'<span style="background:#fef9c3;color:#92400e;border-radius:7px;padding:2px 8px;font-size:.97em;font-weight:700;">⚠ Low</span>':'<span style="background:#dcfce7;color:#166534;border-radius:7px;padding:2px 8px;font-size:.97em;font-weight:700;">✓ OK</span>';
       return `<tr>
-        <td><strong>${esc(i.name)}</strong><br><span style="font-size:.95em;color:var(--ink4);">${esc(i.stockType||'General')}</span></td>
+        <td><strong>${esc(i.name)}</strong><br><span style="font-size:.95em;color:var(--ink4);">${esc(i.stockType||i.category||'General')}</span></td>
         <td><span style="background:#e0f2fe;color:#0369a1;border-radius:6px;padding:2px 7px;font-size:.87em;">${esc(i.category||'General')}</span></td>
         <td style="font-size:.8em;color:var(--ink3);">${esc(i.unit||'Nos')}</td>
-        <td class="num" style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${i.qty??0}</td>
-        <td class="num" style="font-size:.97em;color:var(--ink3);">${i.reorder||0}</td>
+        <td class="num" style="font-weight:800;color:${isOut?'var(--red)':isLow?'var(--amber)':'var(--green)'};">${qty.toFixed(2)}</td>
+        <td class="num" style="font-size:.97em;color:var(--ink3);">${reorder}</td>
         <td>${stLabel}</td>
         <td style="font-size:.9em;color:var(--ink3);">${i.lastMovement||'—'}</td>
         <td><div style="display:flex;gap:4px;">
-          <button class="btn btn-sm" style="background:var(--green);color:#fff;padding:4px 9px;font-size:.98em;" onclick="quickStockIn('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-down"></i> In</button>
           <button class="btn btn-sm" style="background:var(--red);color:#fff;padding:4px 9px;font-size:.98em;" onclick="quickStockOut('${i.id}','${esc(i.name)}')"><i class="fas fa-arrow-up"></i> Out</button>
         </div></td>
       </tr>`;
@@ -5059,11 +5064,11 @@ function quickStockIn(itemId,itemName){
 
 function quickStockOut(itemId,itemName){
   const item=D.stock_items.find(i=>i.id===itemId);if(!item)return;
-  const qty=parseInt(prompt(`Stock OUT — ${itemName}\nCurrent: ${item.qty??0}\nEnter quantity to issue:`));
+  const currentQty=stockQty(itemId);
+  const qty=parseInt(prompt(`Stock OUT — ${itemName}\nAvailable: ${currentQty.toFixed(2)}\nEnter quantity to issue:`));
   if(!qty||qty<=0)return;
-  if(qty>(item.qty||0)){alert(`Only ${item.qty||0} available`);return;}
+  if(qty>currentQty){alert(`Only ${currentQty.toFixed(2)} available`);return;}
   const notes=prompt('Purpose / Notes (optional):');
-  item.qty=(item.qty||0)-qty;
   item.lastMovement=today();
   if(!D.stock_txns)D.stock_txns=[];
   D.stock_txns.push({id:uid(),date:today(),itemName:item.name,itemId,type:'out',qty,ref:'Service Stock Out',notes:notes||'',by:D.currentUser?.name||'Service'});
