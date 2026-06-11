@@ -1720,6 +1720,9 @@ tbody tr:last-child td{border-bottom:none;}
           <i class="fas fa-bolt" style="color:var(--amber);"></i> Urgent
         </label>
       </div>
+      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()">
+        <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
+      </button>
     </div>
 
     <!-- ── Delivery Challan ── -->
@@ -1817,8 +1820,6 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="ph">
     <div><h2><span class="phi" style="background:var(--green)"><i class="fas fa-boxes-stacked"></i></span><span class="sora">Material Stock</span></h2><p>Track stock levels · inward &amp; outward entries</p></div>
     <div class="btn-row">
-      <button class="btn btn-outline btn-sm" onclick="showSvcAddItemForm()"><i class="fas fa-plus" style="color:var(--green);"></i> Add Item</button>
-      <button class="btn btn-outline btn-sm" onclick="showStockInForm()"><i class="fas fa-arrow-down" style="color:var(--green);"></i> Stock In</button>
       <button class="btn btn-outline btn-sm" onclick="showStockOutForm()"><i class="fas fa-arrow-up" style="color:var(--red);"></i> Stock Out</button>
       <button class="btn btn-outline btn-sm" onclick="exportSvcStockView()"><i class="fas fa-file-excel"></i> Export</button>
     </div>
@@ -2076,8 +2077,24 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
     <div class="g2" style="margin-bottom:11px;">
       <div class="fg"><label>Reference (Invoice / Order No)</label><input type="text" id="stkTxnRef" placeholder="Optional reference"></div>
-      <div class="fg"><label>Notes</label><input type="text" id="stkTxnNotes" placeholder="Optional notes"></div>
+      <div class="fg"><label>Delivery Challan No</label><input type="text" id="stkTxnChallan" placeholder="DC / Challan number"></div>
     </div>
+    <div class="g2" style="margin-bottom:11px;" id="stkOutExtraFields">
+      <div class="fg"><label>Customer Name</label>
+        <select id="stkTxnCust" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+          <option value="">-- Select Customer --</option>
+        </select>
+      </div>
+      <div class="fg"><label>Purpose</label>
+        <div style="display:flex;gap:6px;margin-top:4px;">
+          <button type="button" class="call-type-btn active" id="stkp-amc" data-type="AMC Replacement" onclick="setStkPurpose('AMC Replacement')" style="flex:1;font-size:.76em;padding:5px 3px;"><i class="fas fa-shield-halved"></i> AMC Replacement</button>
+          <button type="button" class="call-type-btn" id="stkp-sale" data-type="For Sale" onclick="setStkPurpose('For Sale')" style="flex:1;font-size:.76em;padding:5px 3px;"><i class="fas fa-cart-shopping"></i> For Sale</button>
+          <button type="button" class="call-type-btn" id="stkp-other" data-type="Other" onclick="setStkPurpose('Other')" style="flex:1;font-size:.76em;padding:5px 3px;"><i class="fas fa-ellipsis"></i> Other</button>
+        </div>
+        <input type="hidden" id="stkTxnPurpose" value="AMC Replacement">
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:11px;"><label>Notes</label><input type="text" id="stkTxnNotes" placeholder="Optional notes"></div>
     <div id="stkCurrentStockBox" style="display:none;background:var(--bg);border-radius:10px;padding:11px 14px;margin-bottom:13px;font-size:.83em;border:1.5px solid var(--line);display:flex;gap:18px;flex-wrap:wrap;">
       <div><span style="color:var(--ink3);">Current Stock: </span><strong id="stkCurrentQty" style="color:var(--acc);">—</strong></div>
       <div><span style="color:var(--ink3);">After this txn: </span><strong id="stkAfterQty" style="color:var(--green);">—</strong></div>
@@ -2123,7 +2140,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="filt-date-grp"><i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i><input type="date" id="stockTxnFrom" onchange="renderStockTxns()"><span>→</span><input type="date" id="stockTxnTo" onchange="renderStockTxns()"></div>
   </div>
   <div class="tw"><table>
-    <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead>
+    <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Customer</th><th>Purpose</th><th>Challan</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead>
     <tbody id="stockTxnBody"></tbody>
   </table></div>
 </div>
@@ -2140,6 +2157,7 @@ tbody tr:last-child td{border-bottom:none;}
     <button class="rpt-tab" onclick="switchRptTab('rpt-conveyance',this);renderRptConveyance()"><i class="fas fa-car-side" style="color:var(--svc);"></i> Conveyance</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-send-mkt',this)"><i class="fas fa-paper-plane" style="color:var(--mkt);"></i> Send to Service Engineer</button>
     <button class="rpt-tab" onclick="switchRptTab('rpt-financial',this)"><i class="fas fa-chart-bar" style="color:var(--acc);"></i> Financial Summary</button>
+    <button class="rpt-tab" onclick="switchRptTab('rpt-stock-txn',this);renderStockTxnReport()"><i class="fas fa-boxes-stacked" style="color:var(--green);"></i> Stock Transactions</button>
   </div>
 
   <!-- SUB: Outstanding by Customer -->
@@ -2326,6 +2344,42 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="tw"><table><thead><tr><th>Customer</th><th>Total Invoiced</th><th>Collected</th><th>Outstanding</th><th>Overdue</th><th>Advance Bal</th></tr></thead><tbody id="accRepBody2"></tbody></table></div>
   </div>
 
+  <!-- SUB: Stock Transactions Report -->
+  <div class="rpt-panel" id="rpt-stock-txn">
+    <div class="btn-row" style="margin-bottom:13px;">
+      <button class="btn btn-outline btn-sm" onclick="exportStockTxnReportExcel()"><i class="fas fa-file-excel"></i> Export Excel</button>
+      <button class="btn btn-outline btn-sm" onclick="printSection('stockTxnRptBody','Stock Transactions Report')"><i class="fas fa-print"></i> Print</button>
+    </div>
+    <!-- Sub-tabs: Per Engineer / Per Customer -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="rpt-tab active" id="stkrpt-eng-btn" data-stab="stkrpt-eng" onclick="switchStkTxnTab('eng')"><i class="fas fa-user-helmet-safety"></i> Per Engineer</button>
+      <button class="rpt-tab" id="stkrpt-cust-btn" data-stab="stkrpt-cust" onclick="switchStkTxnTab('cust')"><i class="fas fa-building"></i> Per Customer</button>
+      <button class="rpt-tab" id="stkrpt-all-btn" data-stab="stkrpt-all" onclick="switchStkTxnTab('all')"><i class="fas fa-list"></i> All Transactions</button>
+    </div>
+    <!-- Filters -->
+    <div class="filt-row" style="flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+      <span class="filt-lbl"><i class="fas fa-filter" style="margin-right:4px;opacity:.5;"></i>Filter</span>
+      <div class="filt-sep"></div>
+      <select id="stkRptEngFilter" onchange="renderStockTxnReport()"><option value="">All Engineers</option></select>
+      <select id="stkRptCustFilter" onchange="renderStockTxnReport()"><option value="">All Customers</option></select>
+      <select id="stkRptItemFilter" onchange="renderStockTxnReport()"><option value="">All Items</option></select>
+      <select id="stkRptTypeFilter" onchange="renderStockTxnReport()">
+        <option value="">All Types</option>
+        <option value="out">Stock Out</option>
+        <option value="in">Stock In</option>
+      </select>
+      <div class="filt-date-grp">
+        <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
+        <input type="date" id="stkRptFrom" onchange="renderStockTxnReport()">
+        <span>→</span>
+        <input type="date" id="stkRptTo" onchange="renderStockTxnReport()">
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="clearStkTxnFilters()" style="margin-left:auto;font-size:.75em;"><i class="fas fa-times-circle"></i> Clear</button>
+    </div>
+    <div class="stats" id="stkTxnRptStats" style="margin-bottom:14px;"></div>
+    <div id="stockTxnRptBody"></div>
+  </div>
+
   <!-- SUB: Stock Report -->
   <div class="rpt-panel" id="rpt-stock">
     <div class="btn-row" style="margin-bottom:13px;">
@@ -2375,6 +2429,29 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+
+<!-- ════ STOCK PICKER MODAL ════ -->
+<div class="modal-overlay" id="stockPickerModal" onclick="if(event.target===this)closeModal('stockPickerModal')">
+  <div class="modal" style="width:min(780px,96vw);max-height:88vh;display:flex;flex-direction:column;">
+    <div class="modal-title" style="background:linear-gradient(135deg,#166534,#15803d);color:#fff;border-radius:12px 12px 0 0;padding:14px 18px;">
+      <span style="font-size:1.05em;font-weight:800;"><i class="fas fa-boxes-stacked" style="margin-right:8px;"></i>Select Material from Stock</span>
+      <button class="modal-close" style="color:#fff;opacity:.8;" onclick="closeModal('stockPickerModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:14px 18px 8px;border-bottom:1px solid var(--line);">
+      <div class="combo" style="max-width:340px;">
+        <i class="fas fa-search carr" style="left:10px;right:auto;"></i>
+        <input type="text" id="stockPickerSearch" placeholder="Search item…" oninput="renderStockPicker()" style="padding-left:32px;font-size:.95em;">
+      </div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:10px 18px 18px;">
+      <div id="stockPickerList"></div>
+    </div>
+    <div style="padding:12px 18px;border-top:1px solid var(--line);background:var(--bg);border-radius:0 0 12px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="font-size:.85em;color:var(--ink3);"><i class="fas fa-info-circle" style="margin-right:5px;"></i>Click an item to add it to the order. Set quantity in the order items table.</div>
+      <button class="btn btn-outline" onclick="closeModal('stockPickerModal')"><i class="fas fa-times"></i> Close</button>
+    </div>
+  </div>
+</div>
 </div><!-- /appShell -->
 
 <!-- PAY MODAL -->
@@ -4167,7 +4244,7 @@ function renderStockTxns(){
   if(to)   txns=txns.filter(t=>t.date<=to);
 
   if(!txns.length){
-    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--ink3);">No transactions found.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink3);">No transactions found.</td></tr>`;
     return;
   }
   const typeStyle={in:'background:#dcfce7;color:#16a34a;',out:'background:#fee2e2;color:#dc2626;',adjust:'background:#dbeafe;color:#1d4ed8;'};
@@ -4177,9 +4254,12 @@ function renderStockTxns(){
     <td><strong>${esc(t.itemName)}</strong></td>
     <td><span style="border-radius:8px;padding:2px 9px;font-size:.75em;font-weight:700;${typeStyle[t.type]||''}">${typeLabel[t.type]||t.type}</span></td>
     <td style="font-weight:700;color:${t.type==='out'?'#dc2626':t.type==='in'?'#16a34a':'#1d4ed8'};">${t.type==='out'?'-':'+'}${t.qty}</td>
-    <td>${t.ref?`<span class="tag tag-acc">${esc(t.ref)}</span>`:'—'}</td>
-    <td style="color:var(--ink3);font-size:.82em;">${esc(t.notes||'—')}</td>
-    <td style="font-size:.8em;color:var(--ink3);">${esc(t.by||'')}</td>
+    <td style="font-size:.9em;">${t.custName?`<strong>${esc(t.custName)}</strong>`:'<span style="color:var(--ink4);">—</span>'}</td>
+    <td style="font-size:.85em;">${t.purpose?`<span style="background:#f0fdf4;color:#166534;border-radius:6px;padding:2px 7px;font-weight:600;">${esc(t.purpose)}</span>`:'<span style="color:var(--ink4);">—</span>'}</td>
+    <td style="font-size:.9em;color:#0369a1;">${t.challan?esc(t.challan):'—'}</td>
+    <td style="font-size:.9em;color:#0369a1;">${t.ref?`<span class="tag tag-acc">${esc(t.ref)}</span>`:'—'}</td>
+    <td style="color:var(--ink3);font-size:.88em;">${esc(t.notes||'—')}</td>
+    <td style="font-size:.88em;">${esc(t.by||'')}</td>
   </tr>`).join('');
 }
 
@@ -4258,6 +4338,13 @@ function delStockItem(id){
 }
 
 // ── Stock In / Out Transaction Form ──
+function setStkPurpose(type){
+  g('stkTxnPurpose').value=type;
+  document.querySelectorAll('#stkp-amc,#stkp-sale,#stkp-other').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.type===type);
+  });
+}
+
 function showStockTxnForm(type, preItemId){
   hideStockItemForm();
   g('stkTxnType').value=type;
@@ -4265,8 +4352,25 @@ function showStockTxnForm(type, preItemId){
   g('stkTxnQty').value='';
   g('stkTxnRef').value='';
   g('stkTxnNotes').value='';
+  if(g('stkTxnChallan')) g('stkTxnChallan').value='';
+  if(g('stkTxnPurpose')) g('stkTxnPurpose').value='AMC Replacement';
+  setStkPurpose('AMC Replacement');
 
+  // Show/hide Stock Out extra fields (customer + purpose)
+  const extraFields = g('stkOutExtraFields');
   const isIn = type==='in';
+  if(extraFields) extraFields.style.display = isIn ? 'none' : '';
+
+  // Populate customer dropdown for Stock Out
+  if(!isIn){
+    const custSel = g('stkTxnCust');
+    if(custSel){
+      const custs = D.ac_customers||[];
+      custSel.innerHTML='<option value="">-- Select Customer --</option>'
+        + custs.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+    }
+  }
+
   const title = g('stockTxnTitle');
   title.innerHTML=`<i class="fas fa-${isIn?'arrow-down':'arrow-up'}" style="margin-right:7px;color:${isIn?'var(--green)':'var(--red)'};"></i>${isIn?'Stock In — Receive Materials':'Stock Out — Issue Materials'}`;
   const btn = g('stkTxnSaveBtn');
@@ -4284,7 +4388,6 @@ function showStockTxnForm(type, preItemId){
   showCurrentStock();
   window.scrollTo({top:g('stockTxnForm').offsetTop-80,behavior:'smooth'});
 }
-
 function hideStockTxnForm(){ g('stockTxnForm').style.display='none'; }
 
 function showCurrentStock(){
@@ -4322,10 +4425,13 @@ function saveStockTxn(){
   D.stock_txns.push({
     id: uid(), itemId, itemName: item?.name||'',
     type, qty, date,
-    ref:   g('stkTxnRef').value.trim(),
-    notes: g('stkTxnNotes').value.trim(),
-    by:    D.currentUser?.name||'',
-    at:    new Date().toISOString()
+    ref:     g('stkTxnRef').value.trim(),
+    challan: g('stkTxnChallan')?.value.trim()||'',
+    custName: type==='out' ? (g('stkTxnCust')?.value||'') : '',
+    purpose:  type==='out' ? (g('stkTxnPurpose')?.value||'') : '',
+    notes:   g('stkTxnNotes').value.trim(),
+    by:      D.currentUser?.name||'',
+    at:      new Date().toISOString()
   });
   hideStockTxnForm();
   saveData();
@@ -4333,7 +4439,6 @@ function saveStockTxn(){
   const typeLabel = type==='in'?'Stock In recorded':'Stock Out recorded';
   showSuccessToast(`✓ ${typeLabel} — ${item?.name} (${qty} ${item?.unit||''})`, type==='in'?'var(--green)':'var(--red)');
 }
-
 // ── Export stock to Excel-friendly CSV ──
 function exportStockExcel(){
   if(!D.stock_items?.length){ alert('No stock items to export'); return; }
@@ -4921,7 +5026,7 @@ function renderSvcStockView(){
   const txns=(D.stock_txns||[]).slice().reverse().slice(0,30);
   const txEl=g('svcStockTxns');
   if(txEl) txEl.innerHTML=!txns.length?'<div class="empty"><i class="fas fa-history"></i><p>No transactions yet</p></div>':
-    `<div style="overflow-x:auto;"><table class="rpt-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead><tbody>
+    `<div style="overflow-x:auto;"><table class="rpt-table"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Customer</th><th>Purpose</th><th>Challan</th><th>Reference</th><th>Notes</th><th>By</th></tr></thead><tbody>
     ${txns.map(t=>`<tr><td style="font-size:.92em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
     <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.87em;font-weight:700;">${t.type==='in'?'▼ Stock In':'▲ Stock Out'}</span></td>
     <td class="num" style="font-weight:700;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
@@ -8027,30 +8132,87 @@ function renderMgmtIncSummary(){
 
 function renderMgmtAccSummary(){
   const invs=D.ac_invoices||[];
-  const total=invs.reduce((s,i)=>s+(i.total||0),0);
-  const collected=invs.reduce((s,i)=>s+getPayd(i.id),0);
-  const outstanding=total-collected;
-  const overdue=invs.filter(i=>i.dueDate&&i.dueDate<today()&&getOut(i.id)>0).reduce((s,i)=>s+getOut(i.id),0);
+  const custs=D.ac_customers||[];
+  const payments=D.ac_payments||[];
+
+  // Summary totals
+  const totalBilled=invs.reduce((s,i)=>s+(i.total||0),0);
+  const totalCollected=invs.reduce((s,i)=>s+getPaid(i.id),0);
+  const totalOutstanding=invs.reduce((s,i)=>s+getOut(i.id),0);
+  const totalOverdue=invs.filter(i=>i.dueDate&&i.dueDate<today()&&getOut(i.id)>0).reduce((s,i)=>s+getOut(i.id),0);
   const pendOrd=(D.orders||[]).filter(o=>o.status==='pending').length;
+  const thisMonth=today().substring(0,7);
+  const collectedThisMonth=payments.filter(p=>p.date&&p.date.startsWith(thisMonth)).reduce((s,p)=>s+p.amount,0);
+
+  // Aging buckets: 0-30, 31-60, 61-90, 90+ days overdue
+  const todayStr=today();
+  function daysOld(dueDate){if(!dueDate)return 0;const d=(new Date(todayStr)-new Date(dueDate))/(86400000);return Math.max(0,Math.floor(d));}
+  const aging={a30:0,a60:0,a90:0,a90p:0};
+  invs.forEach(i=>{
+    const out=getOut(i.id);
+    if(out<=0||!i.dueDate||i.dueDate>=todayStr)return;
+    const d=daysOld(i.dueDate);
+    if(d<=30)aging.a30+=out;
+    else if(d<=60)aging.a60+=out;
+    else if(d<=90)aging.a90+=out;
+    else aging.a90p+=out;
+  });
+
+  // Customer-level summary
+  const custRows=[...new Set(invs.map(i=>i.custName))].map(cu=>{
+    const cuInvs=invs.filter(i=>i.custName===cu);
+    const cuTotal=cuInvs.reduce((s,i)=>s+(i.total||0),0);
+    const cuColl=cuInvs.reduce((s,i)=>s+getPaid(i.id),0);
+    const cuOut=cuInvs.reduce((s,i)=>s+getOut(i.id),0);
+    const cuOverdue=cuInvs.filter(i=>i.dueDate&&i.dueDate<todayStr&&getOut(i.id)>0).reduce((s,i)=>s+getOut(i.id),0);
+    const cuAdv=getAdvBal(cu);
+    return {cu,cuTotal,cuColl,cuOut,cuOverdue,cuAdv};
+  }).filter(r=>r.cuTotal>0).sort((a,b)=>b.cuOut-a.cuOut);
+
   g('mgmtRptBody').innerHTML=`
     <div class="stats" style="margin-bottom:16px;">
-      <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Invoiced</div><div class="stat-value" style="font-size:.8em;">${fmt(total)}</div></div>
-      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Collected</div><div class="stat-value" style="font-size:.8em;">${fmt(collected)}</div></div>
-      <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Outstanding</div><div class="stat-value" style="font-size:.8em;">${fmt(outstanding)}</div></div>
-      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Overdue</div><div class="stat-value" style="font-size:.8em;">${fmt(overdue)}</div></div>
-      <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Pending Orders</div><div class="stat-value">${pendOrd}</div></div>
+      <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Billed</div><div class="stat-value" style="font-size:.82em;">${fmt(totalBilled)}</div></div>
+      <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Payment Received</div><div class="stat-value" style="font-size:.82em;">${fmt(totalCollected)}</div></div>
+      <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Outstanding</div><div class="stat-value" style="font-size:.82em;">${fmt(totalOutstanding)}</div></div>
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Overdue</div><div class="stat-value" style="font-size:.82em;">${fmt(totalOverdue)}</div></div>
+      <div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">This Month</div><div class="stat-value" style="font-size:.82em;">${fmt(collectedThisMonth)}</div></div>
+      <div class="stat s-purple"><div class="stat-bar"></div><div class="stat-label">Pending Orders</div><div class="stat-value">${pendOrd}</div></div>
     </div>
-    <div class="sdiv">Customer Outstanding</div>
+
+    <!-- Aging Analysis -->
+    <div class="sdiv" style="margin-bottom:10px;"><i class="fas fa-clock" style="margin-right:6px;color:var(--amber);"></i>Overdue Aging Analysis</div>
+    <div class="stats" style="margin-bottom:16px;">
+      <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">1–30 Days</div><div class="stat-value" style="font-size:.82em;">${fmt(aging.a30)}</div></div>
+      <div class="stat s-red" style="--c:220,38,38;"><div class="stat-bar"></div><div class="stat-label">31–60 Days</div><div class="stat-value" style="font-size:.82em;">${fmt(aging.a60)}</div></div>
+      <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">61–90 Days</div><div class="stat-value" style="font-size:.82em;">${fmt(aging.a90)}</div></div>
+      <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">90+ Days</div><div class="stat-value" style="font-size:.82em;color:#991b1b;">${fmt(aging.a90p)}</div></div>
+    </div>
+
+    <!-- Customer Outstanding Table -->
+    <div class="sdiv" style="margin-bottom:10px;"><i class="fas fa-users" style="margin-right:6px;color:var(--acc);"></i>Customer Outstanding</div>
     <div style="overflow-x:auto;"><table class="rpt-table">
-      <thead><tr><th>Customer</th><th>Invoiced</th><th>Collected</th><th>Outstanding</th></tr></thead>
-      <tbody>${[...new Set(invs.map(i=>i.customer))].map(cu=>{
-        const cuInvs=invs.filter(i=>i.customer===cu);
-        const cuTotal=cuInvs.reduce((s,i)=>s+(i.total||0),0);
-        const cuColl=cuInvs.reduce((s,i)=>s+getPayd(i.id),0);
-        const cuOut=cuTotal-cuColl;
-        return cuOut>0?`<tr><td><strong>${esc(cu)}</strong></td><td class="num">${fmt(cuTotal)}</td><td class="num" style="color:var(--green);">${fmt(cuColl)}</td><td class="num" style="color:var(--red);font-weight:800;">${fmt(cuOut)}</td></tr>`:'';
-      }).join('')}</tbody>
-    </table></div>`;
+      <thead><tr><th>Customer</th><th>Total Billed (₹)</th><th>Payment Received (₹)</th><th>Outstanding (₹)</th><th>Overdue (₹)</th><th>Advance Bal (₹)</th></tr></thead>
+      <tbody>${!custRows.length?'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--ink3);">No invoice data</td></tr>':custRows.map(r=>`<tr>
+        <td><strong>${esc(r.cu)}</strong></td>
+        <td class="num">${fmt(r.cuTotal)}</td>
+        <td class="num" style="color:var(--green);">${fmt(r.cuColl)}</td>
+        <td class="num" style="color:${r.cuOut>0?'var(--red)':'var(--green)'};font-weight:${r.cuOut>0?'800':'400'};">${r.cuOut>0?fmt(r.cuOut):'Cleared'}</td>
+        <td class="num" style="color:${r.cuOverdue>0?'#dc2626':''};font-weight:${r.cuOverdue>0?'700':'400'};">${r.cuOverdue>0?fmt(r.cuOverdue):'—'}</td>
+        <td class="num" style="color:${r.cuAdv>0?'var(--acc)':''}">${r.cuAdv>0?fmt(r.cuAdv):'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+      <button class="btn btn-outline btn-sm" onclick="exportMgmtAccExcel()"><i class="fas fa-file-excel"></i> Export</button>
+    </div>`;
+}
+
+function exportMgmtAccExcel(){
+  const invs=D.ac_invoices||[];
+  const rows=invs.map(i=>({'Customer':i.custName||'','Invoice':i.no||'','Date':i.date||'','Due Date':i.dueDate||'','Total Billed':i.total.toFixed(2),'Payment Received':getPaid(i.id).toFixed(2),'Outstanding':getOut(i.id).toFixed(2),'Status':getSt(i.id)}));
+  if(!rows.length){alert('No invoice data to export');return;}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Accounts Summary');
+  XLSX.writeFile(wb,`acenet_acc_mgmt_${today()}.xlsx`);
 }
 
 function renderMgmtStockSummary(){
@@ -8200,7 +8362,7 @@ function switchRptTab(tabId,btn){
   if(tabId==='rpt-incentive') renderRptIncentive();
   if(tabId==='rpt-conveyance'){renderRptConveyance();renderRptAdvances();}
   if(tabId==='rpt-send-mkt'){renderSentMktHistory();populateSmktEngDropdown();}
-  if(tabId==='rpt-stock') renderStockReport();
+  if(tabId==='rpt-stock') renderStockReport(); if(tabId==='rpt-stock-txn') renderStockTxnReport();
   if(tabId==='rpt-financial') renderAccFinancialRpt();
 }
 
@@ -8390,6 +8552,272 @@ function exportStockReportExcel(){
   const txns=(D.stock_txns||[]).map(t=>({'Date':t.date,'Item':t.item,'Type':t.type,'Qty':t.qty,'Notes':t.notes||'','By':t.by||''}));
   xlsxExport([{name:'Stock',rows},{name:'Transactions',rows:txns}],'acenet_stock_report_'+today());
 }
+
+// ════════════════════════════════════════════════════════════════
+// STOCK PICKER MODAL (for Order Checklist)
+// ════════════════════════════════════════════════════════════════
+function openStockPickerModal(){
+  renderStockPicker();
+  openModal('stockPickerModal');
+}
+
+function renderStockPicker(){
+  const search=(g('stockPickerSearch')?.value||'').toLowerCase();
+  const items=(D.stock_items||[]).filter(i=>{
+    if(search && !i.name.toLowerCase().includes(search) && !(i.category||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+  const el=g('stockPickerList');if(!el)return;
+  if(!items.length){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--ink3);font-size:1em;"><i class="fas fa-boxes-stacked" style="font-size:2.5em;display:block;margin-bottom:10px;opacity:.25;"></i>No stock items found.</div>';
+    return;
+  }
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:6px;">
+    ${items.map(i=>{
+      const qty=stockQty(i.id);
+      const isOut=qty<=0;
+      const isLow=qty>0&&qty<=(i.reorderLevel||i.reorder||0);
+      const statusColor=isOut?'#dc2626':isLow?'#d97706':'#16a34a';
+      const statusBg=isOut?'#fee2e2':isLow?'#fef9c3':'#dcfce7';
+      const statusLabel=isOut?'Out of Stock':isLow?'Low Stock':'In Stock';
+      return `<div style="border:2px solid ${isOut?'#fecaca':isLow?'#fde68a':'#bbf7d0'};border-radius:12px;padding:14px 16px;background:${isOut?'#fff5f5':isLow?'#fffbeb':'#f0fdf4'};cursor:${isOut?'not-allowed':'pointer'};transition:box-shadow .15s,transform .1s;${isOut?'opacity:.6':''}" 
+        ${isOut?'title="Out of stock — cannot add"':''} onclick="${isOut?'':(`pickStockItem(\'${i.id}\',\'${i.name.replace(/'/g,"\\'")}\',${qty},\'${i.unit||'Nos'}\')`)}">
+        <div style="font-size:1.05em;font-weight:800;color:var(--ink);margin-bottom:6px;">${esc(i.name)}</div>
+        <div style="font-size:.88em;color:var(--ink3);margin-bottom:8px;">${esc(i.category||'General')} · ${esc(i.unit||'Nos')}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          <div style="font-size:1.3em;font-weight:900;color:${statusColor};">${qty.toFixed(0)} <span style="font-size:.65em;font-weight:600;">${esc(i.unit||'Nos')}</span></div>
+          <span style="font-size:.8em;font-weight:700;background:${statusBg};color:${statusColor};padding:3px 9px;border-radius:8px;">${statusLabel}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function pickStockItem(itemId, itemName, availableQty, unit){
+  // Add this item as a new row in the Order Items table
+  // First check if item already in order
+  const rows=[...document.querySelectorAll('#svOrdItemsBody tr')];
+  const existingInput=rows.find(r=>r.querySelector('.om')?.value===itemName);
+  if(existingInput){
+    // Just increment qty
+    const qtyInput=existingInput.querySelector('.oq');
+    if(qtyInput){qtyInput.value=(parseFloat(qtyInput.value)||0)+1;calcSvOrdTotals();}
+    closeModal('stockPickerModal');
+    showSuccessToast('✓ '+itemName+' quantity increased','var(--green)');
+    return;
+  }
+  // Add as new row
+  addSvOrdItem();
+  // Fill in the last row's material name
+  const allRows=[...document.querySelectorAll('#svOrdItemsBody tr')];
+  const lastRow=allRows[allRows.length-1];
+  if(lastRow){
+    const matInput=lastRow.querySelector('.om');
+    if(matInput){matInput.value=itemName;}
+  }
+  closeModal('stockPickerModal');
+  showSuccessToast('✓ Added: '+itemName,'var(--green)');
+}
+
+// ════════════════════════════════════════════════════════════════
+// STOCK TRANSACTIONS REPORT (per engineer / per customer)
+// ════════════════════════════════════════════════════════════════
+let _stkTxnTab = 'eng';
+
+function switchStkTxnTab(tab){
+  _stkTxnTab=tab;
+  ['eng','cust','all'].forEach(t=>{
+    const btn=g('stkrpt-'+t+'-btn');
+    if(btn) btn.classList.toggle('active',t===tab);
+  });
+  renderStockTxnReport();
+}
+
+function clearStkTxnFilters(){
+  ['stkRptEngFilter','stkRptCustFilter','stkRptItemFilter','stkRptTypeFilter','stkRptFrom','stkRptTo'].forEach(id=>{
+    const el=g(id);if(el)el.value='';
+  });
+  renderStockTxnReport();
+}
+
+function renderStockTxnReport(){
+  const txns=D.stock_txns||[];
+
+  // Populate filter dropdowns
+  const engSel=g('stkRptEngFilter');
+  if(engSel&&engSel.options.length<=1){
+    [...new Set(txns.map(t=>t.by).filter(Boolean))].sort().forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;engSel.appendChild(o);});
+  }
+  const custSel=g('stkRptCustFilter');
+  if(custSel&&custSel.options.length<=1){
+    [...new Set(txns.map(t=>t.custName).filter(Boolean))].sort().forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;custSel.appendChild(o);});
+  }
+  const itemSel=g('stkRptItemFilter');
+  if(itemSel&&itemSel.options.length<=1){
+    [...new Set(txns.map(t=>t.itemName).filter(Boolean))].sort().forEach(i=>{const o=document.createElement('option');o.value=i;o.textContent=i;itemSel.appendChild(o);});
+  }
+
+  // Apply filters
+  const engF=g('stkRptEngFilter')?.value||'';
+  const custF=g('stkRptCustFilter')?.value||'';
+  const itemF=g('stkRptItemFilter')?.value||'';
+  const typeF=g('stkRptTypeFilter')?.value||'';
+  const from=g('stkRptFrom')?.value||'';
+  const to=g('stkRptTo')?.value||'';
+
+  let filtered=[...txns].sort((a,b)=>b.date.localeCompare(a.date));
+  if(engF)    filtered=filtered.filter(t=>t.by===engF);
+  if(custF)   filtered=filtered.filter(t=>t.custName===custF);
+  if(itemF)   filtered=filtered.filter(t=>t.itemName===itemF);
+  if(typeF)   filtered=filtered.filter(t=>t.type===typeF);
+  if(from)    filtered=filtered.filter(t=>t.date>=from);
+  if(to)      filtered=filtered.filter(t=>t.date<=to);
+
+  // Stats
+  const outTxns=filtered.filter(t=>t.type==='out');
+  const inTxns=filtered.filter(t=>t.type==='in');
+  const totalOut=outTxns.reduce((s,t)=>s+t.qty,0);
+  const totalIn=inTxns.reduce((s,t)=>s+t.qty,0);
+  const statEl=g('stkTxnRptStats');
+  if(statEl) statEl.innerHTML=`
+    <div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Txns</div><div class="stat-value">${filtered.length}</div></div>
+    <div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Stock Out Qty</div><div class="stat-value">${totalOut}</div></div>
+    <div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Stock In Qty</div><div class="stat-value">${totalIn}</div></div>
+    <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Unique Items</div><div class="stat-value">${new Set(filtered.map(t=>t.itemName)).size}</div></div>`;
+
+  const body=g('stockTxnRptBody');
+  if(!body)return;
+
+  if(!filtered.length){
+    body.innerHTML='<div class="empty"><i class="fas fa-boxes-stacked"></i><p>No transactions match your filters.</p></div>';
+    return;
+  }
+
+  if(_stkTxnTab==='eng'){
+    // GROUP BY ENGINEER
+    const engMap={};
+    filtered.forEach(t=>{
+      const e=t.by||'Unknown';
+      if(!engMap[e])engMap[e]={name:e,txns:[],totalOut:0,totalIn:0,items:new Set()};
+      engMap[e].txns.push(t);
+      if(t.type==='out')engMap[e].totalOut+=t.qty;
+      if(t.type==='in')engMap[e].totalIn+=t.qty;
+      engMap[e].items.add(t.itemName);
+    });
+    const engs=Object.values(engMap).sort((a,b)=>b.totalOut-a.totalOut);
+    body.innerHTML=engs.map(e=>`
+      <div style="margin-bottom:20px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,var(--svc),#0d9488);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="color:#fff;font-weight:800;font-size:1.05em;"><i class="fas fa-user-helmet-safety" style="margin-right:8px;opacity:.8;"></i>${esc(e.name)}</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <span style="color:#fff;font-size:.9em;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:8px;"><i class="fas fa-arrow-up" style="margin-right:4px;"></i>Out: <strong>${e.totalOut}</strong></span>
+            <span style="color:#fff;font-size:.9em;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:8px;"><i class="fas fa-arrow-down" style="margin-right:4px;"></i>In: <strong>${e.totalIn}</strong></span>
+            <span style="color:#fff;font-size:.9em;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:8px;"><i class="fas fa-box" style="margin-right:4px;"></i>Items: <strong>${e.items.size}</strong></span>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="rpt-table" style="font-size:.93em;">
+            <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Customer</th><th>Purpose</th><th>Challan</th><th>Reference</th><th>Notes</th></tr></thead>
+            <tbody>${e.txns.map(t=>`<tr>
+              <td style="white-space:nowrap;">${t.date}</td>
+              <td><strong>${esc(t.itemName)}</strong></td>
+              <td><span style="background:${t.type==='out'?'#fee2e2':'#dcfce7'};color:${t.type==='out'?'#991b1b':'#166534'};border-radius:7px;padding:2px 8px;font-size:.85em;font-weight:700;">${t.type==='out'?'▲ Stock Out':'▼ Stock In'}</span></td>
+              <td style="font-weight:800;color:${t.type==='out'?'var(--red)':'var(--green)'};">${t.type==='out'?'-':'+'}${t.qty}</td>
+              <td>${t.custName?esc(t.custName):'<span style="color:var(--ink4);">—</span>'}</td>
+              <td>${t.purpose?`<span style="background:#f0fdf4;color:#166534;border-radius:6px;padding:2px 7px;font-size:.85em;font-weight:600;">${esc(t.purpose)}</span>`:'<span style="color:var(--ink4);">—</span>'}</td>
+              <td style="color:#0369a1;">${t.challan?esc(t.challan):'—'}</td>
+              <td>${t.ref?`<span class="tag tag-acc" style="font-size:.85em;">${esc(t.ref)}</span>`:'—'}</td>
+              <td style="color:var(--ink3);">${esc(t.notes||'—')}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>`).join('');
+
+  } else if(_stkTxnTab==='cust'){
+    // GROUP BY CUSTOMER
+    const custMap={};
+    filtered.filter(t=>t.custName).forEach(t=>{
+      const c=t.custName;
+      if(!custMap[c])custMap[c]={name:c,txns:[],totalOut:0,items:new Set()};
+      custMap[c].txns.push(t);
+      if(t.type==='out')custMap[c].totalOut+=t.qty;
+      custMap[c].items.add(t.itemName);
+    });
+    const custs=Object.values(custMap).sort((a,b)=>b.totalOut-a.totalOut);
+    if(!custs.length){
+      body.innerHTML='<div class="empty"><i class="fas fa-building"></i><p>No transactions with customer data. Customer is only filled for Stock Out entries.</p></div>';
+      return;
+    }
+    body.innerHTML=custs.map(c=>`
+      <div style="margin-bottom:20px;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,var(--acc),#1d4ed8);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div style="color:#fff;font-weight:800;font-size:1.05em;"><i class="fas fa-building" style="margin-right:8px;opacity:.8;"></i>${esc(c.name)}</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <span style="color:#fff;font-size:.9em;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:8px;"><i class="fas fa-arrow-up" style="margin-right:4px;"></i>Total Out: <strong>${c.totalOut}</strong></span>
+            <span style="color:#fff;font-size:.9em;background:rgba(255,255,255,.15);padding:3px 10px;border-radius:8px;"><i class="fas fa-box" style="margin-right:4px;"></i>Items: <strong>${c.items.size}</strong></span>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="rpt-table" style="font-size:.93em;">
+            <thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Purpose</th><th>Challan</th><th>By (Engineer)</th><th>Reference</th><th>Notes</th></tr></thead>
+            <tbody>${c.txns.map(t=>`<tr>
+              <td style="white-space:nowrap;">${t.date}</td>
+              <td><strong>${esc(t.itemName)}</strong></td>
+              <td style="font-weight:800;color:var(--red);">-${t.qty}</td>
+              <td>${t.purpose?`<span style="background:#f0fdf4;color:#166534;border-radius:6px;padding:2px 7px;font-size:.85em;font-weight:600;">${esc(t.purpose)}</span>`:'<span style="color:var(--ink4);">—</span>'}</td>
+              <td style="color:#0369a1;">${t.challan?esc(t.challan):'—'}</td>
+              <td><strong>${esc(t.by||'—')}</strong></td>
+              <td>${t.ref?`<span class="tag tag-acc" style="font-size:.85em;">${esc(t.ref)}</span>`:'—'}</td>
+              <td style="color:var(--ink3);">${esc(t.notes||'—')}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        </div>
+      </div>`).join('');
+
+  } else {
+    // ALL TRANSACTIONS flat table
+    body.innerHTML=`<div style="overflow-x:auto;"><table class="rpt-table" style="font-size:.93em;">
+      <thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Customer</th><th>Purpose</th><th>Challan</th><th>By (Engineer)</th><th>Reference</th><th>Notes</th></tr></thead>
+      <tbody>${filtered.map(t=>`<tr>
+        <td style="white-space:nowrap;">${t.date}</td>
+        <td><strong>${esc(t.itemName)}</strong></td>
+        <td><span style="background:${t.type==='out'?'#fee2e2':'#dcfce7'};color:${t.type==='out'?'#991b1b':'#166534'};border-radius:7px;padding:2px 8px;font-size:.85em;font-weight:700;">${t.type==='out'?'▲ Stock Out':'▼ Stock In'}</span></td>
+        <td style="font-weight:800;color:${t.type==='out'?'var(--red)':'var(--green)'};">${t.type==='out'?'-':'+'}${t.qty}</td>
+        <td>${t.custName?`<strong>${esc(t.custName)}</strong>`:'<span style="color:var(--ink4);">—</span>'}</td>
+        <td>${t.purpose?`<span style="background:#f0fdf4;color:#166534;border-radius:6px;padding:2px 7px;font-size:.85em;font-weight:600;">${esc(t.purpose)}</span>`:'<span style="color:var(--ink4);">—</span>'}</td>
+        <td style="color:#0369a1;">${t.challan?esc(t.challan):'—'}</td>
+        <td><strong>${esc(t.by||'—')}</strong></td>
+        <td>${t.ref?`<span class="tag tag-acc" style="font-size:.85em;">${esc(t.ref)}</span>`:'—'}</td>
+        <td style="color:var(--ink3);">${esc(t.notes||'—')}</td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+  }
+}
+
+function exportStockTxnReportExcel(){
+  const txns=D.stock_txns||[];
+  const engF=g('stkRptEngFilter')?.value||'';
+  const custF=g('stkRptCustFilter')?.value||'';
+  const itemF=g('stkRptItemFilter')?.value||'';
+  const typeF=g('stkRptTypeFilter')?.value||'';
+  const from=g('stkRptFrom')?.value||'';
+  const to=g('stkRptTo')?.value||'';
+  let filtered=[...txns].sort((a,b)=>b.date.localeCompare(a.date));
+  if(engF)    filtered=filtered.filter(t=>t.by===engF);
+  if(custF)   filtered=filtered.filter(t=>t.custName===custF);
+  if(itemF)   filtered=filtered.filter(t=>t.itemName===itemF);
+  if(typeF)   filtered=filtered.filter(t=>t.type===typeF);
+  if(from)    filtered=filtered.filter(t=>t.date>=from);
+  if(to)      filtered=filtered.filter(t=>t.date<=to);
+  const rows=filtered.map(t=>({
+    'Date':t.date,'Item':t.itemName||'','Type':t.type==='out'?'Stock Out':'Stock In',
+    'Qty':t.qty,'Customer':t.custName||'','Purpose':t.purpose||'',
+    'Challan No':t.challan||'','By (Engineer)':t.by||'',
+    'Reference':t.ref||'','Notes':t.notes||''
+  }));
+  xlsxExport([{name:'Stock Transactions',rows}],'acenet_stock_txn_'+today());
+}
+
 
 // ── Send to Service Engineer ─────────────────────────────────────────────
 function populateSmktEngDropdown(){
