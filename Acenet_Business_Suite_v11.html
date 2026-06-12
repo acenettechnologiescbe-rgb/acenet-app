@@ -2453,6 +2453,71 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
   </div>
 </div>
+
+<!-- ════ SERVICE STOCK OUT MODAL ════ -->
+<div class="modal-overlay" id="svcStockOutModal" onclick="if(event.target===this)closeModal('svcStockOutModal')">
+  <div class="modal" style="width:min(620px,96vw);">
+    <div class="modal-title" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:12px 12px 0 0;padding:14px 18px;">
+      <span style="font-size:1.05em;font-weight:800;"><i class="fas fa-arrow-up" style="margin-right:8px;"></i>Stock Out — Issue Material</span>
+      <button class="modal-close" style="color:#fff;opacity:.8;" onclick="closeModal('svcStockOutModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:18px;">
+      <div class="g2" style="margin-bottom:13px;">
+        <div class="fg">
+          <label>Item *</label>
+          <select id="svcSoItem" onchange="svcSoItemChanged()" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+            <option value="">-- Select Item --</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Quantity *</label>
+          <input type="number" id="svcSoQty" value="1" min="1" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+          <div id="svcSoAvail" style="margin-top:4px;font-size:.85em;font-weight:700;display:none;"></div>
+        </div>
+      </div>
+      <div class="g2" style="margin-bottom:13px;">
+        <div class="fg">
+          <label>Date *</label>
+          <input type="date" id="svcSoDate" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+        </div>
+        <div class="fg">
+          <label>Customer Name</label>
+          <select id="svcSoCust" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+            <option value="">-- Select Customer --</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:13px;">
+        <label>Purpose *</label>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:5px;">
+          <button type="button" class="call-type-btn active" id="svcso-amc" data-type="AMC Replacement" onclick="setSvcSoPurpose('AMC Replacement')" style="font-size:.82em;padding:7px 12px;"><i class="fas fa-shield-halved"></i> AMC Replacement</button>
+          <button type="button" class="call-type-btn" id="svcso-asc" data-type="ASC Replacement" onclick="setSvcSoPurpose('ASC Replacement')" style="font-size:.82em;padding:7px 12px;"><i class="fas fa-wrench"></i> ASC Replacement</button>
+          <button type="button" class="call-type-btn" id="svcso-sale" data-type="For Sale" onclick="setSvcSoPurpose('For Sale')" style="font-size:.82em;padding:7px 12px;"><i class="fas fa-cart-shopping"></i> For Sale</button>
+          <button type="button" class="call-type-btn" id="svcso-other" data-type="Other" onclick="setSvcSoPurpose('Other')" style="font-size:.82em;padding:7px 12px;"><i class="fas fa-ellipsis"></i> Other</button>
+        </div>
+        <input type="hidden" id="svcSoPurpose" value="AMC Replacement">
+      </div>
+      <div class="g2" style="margin-bottom:13px;">
+        <div class="fg">
+          <label>Delivery Challan No</label>
+          <input type="text" id="svcSoDC" placeholder="DC / Challan number" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+        </div>
+        <div class="fg">
+          <label>Reference (Invoice / Order No)</label>
+          <input type="text" id="svcSoRef" placeholder="Optional reference" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:18px;">
+        <label>Notes</label>
+        <input type="text" id="svcSoNotes" placeholder="Optional notes" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+      </div>
+      <div class="btn-row">
+        <button class="btn" style="background:var(--red);color:#fff;" onclick="saveSvcStockOut()"><i class="fas fa-arrow-up"></i> Save Stock Out</button>
+        <button class="btn btn-outline" onclick="closeModal('svcStockOutModal')"><i class="fas fa-times"></i> Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 </div><!-- /appShell -->
 
 <!-- PAY MODAL -->
@@ -2686,6 +2751,7 @@ function fmt(n){return '₹'+Math.abs(n||0).toFixed(2);}
 function J(v){try{return v?JSON.parse(v):null;}catch{return null;}}
 function closeEl(id){const e=g(id);if(e)e.style.display='none';}
 // FIXED modal close function
+function openModal(id){const e=document.getElementById(id);if(e)e.classList.add('on');}
 function closeModal(id){const e=document.getElementById(id);if(e)e.classList.remove('on');}
 
 function setRoleCSS(role){
@@ -5062,18 +5128,72 @@ function quickStockIn(itemId,itemName){
   saveData();renderSvcStockView();showSuccessToast(`✓ ${qty} ${item.unit||'units'} added to ${item.name}`,'var(--green)');
 }
 
-function quickStockOut(itemId,itemName){
+function openSvcStockOutModal(preItemId){
+  const items=D.stock_items||[];
+  if(!items.length){showSuccessToast('No stock items. Ask Accounts to add items.','var(--amber)');return;}
+  const sel=g('svcSoItem');
+  sel.innerHTML='<option value="">-- Select Item --</option>'
+    +items.map(i=>{const q=stockQty(i.id);return`<option value="${i.id}"${preItemId===i.id?' selected':''}>${esc(i.name)} — ${q.toFixed(2)} ${esc(i.unit||'Nos')} available</option>`;}).join('');
+  if(preItemId)sel.value=preItemId;
+  const custSel=g('svcSoCust');
+  custSel.innerHTML='<option value="">-- Select Customer --</option>'
+    +(D.ac_customers||[]).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  g('svcSoDate').value=today();
+  g('svcSoQty').value=1;
+  g('svcSoRef').value='';g('svcSoDC').value='';g('svcSoNotes').value='';
+  setSvcSoPurpose('AMC Replacement');
+  svcSoItemChanged();
+  openModal('svcStockOutModal');
+}
+
+function svcSoItemChanged(){
+  const itemId=g('svcSoItem').value;
+  const avail=g('svcSoAvail');
+  if(!itemId){if(avail)avail.style.display='none';return;}
+  const qty=stockQty(itemId);
+  const item=D.stock_items.find(i=>i.id===itemId);
+  if(avail){
+    avail.style.display='block';
+    avail.style.color=qty<=0?'var(--red)':qty<=(item?.reorder||item?.reorderLevel||0)?'var(--amber)':'var(--green)';
+    avail.textContent='Available: '+qty.toFixed(2)+' '+(item?.unit||'Nos');
+  }
+}
+
+function setSvcSoPurpose(type){
+  if(g('svcSoPurpose'))g('svcSoPurpose').value=type;
+  document.querySelectorAll('#svcso-amc,#svcso-asc,#svcso-sale,#svcso-other').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.type===type);
+  });
+}
+
+function saveSvcStockOut(){
+  const itemId=g('svcSoItem').value;
+  const qty=parseFloat(g('svcSoQty').value)||0;
+  const date=g('svcSoDate').value;
+  if(!itemId){alert('Please select an item');return;}
+  if(!qty||qty<=0){alert('Enter a valid quantity');return;}
+  if(!date){alert('Please select a date');return;}
   const item=D.stock_items.find(i=>i.id===itemId);if(!item)return;
   const currentQty=stockQty(itemId);
-  const qty=parseInt(prompt(`Stock OUT — ${itemName}\nAvailable: ${currentQty.toFixed(2)}\nEnter quantity to issue:`));
-  if(!qty||qty<=0)return;
-  if(qty>currentQty){alert(`Only ${currentQty.toFixed(2)} available`);return;}
-  const notes=prompt('Purpose / Notes (optional):');
-  item.lastMovement=today();
+  if(qty>currentQty){alert('Only '+currentQty.toFixed(2)+' '+( item.unit||'units')+' available');return;}
   if(!D.stock_txns)D.stock_txns=[];
-  D.stock_txns.push({id:uid(),date:today(),itemName:item.name,itemId,type:'out',qty,ref:'Service Stock Out',notes:notes||'',by:D.currentUser?.name||'Service'});
-  saveData();renderSvcStockView();showSuccessToast(`✓ ${qty} ${item.unit||'units'} issued from ${item.name}`,'var(--svc)');
+  D.stock_txns.push({
+    id:uid(),date,itemId,itemName:item.name,type:'out',qty,
+    custName:g('svcSoCust').value||'',
+    purpose:g('svcSoPurpose').value||'',
+    challan:g('svcSoDC').value.trim(),
+    ref:g('svcSoRef').value.trim(),
+    notes:g('svcSoNotes').value.trim(),
+    by:D.currentUser?.name||'Service',
+    at:new Date().toISOString()
+  });
+  item.lastMovement=date;
+  saveData();closeModal('svcStockOutModal');renderSvcStockView();
+  showSuccessToast('✓ '+qty+' '+( item.unit||'units')+' issued — '+item.name,'var(--red)');
 }
+
+function quickStockOut(itemId,itemName){openSvcStockOutModal(itemId);}
+function showStockOutForm(){openSvcStockOutModal('');}
 
 function showSvcAddItemForm(){
   const name=prompt('Item Name:');if(!name)return;
@@ -7033,6 +7153,7 @@ function renderSvcOrders(){
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.total)}</div>
             <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
+            ${o.status==='pending'?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editSvcOrder('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--svc);color:var(--svc);"><i class="fas fa-edit"></i> Edit</button>`:''}
           </div>
         </div>
       </div>
