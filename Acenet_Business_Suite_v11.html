@@ -5472,65 +5472,47 @@ function exportCustomerWiseReport(selectedOnly){
     selectedCusts=new Set([...document.querySelectorAll('.cust-chk:checked')].map(c=>c.dataset.cust));
     if(!selectedCusts.size){alert('Please select at least one customer to export.');return;}
   }
-  const custMap={};
-  calls.forEach(c=>{
-    const cu=c.customer||'Unknown';
-    if(selectedOnly&&!selectedCusts.has(cu)) return;
-    if(!custMap[cu])custMap[cu]={Customer:cu,Total:0,Completed:0,Pending:0,'In Progress':0,Escalated:0,'AMC':0,'ASC':0,'Per Call':0,Products:new Set()};
-    custMap[cu].Total++;
-    if(c.status==='completed')custMap[cu].Completed++;
-    if(c.status==='pending')custMap[cu].Pending++;
-    if(c.status==='in-progress')custMap[cu]['In Progress']++;
-    if(c.status==='escalated')custMap[cu].Escalated++;
-    const ct=c.callType||'AMC';
-    if(ct==='AMC')custMap[cu].AMC++;
-    else if(ct==='ASC')custMap[cu].ASC++;
-    else custMap[cu]['Per Call']++;
-    if(c.product)custMap[cu].Products.add(c.product);
-  });
-  const filtCalls=selectedOnly?calls.filter(c=>selectedCusts.has(c.customer||'Unknown')):calls;
-  // Customer Summary — full details
-  const summaryRows=Object.values(custMap).sort((a,b)=>b.Total-a.Total).map(r=>{
-    const cm=(D.ac_customers||[]).find(c=>c.name===r.Customer)||{};
-    return {
-      'Customer':r.Customer,
-      'Phone':cm.phone||'',
-      'City':cm.city||'',
-      'Contract Type':cm.contractType||'',
-      'GSTIN':cm.gstin||'',
-      'Total Calls':r.Total,
-      'Completed':r.Completed,
-      'Pending':r.Pending,
-      'In Progress':r['In Progress'],
-      'Escalated':r.Escalated,
-      'AMC Calls':r.AMC,
-      'ASC Calls':r.ASC,
-      'Per Call Calls':r['Per Call'],
-      'Products':[ ...r.Products].join(', ')||'—',
-      'Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'
-    };
-  });
-  // Calls Detail — full details including solution/notes
-  const detailRows=filtCalls.map(c=>({
-    'Customer':c.customer||'Unknown',
-    'Call ID':c.no,
-    'Date':c.date||'',
-    'Engineer':c.engineer||'',
-    'Call Type':c.callType||'AMC',
-    'Product':c.product||'',
-    'Priority':c.priority||'Normal',
-    'Status':c.status,
-    'Issue / Complaint':c.issue||'',
-    'Solution / Resolution':c.resolution||'',
-    'Notes':c.notes||'',
-    'ETA':c.eta||'',
-    'Phone':c.phone||'',
-    'Location':c.location||''
-  }));
-  xlsxExport([{name:'Customer Summary',rows:summaryRows},{name:'Calls Detail',rows:detailRows}],
-    'acenet_cust_'+(selectedOnly?'selected_':'')+today());
-}
+  const filtCalls=selectedOnly
+    ? calls.filter(c=>selectedCusts.has(c.customer||'Unknown'))
+    : calls;
+  if(!filtCalls.length){alert('No calls to export.');return;}
 
+  // Sort by customer name then date
+  const sorted=[...filtCalls].sort((a,b)=>{
+    const cc=(a.customer||'').localeCompare(b.customer||'');
+    return cc!==0?cc:(a.date||'').localeCompare(b.date||'');
+  });
+
+  // Build rows with blank separator between each customer group
+  const rows=[];
+  let lastCust=null;
+  const emptyRow={'Customer':'','Call ID':'','Date':'','Engineer':'','Call Type':'','Product':'','Priority':'','Status':'','Issue / Complaint':'','Solution / Resolution':'','Notes':'','ETA':'','Phone':'','Location':'','Contact':''};
+  sorted.forEach(c=>{
+    const cu=c.customer||'Unknown';
+    if(lastCust!==null && cu!==lastCust) rows.push({...emptyRow});
+    lastCust=cu;
+    rows.push({
+      'Customer':cu,
+      'Call ID':c.no||'',
+      'Date':c.date||'',
+      'Engineer':c.engineer||'',
+      'Call Type':c.callType||'',
+      'Product':c.product||'',
+      'Priority':c.priority||'',
+      'Status':c.status||'',
+      'Issue / Complaint':c.issue||'',
+      'Solution / Resolution':c.resolution||'',
+      'Notes':c.notes||'',
+      'ETA':c.eta||'',
+      'Phone':c.phone||'',
+      'Location':c.location||'',
+      'Contact':c.contact||''
+    });
+  });
+
+  xlsxExport([{name:'Customer Calls',rows}],
+    'acenet_cust_calls_'+(selectedOnly?'selected_':'')+today());
+}
 function clearSvcRptFilters(){
   ['rptEng','rptCallType','rptStatus','rptFrom','rptTo'].forEach(id=>{const e=g(id);if(e)e.value='';});
   renderSvcReports();
