@@ -1721,6 +1721,10 @@ tbody tr:last-child td{border-bottom:none;}
           <input type="checkbox" id="svOrdUrgent" style="width:16px;height:16px;accent-color:var(--amber);">
           <i class="fas fa-bolt" style="color:var(--amber);"></i> Urgent
         </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.84em;font-weight:600;background:#faf5ff;border:1.5px solid #c4b5fd;border-radius:9px;padding:8px 14px;" title="Automatically create a draft incentive entry for this order">
+          <input type="checkbox" id="svOrdAddIncentive" style="width:16px;height:16px;accent-color:#7c3aed;">
+          <i class="fas fa-gift" style="color:#7c3aed;"></i> Add to Incentive
+        </label>
       </div>
       <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()">
         <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
@@ -5484,12 +5488,45 @@ function exportCustomerWiseReport(selectedOnly){
     else custMap[cu]['Per Call']++;
     if(c.product)custMap[cu].Products.add(c.product);
   });
-  const summaryRows=Object.values(custMap).sort((a,b)=>b.Total-a.Total).map(r=>({
-    ...r,Products:[...r.Products].join(', ')||'—',
-    'Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'
-  }));
   const filtCalls=selectedOnly?calls.filter(c=>selectedCusts.has(c.customer||'Unknown')):calls;
-  const detailRows=filtCalls.map(c=>({'Customer':c.customer||'Unknown','Call ID':c.no,'Date':c.date||'','Engineer':c.engineer||'','Call Type':c.callType||'AMC','Product':c.product||'','Priority':c.priority||'Normal','Status':c.status,'Issue':c.issue||'','Resolution':c.resolution||''}));
+  // Customer Summary — full details
+  const summaryRows=Object.values(custMap).sort((a,b)=>b.Total-a.Total).map(r=>{
+    const cm=(D.ac_customers||[]).find(c=>c.name===r.Customer)||{};
+    return {
+      'Customer':r.Customer,
+      'Phone':cm.phone||'',
+      'City':cm.city||'',
+      'Contract Type':cm.contractType||'',
+      'GSTIN':cm.gstin||'',
+      'Total Calls':r.Total,
+      'Completed':r.Completed,
+      'Pending':r.Pending,
+      'In Progress':r['In Progress'],
+      'Escalated':r.Escalated,
+      'AMC Calls':r.AMC,
+      'ASC Calls':r.ASC,
+      'Per Call Calls':r['Per Call'],
+      'Products':[ ...r.Products].join(', ')||'—',
+      'Completion %':r.Total?Math.round((r.Completed/r.Total)*100)+'%':'0%'
+    };
+  });
+  // Calls Detail — full details including solution/notes
+  const detailRows=filtCalls.map(c=>({
+    'Customer':c.customer||'Unknown',
+    'Call ID':c.no,
+    'Date':c.date||'',
+    'Engineer':c.engineer||'',
+    'Call Type':c.callType||'AMC',
+    'Product':c.product||'',
+    'Priority':c.priority||'Normal',
+    'Status':c.status,
+    'Issue / Complaint':c.issue||'',
+    'Solution / Resolution':c.resolution||'',
+    'Notes':c.notes||'',
+    'ETA':c.eta||'',
+    'Phone':c.phone||'',
+    'Location':c.location||''
+  }));
   xlsxExport([{name:'Customer Summary',rows:summaryRows},{name:'Calls Detail',rows:detailRows}],
     'acenet_cust_'+(selectedOnly?'selected_':'')+today());
 }
@@ -5790,8 +5827,8 @@ function renderRptAllCalls(calls){
 
 function printSvcReport(){
   const calls=getSvcRptCalls();
-  const rows=calls.map(c=>`<tr><td>${esc(c.no)}</td><td>${c.date||''}</td><td>${esc(c.customer||'')}</td><td>${esc(c.engineer||'')}</td><td>${c.callType||'AMC'}</td><td>${esc(c.product||'')}</td><td>${c.priority||''}</td><td>${c.status}</td><td>${c.eta||''}</td><td>${esc(c.issue||'')}</td></tr>`).join('');
-  openPrintWindow('Service Calls Report',`<table><thead><tr><th>Call ID</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Product</th><th>Priority</th><th>Status</th><th>ETA</th><th>Issue</th></tr></thead><tbody>${rows||'<tr><td colspan="10" style="text-align:center;padding:14px;">No calls</td></tr>'}</tbody></table>`);
+  const rows=calls.map(c=>`<tr><td>${esc(c.no)}</td><td>${c.date||''}</td><td>${esc(c.customer||'')}</td><td>${esc(c.engineer||'')}</td><td>${c.callType||'AMC'}</td><td>${esc(c.product||'')}</td><td>${c.priority||''}</td><td>${c.status}</td><td>${c.eta||''}</td><td>${esc(c.issue||'')}</td><td>${esc(c.resolution||'')}</td><td>${esc(c.notes||'')}</td></tr>`).join('');
+  openPrintWindow('Service Calls Report',`<table><thead><tr><th>Call ID</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Product</th><th>Priority</th><th>Status</th><th>ETA</th><th>Issue</th><th>Solution/Resolution</th><th>Notes</th></tr></thead><tbody>${rows||'<tr><td colspan="12" style="text-align:center;padding:14px;">No calls</td></tr>'}</tbody></table>`);
 }
 
 function exportSvcReportExcel(){
@@ -7176,6 +7213,7 @@ function showSvcOrderForm(){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=false;
+  if(g('svOrdAddIncentive'))g('svOrdAddIncentive').checked=false;
   setOrdCallType('AMC');
   // Reset Delivery Challan
   ['svDCNo','svDCDate','svDCVehicle','svDCDriver','svDCAddr','svDCRemarks'].forEach(id=>{const el=g(id);if(el)el.value='';});
@@ -7210,6 +7248,7 @@ function editSvcOrder(id){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=o.oralConf||false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=o.writeConf||false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=o.urgent||false;
+  if(g('svOrdAddIncentive'))g('svOrdAddIncentive').checked=false;
   setOrdCallType(o.callType||'AMC');
   if(g('svOrdGST'))g('svOrdGST').value=o.gstType||'none';
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
@@ -7353,9 +7392,44 @@ function sendSvcOrderToAccounts(){
         });
         hideSvcOrderForm();saveData('new_order');renderSvcOrders();
         showSuccessToast(`✓ Order ${ordNo} sent to Accounts!`,'var(--orange)');
+        // Auto-create incentive entry if checkbox was checked
+        if(g('svOrdAddIncentive')?.checked){
+          autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType:g('svOrdCallType')?.value||'AMC'});
+        }
       }
     }
   });
+}
+
+function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType}){
+  if(!D.svc_incentives)D.svc_incentives=[];
+  // Build incentive entry from order data
+  const saleAmt=items.reduce((s,it)=>s+(it.amount||0),0);
+  const purchase=parseFloat(purchaseVal)||0;
+  let gstAmt=0,netSale=saleAmt;
+  if(gstType==='exclusive'){gstAmt=saleAmt*GST_R;netSale=saleAmt;}
+  else if(gstType==='inclusive'){gstAmt=saleAmt-saleAmt/(1+GST_R);netSale=saleAmt/(1+GST_R);}
+  const profit=netSale-purchase;
+  const no=genIncNo();
+  const productNames=items.map(it=>it.material||it.name||'').filter(Boolean).join(', ');
+  const obj={
+    id:uid(),no,
+    date:today(),
+    engineerName:D.currentUser?.name||'',
+    customer:cust,
+    product:productNames.slice(0,120),
+    ref:ordNo,
+    saleAmt,purchaseAmt:purchase,profit,netProfit:profit,
+    expType:'',expAmt:0,
+    gstType:gstType||'none',gstAmt,netSale,
+    notes:'Auto-created from Order '+ordNo,
+    status:'draft',
+    approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',
+    createdAt:new Date().toISOString()
+  };
+  D.svc_incentives.push(obj);
+  saveData();
+  showSuccessToast(`✓ Incentive draft ${no} created from ${ordNo}`,'#7c3aed');
 }
 
 function renderSvcOrders(){
@@ -9516,23 +9590,55 @@ function showMgmtDetail(type){
 function svcCallsDetailHtml(calls, label, cnt, color){
   let html=`<div class="stats" style="margin-bottom:14px;"><div class="stat" style="--sb-color:${color}"><div class="stat-bar" style="background:${color}"></div><div class="stat-label">${label}</div><div class="stat-value">${cnt}</div></div></div>`;
   if(!calls.length) return html+'<div class="empty"><i class="fas fa-headset"></i><p>No calls in this category</p></div>';
-  html += calls.map(c=>`<div class="conv-card" style="margin-bottom:9px;">
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-        <strong style="color:var(--svc);">${esc(c.no)}</strong>
-        ${svcPriorityBadge(c.priority)}
-        <span style="font-size:.92em;color:${svcStatusColor(c.status)};font-weight:700;">● ${c.status}</span>
-      </div>
-      <div style="font-size:.8em;font-weight:600;margin-bottom:3px;">${esc(c.customer)}</div>
-      <div style="font-size:.76em;color:var(--ink3);">
-        ${c.date} &nbsp;·&nbsp; ${c.engineer?'Eng: '+esc(c.engineer):'<span style="color:var(--amber);">Unassigned</span>'}
-        ${c.type?' &nbsp;·&nbsp; Type: '+esc(c.type):''}
-      </div>
-      ${c.description?`<div style="font-size:.78em;color:var(--ink3);margin-top:4px;border-left:2px solid var(--line);padding-left:7px;">${esc(c.description)}</div>`:''}
-    </div>
-    ${c.phone?`<div style="flex-shrink:0;"><a href="tel:${esc(c.phone)}" class="btn btn-sm" style="background:var(--svc);color:#fff;"><i class="fas fa-phone"></i></a></div>`:''}
-  </div>`).join('');
+  html += `<div style="overflow-x:auto;"><table class="rpt-table" style="font-size:.93em;">
+    <thead><tr><th>Call ID</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Product</th><th>Priority</th><th>Status</th><th>Issue</th><th>Solution / Notes</th><th></th></tr></thead>
+    <tbody>${calls.map(c=>`<tr>
+      <td><strong style="color:var(--svc);">${esc(c.no)}</strong></td>
+      <td style="white-space:nowrap;">${c.date||''}</td>
+      <td><strong>${esc(c.customer||'')}</strong>${c.phone?`<br><span style="font-size:.82em;color:var(--ink3);">📞 ${esc(c.phone)}</span>`:''}</td>
+      <td>${esc(c.engineer||'—')}</td>
+      <td><span style="font-size:.82em;font-weight:700;background:${c.callType==='AMC'?'var(--acc-l)':c.callType==='ASC'?'var(--svc-l)':'#fff7ed'};color:${c.callType==='AMC'?'var(--acc)':c.callType==='ASC'?'var(--svc)':'var(--amber)'};padding:2px 7px;border-radius:6px;">${c.callType||'—'}</span></td>
+      <td style="font-size:.9em;">${esc(c.product||'—')}</td>
+      <td>${svcPriorityBadge(c.priority)}</td>
+      <td><span style="font-size:.88em;font-weight:700;color:${svcStatusColor(c.status)};">● ${c.status}</span></td>
+      <td style="max-width:200px;font-size:.9em;">${esc(c.issue||'—')}</td>
+      <td style="max-width:220px;font-size:.9em;">${c.resolution?`<span style="color:#166534;">${esc(c.resolution)}</span>`:''} ${c.notes?`<span style="color:var(--ink3);font-size:.9em;">${esc(c.notes)}</span>`:(!c.resolution?'—':'')}</td>
+      <td><button class="btn btn-outline btn-sm" style="font-size:.8em;padding:4px 9px;white-space:nowrap;" onclick="openMgmtCallViewModal('${c.id}')"><i class="fas fa-eye"></i> View</button></td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
   return html;
+}
+
+function openMgmtCallViewModal(callId){
+  const c=(D.svc_calls||[]).find(x=>x.id===callId);
+  if(!c){alert('Call not found');return;}
+  const html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Call ID</div><div style="font-weight:800;color:var(--svc);font-size:1.05em;">${esc(c.no)}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Date</div><div style="font-weight:700;">${c.date||'—'}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Customer</div><div style="font-weight:700;">${esc(c.customer||'—')}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Engineer</div><div style="font-weight:700;">${esc(c.engineer||'Unassigned')}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Call Type</div><div style="font-weight:700;">${c.callType||'—'}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;">${esc(c.product||'—')}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Priority</div><div>${svcPriorityBadge(c.priority)}</div></div>
+    <div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Status</div><div style="font-weight:700;color:${svcStatusColor(c.status)};">● ${c.status}</div></div>
+    ${c.phone?`<div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Phone</div><div>${esc(c.phone)}</div></div>`:''}
+    ${c.location?`<div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Location</div><div>${esc(c.location)}</div></div>`:''}
+    ${c.eta?`<div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">ETA</div><div>${esc(c.eta)}</div></div>`:''}
+    ${c.contact?`<div><div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Contact</div><div>${esc(c.contact)}</div></div>`:''}
+  </div>
+  <div style="background:#fef9c3;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+    <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#92400e;margin-bottom:6px;"><i class="fas fa-exclamation-circle" style="margin-right:5px;"></i>Issue / Complaint</div>
+    <div style="font-size:.95em;line-height:1.5;">${esc(c.issue||'—')}</div>
+  </div>
+  ${c.resolution?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+    <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:#166534;margin-bottom:6px;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Solution / Resolution</div>
+    <div style="font-size:.95em;line-height:1.5;color:#166534;">${esc(c.resolution)}</div>
+  </div>`:''}
+  ${c.notes?`<div style="background:#f8fafc;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+    <div style="font-size:.75em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>Notes</div>
+    <div style="font-size:.95em;line-height:1.5;">${esc(c.notes)}</div>
+  </div>`:''}`;
+  openMgmtDrawer('headset','Call Details: '+c.no, html);
 }
 
 // Async startup: loadData may fetch from Firestore
