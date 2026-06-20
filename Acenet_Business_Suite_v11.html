@@ -2618,6 +2618,14 @@ tbody tr:last-child td{border-bottom:none;}
 // CORE
 // ════════════════════════════════════════════════════════════════
 const GST_R = 0.18;
+// Returns the correct GST-inclusive display total for an order, regardless of when it was saved
+function ordDisplayTotal(o){
+  if(o.gstType!=='exclusive') return o.total;
+  if(o.baseTotal!=null) return o.total;
+  const itemsBase=(o.items||[]).reduce((s,it)=>s+(it.amount||(it.qty||0)*(it.rate||0)+(it.expAmt||0)),0);
+  if(itemsBase>0 && Math.abs(o.total-itemsBase)<0.5) return Math.round(o.total*(1+GST_R)*100)/100;
+  return o.total;
+}
 const DEF_USERS = [
   {id:'u1',name:'Administrator',username:'admin',password:'Admin@123',role:'management',active:true},
   {id:'u3',name:'Accounts Team',username:'accounts',password:'Acc@123',role:'accounts',active:true},
@@ -3500,18 +3508,30 @@ function viewOrderModal(id){
   // GST calculation for display:
   // New records (v21+): baseTotal = items sum, total = baseTotal*(1+GST_R) for exclusive
   // Old records (pre-v21): no baseTotal, total = items sum (base only)
+  // Most reliable: recompute base directly from items (always accurate)
+  const _itemsBase = (o.items||[]).reduce((s,it)=>s+(it.amount||(it.qty||0)*(it.rate||0)+(it.expAmt||0)),0);
   let _base, _gstAmt, _displayTotal;
   if(o.gstType==='exclusive'){
     if(o.baseTotal!=null){
-      // New record — total already includes GST
+      // Record has baseTotal stored — total already includes GST
       _base         = o.baseTotal;
-      _gstAmt       = o.total - o.baseTotal;
+      _gstAmt       = Math.round((o.total - o.baseTotal) * 100) / 100;
       _displayTotal = o.total;
-    } else {
-      // Old record — total is base only, GST not yet added
+    } else if(_itemsBase>0 && Math.abs(o.total - _itemsBase) < 0.5){
+      // total === items sum (no GST applied yet) — legacy record, base is total itself
       _base         = o.total;
       _gstAmt       = Math.round(o.total * GST_R * 100) / 100;
-      _displayTotal = _base + _gstAmt;
+      _displayTotal = Math.round((_base + _gstAmt) * 100) / 100;
+    } else if(_itemsBase>0){
+      // total already looks GST-inclusive vs items sum — use items as base
+      _base         = _itemsBase;
+      _gstAmt       = Math.round((o.total - _itemsBase) * 100) / 100;
+      _displayTotal = o.total;
+    } else {
+      // No items data either — last resort, assume total is base-only
+      _base         = o.total;
+      _gstAmt       = Math.round(o.total * GST_R * 100) / 100;
+      _displayTotal = Math.round((_base + _gstAmt) * 100) / 100;
     }
   } else if(o.gstType==='inclusive'){
     _base         = Math.round(o.total / (1 + GST_R) * 100) / 100;
@@ -5437,16 +5457,6 @@ function showSvcAddItemForm(){
   saveData();renderSvcStockView();showSuccessToast('Item added: '+name,'var(--green)');
 }
 function showStockInForm(){showSvcAddItemForm();}
-function showStockOutForm(){
-  // Let user pick item first then quantity
-  const items=D.stock_items||[];
-  if(!items.length){alert('No stock items found. Add items from Accounts > Stock first.');return;}
-  const itemName=prompt('Enter item name for Stock OUT:\n\n'+items.map((i,n)=>`${n+1}. ${i.name} (${i.qty??0} available)`).join('\n'));
-  if(!itemName)return;
-  const item=items.find(i=>i.name.toLowerCase()===itemName.toLowerCase()||i.name.toLowerCase().includes(itemName.toLowerCase()));
-  if(!item){alert('Item not found');return;}
-  quickStockOut(item.id,item.name);
-}
 
 function exportSvcStockView(){
   const items=D.stock_items||[];
@@ -7331,7 +7341,7 @@ function sendSvcOrderToAccounts(){
           const prev=D.orders[idx];
           D.orders[idx]={
             ...prev,
-            date,customer:cust,notes,items,total,gstType,
+            date,customer:cust,notes,items,total,baseTotal,gstType,
             supplier,purchaseVal,margin,
             callType:g('svOrdCallType')?.value||prev.callType||'AMC',
             orderFrom:g('svOrdFrom')?.value||prev.orderFrom||'',
@@ -7360,7 +7370,7 @@ function sendSvcOrderToAccounts(){
         };
         // CREATE new order
         D.orders.push({
-          id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,gstType,
+          id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,baseTotal,gstType,
           supplier,purchaseVal,margin,
           callType:g('svOrdCallType')?.value||'AMC',
           orderFrom:g('svOrdFrom')?.value||'',
@@ -7523,20 +7533,6 @@ function populateSvcIncEngDropdown(){
     sel.innerHTML='<option value="">-- Select Engineer --</option>'+engs.map(e=>`<option value="${esc(e.name)}">${esc(e.name)}</option>`).join('');
     sel.disabled=false;sel.style.cursor='';sel.style.opacity='';sel.style.background='';
   }
-}
-
-function calcIncProfit(){
-  const s=parseFloat(g('incSaleAmt')?.value)||0,p=parseFloat(g('incPurchaseAmt')?.value)||0;
-  const exp=parseFloat(g('incExpAmt')?.value)||0;
-  const gstType=g('incGST')?.value||'none';
-  let netSale=s;
-  if(gstType==='inclusive'){netSale=s/(1+GST_R);}
-  const grossProfit=netSale-p;
-  const netProfit=grossProfit-exp;
-  const disp=g('incProfitDisplay');
-  if(disp){disp.value=(grossProfit>=0?'+':'')+fmt(grossProfit).replace('₹','₹');disp.style.color=grossProfit>=0?'var(--green)':'var(--red)';}
-  const np=g('incNetProfit');
-  if(np){np.value=(netProfit>=0?'+':'')+fmt(netProfit).replace('₹','₹');np.style.color=netProfit>=0?'var(--green)':'var(--red)';}
 }
 
 function saveSvcIncDraft(){
@@ -10080,15 +10076,18 @@ function generateConvFromSelected(){
 function calcIncProfit(){
   const s=parseFloat(g('incSaleAmt')?.value)||0;
   const p=parseFloat(g('incPurchaseAmt')?.value)||0;
+  const exp=parseFloat(g('incExpAmt')?.value)||0;
   const gType=g('incGST')?.value||'none';
   let netSale=s,gstAmt=0;
   if(gType==='exclusive'){gstAmt=s*GST_R;netSale=s;}
   else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s/(1+GST_R);}
-  const profit=netSale-p;
-  const gstEl=g('incGSTAmt');const netEl=g('incNetSale');const dispEl=g('incProfitDisplay');
+  const grossProfit=netSale-p;
+  const netProfit=grossProfit-exp;
+  const gstEl=g('incGSTAmt');const netEl=g('incNetSale');const dispEl=g('incProfitDisplay');const npEl=g('incNetProfit');
   if(gstEl) gstEl.value=gstAmt>0?fmt(gstAmt):'₹0.00';
   if(netEl) netEl.value=netSale>0?fmt(netSale):'₹0.00';
-  if(dispEl){dispEl.value=(profit>=0?'+':'')+fmt(profit);dispEl.style.color=profit>=0?'var(--green)':'var(--red)';}
+  if(dispEl){dispEl.value=(grossProfit>=0?'+':'')+fmt(grossProfit);dispEl.style.color=grossProfit>=0?'var(--green)':'var(--red)';}
+  if(npEl){npEl.value=(netProfit>=0?'+':'')+fmt(netProfit);npEl.style.color=netProfit>=0?'var(--green)':'var(--red)';}
 }
 
 
