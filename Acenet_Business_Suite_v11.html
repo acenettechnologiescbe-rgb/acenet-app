@@ -636,6 +636,12 @@ tbody tr:last-child td{border-bottom:none;}
 .call-type-btn.active[data-type="AMC"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
 .call-type-btn.active[data-type="ASC"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
 .call-type-btn.active[data-type="Per Call"]{background:linear-gradient(135deg,#d97706,#f59e0b);border-color:#d97706;color:#fff;box-shadow:0 3px 10px rgba(217,119,6,.3);}
+/* Stock-out purpose buttons */
+.call-type-btn.active[data-type="AMC Replacement"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
+.call-type-btn.active[data-type="ASC Replacement"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
+.call-type-btn.active[data-type="For Sale"]{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#16a34a;color:#fff;box-shadow:0 3px 10px rgba(22,163,74,.3);}
+.call-type-btn.active[data-type="Other"]{background:linear-gradient(135deg,#64748b,#94a3b8);border-color:#64748b;color:#fff;box-shadow:0 3px 10px rgba(100,116,139,.3);}
+.call-type-btn.active{background:linear-gradient(135deg,#ea580c,#f97316);border-color:#ea580c;color:#fff;box-shadow:0 3px 10px rgba(234,88,12,.3);}
 .call-type-badge-amc{background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
 .call-type-badge-asc{background:#ede9fe;color:#7c3aed;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
 .call-type-badge-per{background:#fef3c7;color:#92400e;border-radius:8px;padding:2px 8px;font-size:.7em;font-weight:700;}
@@ -3460,16 +3466,16 @@ function orderAccCard(o,showConfirm){
       ${showConfirm?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
-        <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
+        <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number for this order — invoice entry will be auto-created in Invoices tab:</p>
         <div class="bill-confirm-input">
           <input type="text" id="bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-open-all-inv">
           <datalist id="dl-open-all-inv">${D.ac_invoices.map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
           <button class="btn btn-success" onclick="confirmBillOrder('${o.id}')"><i class="fas fa-check-circle"></i> Confirm Billed</button>
         </div>
         <div style="margin-top:10px;font-size:.79em;color:var(--ink3);">
-          <i class="fas fa-lightbulb" style="color:var(--amber);margin-right:5px;"></i>Tip: First create the invoice in the Invoices tab, then come back here to confirm.
+          <i class="fas fa-magic" style="color:var(--acc);margin-right:5px;"></i>Invoice entry is auto-created from order items — no manual entry needed.
         </div>
-      </div>`:`<div style="font-size:.82em;color:var(--green);margin-top:10px;font-weight:600;background:var(--green-l);padding:8px 12px;border-radius:8px;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate} — Confirmation sent to Marketing</div>`}
+      </div>`:`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.82em;color:var(--green);margin-top:10px;font-weight:600;background:var(--green-l);padding:8px 12px;border-radius:8px;"><i class="fas fa-check-circle" style="margin-right:4px;flex-shrink:0;"></i><span>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate} — Invoice auto-created &amp; sent to Marketing</span><button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:.8em;padding:3px 10px;border-color:#16a34a;color:#16a34a;white-space:nowrap;" onclick="event.stopPropagation();editBillNumberInline('${o.id}')"><i class="fas fa-edit"></i> Edit Bill No</button></div>`}
     </div>
   </div>`;
 }
@@ -3478,28 +3484,122 @@ function confirmBillOrder(ordId){
   const inp=g('bill-inp-'+ordId);
   const invNo=(inp?.value||'').trim();
   if(!invNo){alert('Please enter the invoice/bill number');inp?.focus();return;}
+  // ── Duplicate bill number check ──
+  const dupOrd=D.orders.find(x=>x.status==='billed'&&x.invoiceNo===invNo&&x.id!==ordId);
+  if(dupOrd){alert(`⚠️ Bill number "${invNo}" is already used for Order ${dupOrd.orderNo} (${dupOrd.customer})!\nPlease enter a unique bill number.`);inp?.focus();return;}
   const o=D.orders.find(x=>x.id===ordId);if(!o)return;
   o.status='billed';o.invoiceNo=invNo;o.billedDate=today();
+  // ── Auto-create invoice entry if not already exists ──
+  autoCreateInvoiceFromOrder(o, invNo);
   saveData('sync');
   renderAccOrders();
-  // Show confirmation toast to marketing
+  renderInvoices();
   if(bc)try{bc.postMessage('order_billed');}catch(e){}
-  alert(`✓ Order ${o.orderNo} confirmed as billed with ${invNo}!\nMarketing will see this update.`);
+  showSuccessToast(`✓ Order ${o.orderNo} billed as ${invNo} — Invoice auto-created!`,'var(--green)');
 }
 
 function confirmBillFromModal(ordId){
   const inp=g('modal-bill-inp-'+ordId);
   const invNo=(inp?.value||'').trim();
   if(!invNo){alert('Please enter the invoice/bill number');inp?.focus();return;}
+  // ── Duplicate bill number check ──
+  const dupOrd=D.orders.find(x=>x.status==='billed'&&x.invoiceNo===invNo&&x.id!==ordId);
+  if(dupOrd){alert(`⚠️ Bill number "${invNo}" is already used for Order ${dupOrd.orderNo} (${dupOrd.customer})!\nPlease enter a unique bill number.`);inp?.focus();return;}
   const o=D.orders.find(x=>x.id===ordId);if(!o)return;
   o.status='billed';o.invoiceNo=invNo;o.billedDate=today();
+  // ── Auto-create invoice entry if not already exists ──
+  autoCreateInvoiceFromOrder(o, invNo);
   saveData('sync');
   renderAccOrders();
+  renderInvoices();
   if(bc)try{bc.postMessage('order_billed');}catch(e){}
-  // Update the modal to show billed state
   const modal=g('ordViewModal');
   if(modal)modal.remove();
-  showSuccessToast(`✓ Order ${o.orderNo} confirmed as billed with invoice ${invNo}`,'var(--green)');
+  showSuccessToast(`✓ Order ${o.orderNo} billed as ${invNo} — Invoice auto-created!`,'var(--green)');
+}
+
+// ── Auto-create invoice from a confirmed order ──────────────────
+function autoCreateInvoiceFromOrder(o, invNo){
+  // Skip if invoice number already exists
+  if(D.ac_invoices.find(i=>i.no===invNo)) return;
+  // Ensure customer exists in accounts master
+  if(!D.ac_customers.find(c=>c.name===o.customer))
+    D.ac_customers.push({id:uid(),name:o.customer,phone:'',email:'',gstin:'',city:''});
+  // Build invoice items from order items
+  const invItems=(o.items||[]).map(it=>({
+    desc:it.material||it.name||'',
+    qty:it.qty||1,
+    rate:it.rate||0,
+    amt:it.amount||(it.qty||1)*(it.rate||0)
+  }));
+  // Calculate subtotal and tax from order
+  const _base=o.baseTotal!=null?o.baseTotal:
+    (o.gstType==='inclusive'?Math.round(o.total/(1+GST_R)*100)/100:
+    (o.gstType==='exclusive'?invItems.reduce((s,x)=>s+x.amt,0):o.total));
+  const _taxR=(o.gstType&&o.gstType!=='none')?18:0;
+  const _taxAmt=o.gstType==='inclusive'?Math.round((o.total-_base)*100)/100:
+    (o.gstType==='exclusive'?Math.round(_base*GST_R*100)/100:0);
+  const _total=o.gstType==='exclusive'?Math.round((_base+_taxAmt)*100)/100:o.total;
+  D.ac_invoices.push({
+    id:uid(),no:invNo,date:o.billedDate||today(),
+    dueDate:addDays(o.billedDate||today(),30),
+    custName:o.customer,
+    notes:`Auto-created from Order ${o.orderNo}`,
+    items:invItems,subtotal:_base,taxRate:_taxR,taxAmt:_taxAmt,total:_total,
+    fromOrderId:o.id,fromOrderNo:o.orderNo
+  });
+}
+
+// ── Edit bill number for a billed order ─────────────────────────
+function editBillNumberInline(ordId){
+  const o=D.orders.find(x=>x.id===ordId);if(!o)return;
+  const oldNo=o.invoiceNo;
+  // Build an inline edit panel
+  const panel=document.createElement('div');
+  panel.id='edit-bill-panel-'+ordId;
+  panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  panel.innerHTML=`<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
+    <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--orange);margin-bottom:6px;"><i class="fas fa-edit" style="margin-right:8px;"></i>Edit Bill Number</div>
+    <div style="font-size:.88em;color:var(--ink3);margin-bottom:14px;">Order: <strong>${esc(o.orderNo)}</strong> &nbsp;|&nbsp; Customer: <strong>${esc(o.customer)}</strong></div>
+    <label style="font-size:.82em;font-weight:700;color:var(--ink4);display:block;margin-bottom:5px;">New Bill / Invoice Number</label>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input id="edit-bill-inp-${ordId}" type="text" value="${esc(oldNo)}" list="dl-edit-bill-${ordId}" style="flex:1;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.98em;font-family:'Inter',sans-serif;" placeholder="e.g. INV-2025-0007">
+      <datalist id="dl-edit-bill-${ordId}">${(D.ac_invoices||[]).map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
+    </div>
+    <div style="font-size:.78em;color:var(--ink3);margin-bottom:14px;"><i class="fas fa-info-circle" style="color:var(--acc);margin-right:5px;"></i>Linked invoice record will also be updated automatically.</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="document.getElementById('edit-bill-panel-${ordId}').remove()">Cancel</button>
+      <button class="btn btn-success" onclick="saveBillNumberEdit('${ordId}')"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>`;
+  document.body.appendChild(panel);
+  setTimeout(()=>{const inp=g('edit-bill-inp-'+ordId);if(inp){inp.focus();inp.select();}},80);
+}
+
+function saveBillNumberEdit(ordId){
+  const inp=g('edit-bill-inp-'+ordId);
+  const newNo=(inp?.value||'').trim();
+  if(!newNo){alert('Bill number cannot be empty');return;}
+  const o=D.orders.find(x=>x.id===ordId);if(!o)return;
+  const oldNo=o.invoiceNo;
+  if(newNo===oldNo){g('edit-bill-panel-'+ordId)?.remove();return;}
+  // Duplicate check
+  const dup=D.orders.find(x=>x.status==='billed'&&x.invoiceNo===newNo&&x.id!==ordId);
+  if(dup){alert(`⚠️ Bill number "${newNo}" is already used for Order ${dup.orderNo} (${dup.customer})!\nPlease enter a unique bill number.`);return;}
+  // Also check if this new number conflicts with a non-linked invoice
+  const existInv=D.ac_invoices.find(i=>i.no===newNo&&i.fromOrderId!==ordId);
+  if(existInv){if(!confirm(`Invoice "${newNo}" already exists for ${existInv.custName}.\nLink this order to that invoice anyway?`))return;}
+  // Update order
+  o.invoiceNo=newNo;
+  // Update linked invoice (auto-created one)
+  const linkedInv=D.ac_invoices.find(i=>i.no===oldNo&&i.fromOrderId===ordId);
+  if(linkedInv){linkedInv.no=newNo;}
+  // Remove edit panel
+  g('edit-bill-panel-'+ordId)?.remove();
+  saveData('sync');
+  renderAccOrders();
+  renderInvoices();
+  showSuccessToast(`✓ Bill number updated: ${oldNo} → ${newNo}`,'var(--green)');
 }
 
 function viewOrderModal(id){
@@ -3647,18 +3747,18 @@ function viewOrderModal(id){
         <!-- Notes -->
         ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.98em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
         <!-- Billed info -->
-        ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
+        ${o.status==='billed'?`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:4px;flex-shrink:0;"></i><span>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate} — Invoice auto-created</span><button class="btn btn-outline btn-sm" style="margin-left:auto;border-color:#16a34a;color:#16a34a;font-size:.8em;padding:3px 10px;white-space:nowrap;" onclick="g('ordViewModal').remove();editBillNumberInline('${o.id}')"><i class="fas fa-edit"></i> Edit Bill No</button></div>`:''}
         <!-- Accounts: Confirm Bill action for pending orders -->
         ${o.status==='pending'?`
         <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-top:4px;">
           <div style="font-weight:800;font-size:.95em;color:#c2410c;margin-bottom:6px;"><i class="fas fa-file-invoice" style="margin-right:7px;"></i>Confirm Bill Number</div>
-          <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
+          <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the bill number — invoice entry will be auto-created from order items.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <input type="text" id="modal-bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-modal-inv-${o.id}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #fed7aa;border-radius:8px;font-size:.98em;font-family:'Inter',sans-serif;">
             <datalist id="dl-modal-inv-${o.id}">${(D.ac_invoices||[]).map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
             <button class="btn btn-success" onclick="confirmBillFromModal('${o.id}')" style="padding:9px 18px;font-size:.98em;white-space:nowrap;"><i class="fas fa-check-circle"></i> Confirm Billed</button>
           </div>
-          <div style="margin-top:10px;font-size:.92em;color:var(--ink3);"><i class="fas fa-lightbulb" style="color:var(--amber);margin-right:5px;"></i>Tip: First create the invoice in the Invoices tab, then confirm here.</div>
+          <div style="margin-top:10px;font-size:.92em;color:var(--ink3);"><i class="fas fa-magic" style="color:var(--acc);margin-right:5px;"></i>Invoice entry auto-created from order items — no manual entry needed.</div>
         </div>`:''}
       </div>
     </div>
@@ -6165,7 +6265,7 @@ function renderSvcCalls(){
         ${c.phone?`<div style="font-size:.92em;margin-bottom:4px;"><i class="fas fa-phone" style="color:var(--svc)"></i> ${esc(c.contact||'')} ${c.phone?`— <a href="tel:${esc(c.phone)}" style="color:var(--svc);font-weight:700;">${esc(c.phone)}</a>`:''}</div>`:''}
         ${c.location?`<div style="font-size:.92em;color:var(--ink3);margin-bottom:4px;"><i class="fas fa-location-dot"></i> ${esc(c.location)}</div>`:''}
         ${c.resolution?`<div style="font-size:.79em;background:var(--green-l);padding:6px 9px;border-radius:7px;color:#065f46;margin-top:5px;"><i class="fas fa-check-circle"></i> ${esc(c.resolution)}</div>`:''}
-        ${c.convFrom||c.convAmt?`<div style="margin-top:6px;font-size:.9em;background:#f0fdfa;border-radius:6px;padding:4px 8px;color:var(--svc);"><i class='fas fa-car-side'></i> ${esc(c.convFrom||'')}${c.convTo?' → '+esc(c.convTo):''} · ${esc(c.convMode||'')}${c.convKm?' · '+c.convKm+'km':''} · ${fmt((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))}</div>`:''}
+        ${c.convFrom||c.convAmt?`<div style="margin-top:6px;font-size:.9em;background:#f0fdfa;border-radius:6px;padding:4px 8px;color:var(--svc);"><i class='fas fa-car-side'></i> ${esc(c.convFrom||'')}${c.convTo?' → '+esc(c.convTo):''} · ${esc(c.convMode||'')}${c.convKm?' · '+c.convKm+'km':''} · ${fmt(c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0)))}</div>`:''}
       </div>
     </div>`).join('');
   // Update datalists
@@ -6507,7 +6607,7 @@ function addCallsToDraft(draftId){
   const usedRefs=new Set((draft.callRefs||draft.callRef||'').split(',').map(r=>r.trim()).filter(Boolean));
   // Get calls for this engineer not yet in any draft/claim
   const usedInAny=new Set(D.svc_conveyance.filter(c=>c.id!==draftId).flatMap(c=>(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean)));
-  const available=D.svc_calls.filter(c=>c.engineer===eng&&!usedRefs.has(c.no)&&!usedInAny.has(c.no)&&((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))>0);
+  const available=D.svc_calls.filter(c=>c.engineer===eng&&!usedRefs.has(c.no)&&!usedInAny.has(c.no)&&(c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0)))>0);
   if(!available.length){
     showSuccessToast('No additional eligible calls available for this engineer','var(--amber)');return;
   }
@@ -6519,12 +6619,12 @@ function addCallsToDraft(draftId){
       </div>
       <div style="padding:16px 20px;">
         <div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">Select calls to add — amounts will be merged into the existing draft.</div>
-        ${available.map(c=>{const t=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);return`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background=''">
+        ${available.map(c=>{const t=c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0));const trvLeg=parseFloat(c.convAmt)||0;const fLeg=parseFloat(c.convFood)||0;const oLeg=parseFloat(c.convOther)||0;return`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background=''">
           <input type="checkbox" class="atd-chk" data-id="${c.id}" style="margin-top:2px;accent-color:var(--svc);">
           <div style="flex:1;">
             <div style="font-weight:700;font-size:.85em;color:var(--svc);">${esc(c.no)} — ${esc(c.customer||'')}</div>
             <div style="font-size:.75em;color:var(--ink3);">${c.date}${c.issue?' · '+esc(c.issue):''}</div>
-            <div style="font-size:.75em;margin-top:3px;">Travel: ${fmt(parseFloat(c.convAmt)||0)} | Food: ${fmt(parseFloat(c.convFood)||0)} | Other: ${fmt(parseFloat(c.convOther)||0)} → <strong style="color:var(--svc);">${fmt(t)}</strong></div>
+            <div style="font-size:.75em;margin-top:3px;">${c.convRows?.length?`${c.convRows.length} leg(s)`:(`Travel: ${fmt(trvLeg)} | Food: ${fmt(fLeg)} | Other: ${fmt(oLeg)}`)} → <strong style="color:var(--svc);">${fmt(t)}</strong></div>
           </div>
         </label>`;}).join('')}
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
@@ -6544,10 +6644,15 @@ function confirmAddCallsToDraft(draftId){
   const newCalls=checked.map(cb=>D.svc_calls.find(c=>c.id===cb.dataset.id)).filter(Boolean);
   // Merge calls
   newCalls.forEach(c=>{
-    draft.travelAmt=(draft.travelAmt||0)+(parseFloat(c.convAmt)||0);
-    draft.foodAmt=(draft.foodAmt||0)+(parseFloat(c.convFood)||0);
-    draft.otherAmt=(draft.otherAmt||0)+(parseFloat(c.convOther)||0);
-    draft.totalAmt=(draft.totalAmt||0)+(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
+    // For multi-leg calls, convAmt is the FULL total; legacy single-leg: convAmt=travel only
+    const _trvAdd=c.convRows?.length?(c.convAmt||0):(parseFloat(c.convAmt)||0);
+    const _foodAdd=c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.food||0),0):(parseFloat(c.convFood)||0);
+    const _otherAdd=c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.other||0),0):(parseFloat(c.convOther)||0);
+    const _total=c.convRows?.length?(c.convAmt||0):(_trvAdd+_foodAdd+_otherAdd);
+    draft.travelAmt=(draft.travelAmt||0)+_trvAdd;
+    draft.foodAmt=(draft.foodAmt||0)+_foodAdd;
+    draft.otherAmt=(draft.otherAmt||0)+_otherAdd;
+    draft.totalAmt=(draft.totalAmt||0)+_total;
     const existing=(draft.callRefs||draft.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
     existing.push(c.no);
     draft.callRefs=existing.join(', ');
@@ -9990,7 +10095,7 @@ function updateConvSelSummary(){
   let total=0;
   checked.forEach(cb=>{
     const c=D.svc_calls.find(x=>x.id===cb.dataset.id);
-    if(c) total+=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
+    if(c) total+=c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0));
   });
   if(selCount) selCount.textContent=checked.length+' call(s) selected';
   if(selTotal) selTotal.textContent=checked.length>0?'Total: '+fmt(total):'';
@@ -10016,9 +10121,9 @@ function generateConvFromSelected(){
     rate:parseFloat(c.convRate)||0,
     amount:parseFloat(c.convAmt)||0
   }));
-  const travelTotal=items.reduce((a,i)=>a+i.amount,0);
-  const foodTotal=calls.reduce((a,c)=>a+(parseFloat(c.convFood)||0),0);
-  const otherTotal=calls.reduce((a,c)=>a+(parseFloat(c.convOther)||0),0);
+  const travelTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.amt||0),0):(parseFloat(c.convAmt)||0)),0);
+  const foodTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.food||0),0):(parseFloat(c.convFood)||0)),0);
+  const otherTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.other||0),0):(parseFloat(c.convOther)||0)),0);
   const grandTotal=travelTotal+foodTotal+otherTotal;
   const dates=calls.map(c=>c.date).filter(Boolean).sort();
   const dateLabel=dates.length?`${dates[0]}${dates.length>1?' to '+dates[dates.length-1]:''}`:today();
