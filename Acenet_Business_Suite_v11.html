@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Acenet Business Suite v7 — Acenet Technologies India Pvt. Ltd.</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -117,7 +117,25 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .moag-val{font-family:'Sora',sans-serif;font-size:1.35em;font-weight:800;line-height:1;}
 .mgmt-kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;}
 @media(max-width:1000px){.mgmt-kpi-row{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:600px){.mgmt-kpi-row{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){
+  .navbar{top:56px !important;}
+  /* Force all modals to bottom sheet */
+  .modal-overlay{align-items:flex-end !important;padding:0 !important;}
+  .modal{
+    width:100vw !important;
+    max-width:100vw !important;
+    border-radius:20px 20px 0 0 !important;
+    max-height:92vh !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+  /* Maximized mgmt detail takes full screen */
+  .mgmt-detail-drawer.maximized{border-radius:0 !important;}
+  /* wider filt-date inputs */
+  .filt-date-grp input[type=date]{font-size:13px !important;}
+  /* stock picker grid — 2 cols on phone */
+  #stockPickerList > div{grid-template-columns:1fr 1fr !important;}
+}.mgmt-kpi-row{grid-template-columns:repeat(2,1fr);}
 .mgmt-mini-kpi{background:#fff;border-radius:12px;padding:14px 13px;border:1px solid var(--line);cursor:pointer;transition:.2s;display:flex;align-items:center;gap:11px;}
 .mgmt-mini-kpi:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);transform:translateY(-1px);}
 .mgmt-mini-kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.88em;flex-shrink:0;}
@@ -161,7 +179,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .mmc-stat::after{content:'▾';position:absolute;bottom:5px;right:9px;font-size:.75em;opacity:.55;}
 .mgmt-detail-overlay{display:none;position:fixed;inset:0;background:rgba(4,13,36,.6);z-index:1200;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:16px;}
 .mgmt-detail-overlay.on{display:flex;}
-.mgmt-detail-drawer{background:#fff;width:min(820px,96vw);max-height:88vh;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(4,13,36,.35);}
+.mgmt-detail-drawer{background:#fff;width:min(820px,96vw);max-height:90vh;overflow-y:auto;max-height:88vh;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(4,13,36,.35);}
 .mgmt-detail-hdr{padding:16px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0;background:linear-gradient(135deg,#040d24,#162463);color:#fff;}
 .mgmt-detail-title{font-family:'Sora',sans-serif;font-weight:700;font-size:1.05em;display:flex;align-items:center;gap:9px;}
 .mgmt-detail-body{padding:20px 24px;overflow-y:auto;flex:1;}
@@ -322,9 +340,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .btn-logout:hover{background:rgba(220,38,38,.3);color:#fff;}
 
 /* ── NAVBAR ── */
-.navbar{background:#fff;border-bottom:2px solid var(--line);padding:0 22px;display:flex;overflow-x:auto;position:sticky;top:60px;z-index:299;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+.navbar{background:#fff;border-bottom:2px solid var(--line);padding:0 22px;display:flex;overflow-x:auto;position:sticky;top:60px;z-index:299;box-shadow:0 2px 6px rgba(0,0,0,.05);;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .navbar::-webkit-scrollbar{display:none;}
-.nb{border:none;background:none;padding:9px 11px;font-family:'Inter',sans-serif;font-weight:600;font-size:.79em;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-2px;}
+.navbar::-webkit-scrollbar{display:none;}
+.nb{border:none;background:none;padding:9px 11px;font-family:'Inter',sans-serif;font-weight:600;font-size:.79em;color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;transition:.15s;white-space:nowrap;display:flex;align-items:center;gap:5px;margin-bottom:-2px;;flex-shrink:0;}
 .nb:hover{color:var(--ink);background:var(--bg);}
 .nb.on{color:var(--role-color);border-bottom-color:var(--role-color);}
 .nb .bc{font-size:.72em;padding:2px 6px;border-radius:8px;background:var(--line);color:var(--ink3);}
@@ -636,7 +655,6 @@ tbody tr:last-child td{border-bottom:none;}
 .call-type-btn.active[data-type="AMC"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
 .call-type-btn.active[data-type="ASC"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
 .call-type-btn.active[data-type="Per Call"]{background:linear-gradient(135deg,#d97706,#f59e0b);border-color:#d97706;color:#fff;box-shadow:0 3px 10px rgba(217,119,6,.3);}
-/* Stock-out purpose buttons */
 .call-type-btn.active[data-type="AMC Replacement"]{background:linear-gradient(135deg,#0e7490,#0891b2);border-color:#0e7490;color:#fff;box-shadow:0 3px 10px rgba(14,116,144,.3);}
 .call-type-btn.active[data-type="ASC Replacement"]{background:linear-gradient(135deg,#7c3aed,#8b5cf6);border-color:#7c3aed;color:#fff;box-shadow:0 3px 10px rgba(124,58,237,.3);}
 .call-type-btn.active[data-type="For Sale"]{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#16a34a;color:#fff;box-shadow:0 3px 10px rgba(22,163,74,.3);}
@@ -665,6 +683,252 @@ tbody tr:last-child td{border-bottom:none;}
 /* ── RESPONSIVE ── */
 @media(max-width:800px){.main{padding:13px;}.topbar,.navbar{padding-left:12px;padding-right:12px;}.g2,.g3{grid-template-columns:1fr;}.stats{grid-template-columns:1fr 1fr;}.mgmt-hero{grid-template-columns:1fr;}}
 @media(max-width:470px){.stats{grid-template-columns:1fr;}}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — Full Mobile Optimisation
+   Targets: phones up to 600px, tablets up to 900px
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Touch-friendly base ── */
+@media(max-width:600px){
+  /* Viewport meta already handled, ensure inputs don't zoom */
+  input,select,textarea{font-size:16px !important;}
+
+  /* ── TOPBAR ── */
+  .topbar{height:56px;padding:0 12px;}
+  .tb-co{display:none;}
+  .tb-tag{display:none;}
+  .tb-left{gap:8px;}
+  .tb-logo{width:34px;height:34px;font-size:.75em;}
+  /* collapse search to icon only on smallest screens */
+  #gSearch{width:0;min-width:0;padding:0;opacity:0;pointer-events:none;}
+  .tb-right{gap:6px;}
+  .save-ind{display:none;}
+  .role-badge{font-size:.68em;padding:3px 8px;}
+  .user-nm span{display:none;}
+  .btn-logout span{display:none;}
+  .btn-logout{padding:5px 8px;}
+
+  /* ── NAVBAR — horizontal scroll, larger touch targets ── */
+  .navbar{padding:0 8px;height:48px;}
+  .nb{padding:12px 10px;font-size:.78em;gap:4px;}
+  .nb i{font-size:1.1em;}
+
+  /* ── MAIN CONTENT ── */
+  .main{padding:10px;}
+
+  /* ── PAGE HEADER ── */
+  .ph{margin-bottom:14px;gap:8px;}
+  .ph h2{font-size:1.1em;}
+  .ph p{font-size:.76em;margin-left:0;margin-top:4px;}
+  .btn-row{flex-wrap:wrap;gap:6px;}
+  .btn-row .btn{font-size:.78em;padding:7px 12px;}
+  .btn-sm{font-size:.75em;padding:6px 10px;}
+
+  /* ── STATS CARDS ── */
+  .stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .stat{padding:12px 13px;}
+  .stat-value{font-size:1.55em;}
+  .stat-label{font-size:.68em;}
+
+  /* ── CARD / SDIV ── */
+  .card{padding:14px;border-radius:12px;}
+  .sdiv{font-size:.78em;padding:7px 12px;}
+
+  /* ── FORMS — all grids go single column ── */
+  .g2,.g3,.g4{grid-template-columns:1fr !important;}
+  .fg{margin-bottom:10px;}
+  .fg label{font-size:.72em;margin-bottom:4px;}
+  .fg input,.fg select,.fg textarea{padding:10px 12px;border-radius:9px;font-size:.92em;}
+
+  /* ── FILTER ROW ── */
+  .filt-row{padding:8px;gap:5px;}
+  .filt-row select{min-width:0;width:100%;max-width:none;height:36px;font-size:.82em;}
+  .filt-row input[type=date]{width:100%;height:36px;}
+  .filt-row .filt-sep{display:none;}
+  .filt-row .filt-date-grp{width:100%;flex-wrap:wrap;}
+  .filt-row .filt-date-grp input[type=date]{width:calc(50% - 20px);}
+  .filt-row .combo{max-width:none;width:100%;}
+
+  /* ── CALL TYPE BUTTONS ── */
+  .call-type-btn{padding:8px 13px;font-size:.78em;gap:5px;}
+
+  /* ── SERVICE CALL CARDS ── */
+  .svc-call-card{border-radius:10px;}
+  .svc-call-card .sc-hdr{flex-wrap:wrap;gap:6px;}
+
+  /* ── CONVEYANCE CARDS ── */
+  .conv-card{flex-wrap:wrap;gap:8px;padding:12px 13px;}
+
+  /* ── CUSTOMER CARDS ── */
+  .cust-card{padding:12px 13px;}
+
+  /* ── TABLES — horizontal scroll with larger touch text ── */
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;}
+  .rpt-table{font-size:.82em;}
+  .rpt-table th,.rpt-table td{padding:9px 10px;white-space:nowrap;}
+  .itbl{font-size:.8em;}
+  .itbl th{padding:8px 8px;font-size:.72em;}
+  .itbl td{padding:7px 7px;}
+  .itbl input,.itbl select{padding:6px 7px;font-size:.84em;}
+
+  /* ── MODALS — full screen on mobile ── */
+  .modal-overlay{align-items:flex-end;padding:0;}
+  .modal{
+    width:100vw !important;max-width:100vw !important;
+    border-radius:20px 20px 0 0;
+    padding:20px 16px 28px;
+    max-height:90vh;overflow-y:auto;
+    animation:modalSlideUp .28s ease;
+  }
+  @keyframes modalSlideUp{from{transform:translateY(100%);opacity:.8}to{transform:translateY(0);opacity:1}}
+  .modal-title{font-size:.95em;margin-bottom:12px;}
+
+  /* ── MGMT DETAIL DRAWER ── */
+  .mgmt-detail-drawer{width:100vw !important;border-radius:16px 16px 0 0 !important;max-height:90vh;}
+
+  /* ── FAB — messaging button ── */
+  .msg-fab{bottom:72px;right:14px;width:48px;height:48px;font-size:1.1em;}
+
+  /* ── INTERNAL MSG PANEL ── */
+  .msg-panel{width:calc(100vw - 20px) !important;right:10px !important;bottom:130px;}
+
+  /* ── ORDER CHECKLIST TABLE ── */
+  .order-items-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+  /* ── MANAGEMENT CARDS ── */
+  .mgmt-hero{grid-template-columns:1fr !important;}
+  .mgmt-two-col{grid-template-columns:1fr !important;}
+  .mgmt-kpi-row{grid-template-columns:repeat(2,1fr) !important;}
+  .mmc-row{grid-template-columns:1fr 1fr;}
+
+  /* ── REPORT TABS ── */
+  .rpt-tab{font-size:.76em;padding:7px 10px;}
+
+  /* ── SVC REPORT CARDS ── */
+  .rpt-eng-card{padding:13px;}
+
+  /* ── ORDER CARDS ── */
+  .sord-card{padding:12px 13px;border-radius:10px;}
+
+  /* ── INCENTIVE CARDS ── */
+  .inc-card{border-radius:10px;}
+
+  /* ── STOCK CARDS ── */
+  .stock-item-row td{font-size:.82em;}
+
+  /* ── SEARCH DROP ── */
+  #searchDrop{
+    left:8px !important;
+    right:8px !important;
+    top:60px !important;
+    transform:none !important;
+    width:auto !important;
+    max-height:65vh;
+    overflow-y:auto;
+    border-radius:12px;
+  }
+
+  /* ── ACCOUNT HERO GRID ── */
+  .acc-hero{grid-template-columns:repeat(2,1fr) !important;}
+
+  /* ── BUTTON ROWS ── */
+  .btn-row{display:flex;flex-wrap:wrap;}
+
+  /* ── VIEW MODAL (order, conv etc) ── */
+  .modal[style*="min-width"]{min-width:unset !important;}
+  .modal[style*="width:"]{width:100vw !important;}
+
+  /* ── DATE GROUP INPUTS ── */
+  .filt-date-grp{gap:3px;}
+
+  /* ── CONV SUMMARY TABLE ── */
+  .conv-summ-table{font-size:.8em;}
+
+  /* ── STOCK PICKER MODAL ── */
+  #stockPickerModal .modal{border-radius:20px 20px 0 0;}
+  #stockPickerModal .modal > div:nth-child(3){
+    grid-template-columns:repeat(2,1fr) !important;
+    gap:8px;
+  }
+
+  /* ── SVC STOCK OUT MODAL ── */
+  #svcStockOutModal .modal{border-radius:20px 20px 0 0;}
+
+  /* ── MGMT DETAIL OVERLAY ── */
+  .mgmt-detail-overlay{padding:0 !important;align-items:flex-end !important;}
+
+  /* ── PRINT HIDE ── */
+  @media print{.topbar,.navbar,.msg-fab{display:none;}}
+}
+
+/* ── Tablet (601-900px) fine-tuning ── */
+@media(min-width:601px)and(max-width:900px){
+  .topbar{height:58px;padding:0 16px;}
+  .tb-co{font-size:.78em;}
+  .main{padding:14px;}
+  .g3{grid-template-columns:1fr 1fr;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .mgmt-hero{grid-template-columns:1fr 1fr;}
+  .modal{width:min(560px,92vw) !important;}
+  .filt-row select{min-width:100px;max-width:140px;}
+  .rpt-table{font-size:.84em;}
+  .itbl{font-size:.83em;}
+  .nb{padding:10px 11px;font-size:.79em;}
+  .acc-hero{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ── Bottom Nav hint for very small screens ── */
+@media(max-width:420px){
+  .nb{padding:11px 7px;font-size:.73em;}
+  .tb-co,.tb-tag{display:none;}
+  .role-badge{font-size:.64em;padding:3px 7px;}
+  .stats{grid-template-columns:1fr 1fr;gap:6px;}
+  .stat-value{font-size:1.4em;}
+  .modal{padding:18px 13px 26px;}
+  .call-type-btn{padding:7px 10px;font-size:.74em;}
+  .btn,.btn-sm{font-size:.76em;}
+}
+
+/* ══ MOBILE BOX NAVIGATION ════════════════════════════════════════
+   On phones (≤600px) the horizontal scroll bar becomes a 4-column
+   icon-box grid so nothing requires sideways scrolling.
+   ══════════════════════════════════════════════════════════════ */
+@media(max-width:600px){
+  /* Hide the original strip */
+  .navbar{display:none !important;}
+  /* Show the box grid */
+  #mobileNavGrid{
+    display:grid !important;
+    position:sticky;top:56px;z-index:299;
+    background:#fff;
+    border-bottom:2px solid var(--line);
+    box-shadow:0 2px 8px rgba(0,0,0,.07);
+    padding:6px 8px 4px;
+  }
+  /* Push page content below topbar + box-nav */
+  .main{padding-top:6px !important;}
+}
+@media(min-width:601px){
+  /* Always hide box grid on desktop/tablet */
+  #mobileNavGrid{display:none !important;}
+}
+.mob-nb{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:7px 4px 5px;border:none;border-radius:10px;background:transparent;
+  cursor:pointer;font-family:'Inter',sans-serif;font-size:.62em;font-weight:700;
+  color:var(--ink3);transition:.15s;line-height:1.1;text-align:center;
+  min-height:52px;position:relative;
+}
+.mob-nb i{font-size:1.35em;display:block;}
+.mob-nb.on{background:var(--bg2);color:var(--acc);}
+.mob-nb.on i{color:var(--acc);}
+.mob-nb .mob-bc{
+  position:absolute;top:4px;right:6px;
+  background:var(--red);color:#fff;border-radius:20px;
+  padding:1px 5px;font-size:.65em;font-weight:800;
+  display:none;min-width:14px;text-align:center;
+}
 </style>
 </head>
 <body>
@@ -726,11 +990,18 @@ tbody tr:last-child td{border-bottom:none;}
     <div><div class="tb-co">Acenet Technologies India Pvt. Ltd.</div><div class="tb-tag">Business Suite</div></div>
   </div>
   <div class="tb-right">
-    <div style="position:relative;display:flex;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 11px;gap:7px;min-width:170px;">
-      <i class="fas fa-search" style="color:rgba(255,255,255,.45);font-size:.78em;"></i>
+    <div id="searchWrap" style="position:relative;display:flex;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 11px;gap:7px;min-width:170px;">
+      <i class="fas fa-search" style="color:rgba(255,255,255,.45);font-size:.78em;cursor:pointer;" onclick="toggleMobileSearch()"></i>
       <input type="text" id="gSearch" placeholder="Search…" oninput="doSearch(this.value)" style="background:none;border:none;outline:none;color:#fff;font-family:'Inter',sans-serif;font-size:.82em;width:100%;">
       <style>#gSearch::placeholder{color:rgba(255,255,255,.4);}</style>
     </div>
+    <style>
+    @media(max-width:600px){
+      #searchWrap{min-width:36px;width:36px;padding:6px 8px;transition:.25s;}
+      #searchWrap.mob-open{min-width:180px;width:180px;}
+      #searchWrap.mob-open #gSearch{width:100%;opacity:1;pointer-events:auto;}
+    }
+    </style>
     <div class="save-ind" id="saveInd"><i class="fas fa-check-circle"></i> Saved</div>
     <div class="role-badge" id="roleBadge"></div>
     <div class="user-nm" id="userNm"><i class="fas fa-user-circle"></i><span id="userName"></span></div>
@@ -739,6 +1010,7 @@ tbody tr:last-child td{border-bottom:none;}
 </div>
 <div id="searchDrop"></div>
 <div class="navbar" id="navBar"></div>
+<div id="mobileNavGrid" style="display:none;"></div>
 
 <div class="main" id="mainContent">
 
@@ -2448,7 +2720,7 @@ tbody tr:last-child td{border-bottom:none;}
 
 <!-- ════ STOCK PICKER MODAL ════ -->
 <div class="modal-overlay" id="stockPickerModal" onclick="if(event.target===this)closeModal('stockPickerModal')">
-  <div class="modal" style="width:min(780px,96vw);max-height:88vh;display:flex;flex-direction:column;">
+  <div class="modal" style="width:min(780px,96vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
     <div class="modal-title" style="background:linear-gradient(135deg,#166534,#15803d);color:#fff;border-radius:12px 12px 0 0;padding:14px 18px;">
       <span style="font-size:1.05em;font-weight:800;"><i class="fas fa-boxes-stacked" style="margin-right:8px;"></i>Select Material from Stock</span>
       <button class="modal-close" style="color:#fff;opacity:.8;" onclick="closeModal('stockPickerModal')"><i class="fas fa-times"></i></button>
@@ -2471,7 +2743,7 @@ tbody tr:last-child td{border-bottom:none;}
 
 <!-- ════ SERVICE STOCK OUT MODAL ════ -->
 <div class="modal-overlay" id="svcStockOutModal" onclick="if(event.target===this)closeModal('svcStockOutModal')">
-  <div class="modal" style="width:min(620px,96vw);">
+  <div class="modal" style="width:min(620px,96vw);max-height:90vh;overflow-y:auto;">
     <div class="modal-title" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:12px 12px 0 0;padding:14px 18px;">
       <span style="font-size:1.05em;font-weight:800;"><i class="fas fa-arrow-up" style="margin-right:8px;"></i>Stock Out — Issue Material</span>
       <button class="modal-close" style="color:#fff;opacity:.8;" onclick="closeModal('svcStockOutModal')"><i class="fas fa-times"></i></button>
@@ -3080,9 +3352,28 @@ const NAVS = {
   ]
 };
 
+
+// Mirror desktop badges to mobile nav grid
+function syncMobBadges(){
+  document.querySelectorAll('.bc').forEach(el=>{
+    const mobId='mob-bc-'+el.id;
+    const mob=g(mobId);
+    if(!mob)return;
+    const count=parseInt(el.textContent)||0;
+    const vis=el.style.display!=='none'&&count>0;
+    mob.textContent=count>0?count:'';
+    mob.style.display=vis?'flex':'none';
+  });
+}
 function buildNav(role){
   const nav=g('navBar');nav.innerHTML='';
-  (NAVS[role]||[]).forEach(item=>{
+  const mob=g('mobileNavGrid');if(mob)mob.innerHTML='';
+  const items=NAVS[role]||[];
+  // Determine grid columns based on item count
+  const cols=items.length<=4?items.length:items.length<=6?3:4;
+  if(mob)mob.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  items.forEach(item=>{
+    // ── Desktop tab strip button ──
     const b=document.createElement('button');
     b.className='nb';b.id='nb-'+item.id;
     const clr=item.color?`style="color:${item.color}"`:item.id.includes('mkt')||item.id==='bill-entry'?'style="color:var(--mkt)"':item.id.includes('acc')||item.id==='invoices'||item.id==='payments'||item.id==='advances'?'style="color:var(--acc)"':item.id.includes('svc')?'style="color:var(--svc)"':'';
@@ -3090,14 +3381,26 @@ function buildNav(role){
     b.innerHTML=`<i class="fas ${item.icon}" ${clr}></i>${esc(item.label)}${badge}`;
     b.onclick=()=>goPage(item.id);
     nav.appendChild(b);
+    // ── Mobile box button ──
+    if(mob){
+      const mb=document.createElement('button');
+      mb.className='mob-nb';mb.id='mob-nb-'+item.id;
+      const iconColor=item.color||( item.id.includes('mkt')||item.id==='bill-entry'?'var(--mkt)':item.id.includes('acc')||item.id==='invoices'||item.id==='payments'||item.id==='advances'?'var(--acc)':item.id.includes('svc')?'var(--svc)':'var(--ink2)');
+      const mobBadge=item.hasBadge?`<span class="mob-bc" id="mob-bc-${item.badgeId||'badge-'+item.id}"></span>`:'';
+      mb.innerHTML=`${mobBadge}<i class="fas ${item.icon}" style="color:${iconColor};"></i><span>${esc(item.label)}</span>`;
+      mb.onclick=()=>goPage(item.id);
+      mob.appendChild(mb);
+    }
   });
 }
 
 function goPage(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
   document.querySelectorAll('.nb').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.mob-nb').forEach(x=>x.classList.remove('on'));
   const pg=g('page-'+p);if(pg)pg.classList.add('on');
   const nb=g('nb-'+p);if(nb)nb.classList.add('on');
+  const mb=g('mob-nb-'+p);if(mb)mb.classList.add('on');
   document.querySelectorAll('.split-drop').forEach(x=>x.classList.remove('open'));
   if(p==='overview') renderMgmt();
   if(p==='mkt-reports') renderMktReports();
@@ -3137,7 +3440,8 @@ function updateOrderBadge(){
   if(!badge) return;
   if(cnt>0){badge.style.display='inline';badge.textContent=cnt;badge.classList.add('alert');}
   else{badge.style.display='none';}
-}
+
+  syncMobBadges();}
 
 function updateSvcBadge(){
   const cnt=D.svc_calls.filter(c=>c.status==='pending'||c.status==='escalated').length;
@@ -3145,7 +3449,8 @@ function updateSvcBadge(){
   if(!badge) return;
   if(cnt>0){badge.style.display='inline';badge.textContent=cnt;badge.classList.toggle('alert',cnt>0);}
   else{badge.style.display='none';}
-}
+
+  syncMobBadges();}
 
 function updateOutBadge(){
   const cnt=D.ac_invoices.filter(i=>getSt(i.id)!=='paid').length;
@@ -3466,7 +3771,7 @@ function orderAccCard(o,showConfirm){
       ${showConfirm?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
-        <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number for this order — invoice entry will be auto-created in Invoices tab:</p>
+        <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
         <div class="bill-confirm-input">
           <input type="text" id="bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-open-all-inv">
           <datalist id="dl-open-all-inv">${D.ac_invoices.map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
@@ -3484,13 +3789,11 @@ function confirmBillOrder(ordId){
   const inp=g('bill-inp-'+ordId);
   const invNo=(inp?.value||'').trim();
   if(!invNo){alert('Please enter the invoice/bill number');inp?.focus();return;}
-  // ── Duplicate bill number check ──
   const dupOrd=D.orders.find(x=>x.status==='billed'&&x.invoiceNo===invNo&&x.id!==ordId);
   if(dupOrd){alert(`⚠️ Bill number "${invNo}" is already used for Order ${dupOrd.orderNo} (${dupOrd.customer})!\nPlease enter a unique bill number.`);inp?.focus();return;}
   const o=D.orders.find(x=>x.id===ordId);if(!o)return;
   o.status='billed';o.invoiceNo=invNo;o.billedDate=today();
-  // ── Auto-create invoice entry if not already exists ──
-  autoCreateInvoiceFromOrder(o, invNo);
+  autoCreateInvoiceFromOrder(o,invNo);
   saveData('sync');
   renderAccOrders();
   renderInvoices();
@@ -3502,13 +3805,11 @@ function confirmBillFromModal(ordId){
   const inp=g('modal-bill-inp-'+ordId);
   const invNo=(inp?.value||'').trim();
   if(!invNo){alert('Please enter the invoice/bill number');inp?.focus();return;}
-  // ── Duplicate bill number check ──
   const dupOrd=D.orders.find(x=>x.status==='billed'&&x.invoiceNo===invNo&&x.id!==ordId);
   if(dupOrd){alert(`⚠️ Bill number "${invNo}" is already used for Order ${dupOrd.orderNo} (${dupOrd.customer})!\nPlease enter a unique bill number.`);inp?.focus();return;}
   const o=D.orders.find(x=>x.id===ordId);if(!o)return;
   o.status='billed';o.invoiceNo=invNo;o.billedDate=today();
-  // ── Auto-create invoice entry if not already exists ──
-  autoCreateInvoiceFromOrder(o, invNo);
+  autoCreateInvoiceFromOrder(o,invNo);
   saveData('sync');
   renderAccOrders();
   renderInvoices();
@@ -3519,59 +3820,37 @@ function confirmBillFromModal(ordId){
 }
 
 // ── Auto-create invoice from a confirmed order ──────────────────
-function autoCreateInvoiceFromOrder(o, invNo){
-  // Skip if invoice number already exists
-  if(D.ac_invoices.find(i=>i.no===invNo)) return;
-  // Ensure customer exists in accounts master
+function autoCreateInvoiceFromOrder(o,invNo){
+  if(D.ac_invoices.find(i=>i.no===invNo))return;
   if(!D.ac_customers.find(c=>c.name===o.customer))
     D.ac_customers.push({id:uid(),name:o.customer,phone:'',email:'',gstin:'',city:''});
-  // Build invoice items from order items
-  const invItems=(o.items||[]).map(it=>({
-    desc:it.material||it.name||'',
-    qty:it.qty||1,
-    rate:it.rate||0,
-    amt:it.amount||(it.qty||1)*(it.rate||0)
-  }));
-  // Calculate subtotal and tax from order
-  const _base=o.baseTotal!=null?o.baseTotal:
-    (o.gstType==='inclusive'?Math.round(o.total/(1+GST_R)*100)/100:
-    (o.gstType==='exclusive'?invItems.reduce((s,x)=>s+x.amt,0):o.total));
+  const invItems=(o.items||[]).map(it=>({desc:it.material||it.name||'',qty:it.qty||1,rate:it.rate||0,amt:it.amount||(it.qty||1)*(it.rate||0)}));
+  const _base=o.gstType==='inclusive'?Math.round(o.total/(1+GST_R)*100)/100:(o.gstType==='exclusive'?invItems.reduce((s,x)=>s+x.amt,0):o.total);
   const _taxR=(o.gstType&&o.gstType!=='none')?18:0;
-  const _taxAmt=o.gstType==='inclusive'?Math.round((o.total-_base)*100)/100:
-    (o.gstType==='exclusive'?Math.round(_base*GST_R*100)/100:0);
+  const _taxAmt=o.gstType==='inclusive'?Math.round((o.total-_base)*100)/100:(o.gstType==='exclusive'?Math.round(_base*GST_R*100)/100:0);
   const _total=o.gstType==='exclusive'?Math.round((_base+_taxAmt)*100)/100:o.total;
-  D.ac_invoices.push({
-    id:uid(),no:invNo,date:o.billedDate||today(),
-    dueDate:addDays(o.billedDate||today(),30),
-    custName:o.customer,
-    notes:`Auto-created from Order ${o.orderNo}`,
-    items:invItems,subtotal:_base,taxRate:_taxR,taxAmt:_taxAmt,total:_total,
-    fromOrderId:o.id,fromOrderNo:o.orderNo
-  });
+  D.ac_invoices.push({id:uid(),no:invNo,date:o.billedDate||today(),dueDate:addDays(o.billedDate||today(),30),custName:o.customer,notes:'Auto-created from Order '+o.orderNo,items:invItems,subtotal:_base,taxRate:_taxR,taxAmt:_taxAmt,total:_total,fromOrderId:o.id,fromOrderNo:o.orderNo});
 }
 
 // ── Edit bill number for a billed order ─────────────────────────
 function editBillNumberInline(ordId){
   const o=D.orders.find(x=>x.id===ordId);if(!o)return;
   const oldNo=o.invoiceNo;
-  // Build an inline edit panel
   const panel=document.createElement('div');
   panel.id='edit-bill-panel-'+ordId;
   panel.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px;';
-  panel.innerHTML=`<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,.25);">
-    <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--orange);margin-bottom:6px;"><i class="fas fa-edit" style="margin-right:8px;"></i>Edit Bill Number</div>
-    <div style="font-size:.88em;color:var(--ink3);margin-bottom:14px;">Order: <strong>${esc(o.orderNo)}</strong> &nbsp;|&nbsp; Customer: <strong>${esc(o.customer)}</strong></div>
-    <label style="font-size:.82em;font-weight:700;color:var(--ink4);display:block;margin-bottom:5px;">New Bill / Invoice Number</label>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <input id="edit-bill-inp-${ordId}" type="text" value="${esc(oldNo)}" list="dl-edit-bill-${ordId}" style="flex:1;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.98em;font-family:'Inter',sans-serif;" placeholder="e.g. INV-2025-0007">
-      <datalist id="dl-edit-bill-${ordId}">${(D.ac_invoices||[]).map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
-    </div>
-    <div style="font-size:.78em;color:var(--ink3);margin-bottom:14px;"><i class="fas fa-info-circle" style="color:var(--acc);margin-right:5px;"></i>Linked invoice record will also be updated automatically.</div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;">
-      <button class="btn btn-ghost" onclick="document.getElementById('edit-bill-panel-${ordId}').remove()">Cancel</button>
-      <button class="btn btn-success" onclick="saveBillNumberEdit('${ordId}')"><i class="fas fa-save"></i> Save</button>
-    </div>
-  </div>`;
+  panel.innerHTML='<div style="background:#fff;border-radius:14px;max-width:480px;width:100%;padding:24px;box-shadow:0 16px 48px rgba(0,0,0,.25);">'
+    +'<div style="font-family:Sora,sans-serif;font-weight:800;font-size:1.05em;color:var(--orange);margin-bottom:6px;"><i class=\"fas fa-edit\" style=\"margin-right:8px;\"></i>Edit Bill Number</div>'
+    +'<div style="font-size:.88em;color:var(--ink3);margin-bottom:14px;">Order: <strong>'+esc(o.orderNo)+'</strong> &nbsp;|&nbsp; Customer: <strong>'+esc(o.customer)+'</strong></div>'
+    +'<label style="font-size:.82em;font-weight:700;color:var(--ink4);display:block;margin-bottom:5px;">New Bill / Invoice Number</label>'
+    +'<div style="display:flex;gap:8px;margin-bottom:14px;">'
+    +'<input id="edit-bill-inp-'+ordId+'" type="text" value="'+esc(oldNo)+'" style="flex:1;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:.98em;" placeholder="e.g. INV-2025-0007">'
+    +'</div>'
+    +'<div style="font-size:.78em;color:var(--ink3);margin-bottom:14px;"><i class=\"fas fa-info-circle\" style=\"color:var(--acc);margin-right:5px;\"></i>Linked invoice will also be updated automatically.</div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;">'
+    +'<button class=\"btn btn-ghost\" onclick=\"document.getElementById(\'edit-bill-panel-'+ordId+'\').remove()\">Cancel</button>'
+    +'<button class=\"btn btn-success\" onclick=\"saveBillNumberEdit(\''+ordId+'\')\"><i class=\"fas fa-save\"></i> Save</button>'
+    +'</div></div>';
   document.body.appendChild(panel);
   setTimeout(()=>{const inp=g('edit-bill-inp-'+ordId);if(inp){inp.focus();inp.select();}},80);
 }
@@ -3583,23 +3862,16 @@ function saveBillNumberEdit(ordId){
   const o=D.orders.find(x=>x.id===ordId);if(!o)return;
   const oldNo=o.invoiceNo;
   if(newNo===oldNo){g('edit-bill-panel-'+ordId)?.remove();return;}
-  // Duplicate check
   const dup=D.orders.find(x=>x.status==='billed'&&x.invoiceNo===newNo&&x.id!==ordId);
-  if(dup){alert(`⚠️ Bill number "${newNo}" is already used for Order ${dup.orderNo} (${dup.customer})!\nPlease enter a unique bill number.`);return;}
-  // Also check if this new number conflicts with a non-linked invoice
-  const existInv=D.ac_invoices.find(i=>i.no===newNo&&i.fromOrderId!==ordId);
-  if(existInv){if(!confirm(`Invoice "${newNo}" already exists for ${existInv.custName}.\nLink this order to that invoice anyway?`))return;}
-  // Update order
+  if(dup){alert('⚠️ Bill number "'+newNo+'" is already used for Order '+dup.orderNo+' ('+dup.customer+')!\nPlease enter a unique bill number.');return;}
   o.invoiceNo=newNo;
-  // Update linked invoice (auto-created one)
   const linkedInv=D.ac_invoices.find(i=>i.no===oldNo&&i.fromOrderId===ordId);
-  if(linkedInv){linkedInv.no=newNo;}
-  // Remove edit panel
+  if(linkedInv)linkedInv.no=newNo;
   g('edit-bill-panel-'+ordId)?.remove();
   saveData('sync');
   renderAccOrders();
   renderInvoices();
-  showSuccessToast(`✓ Bill number updated: ${oldNo} → ${newNo}`,'var(--green)');
+  showSuccessToast('✓ Bill number updated: '+oldNo+' → '+newNo,'var(--green)');
 }
 
 function viewOrderModal(id){
@@ -3747,18 +4019,18 @@ function viewOrderModal(id){
         <!-- Notes -->
         ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.98em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
         <!-- Billed info -->
-        ${o.status==='billed'?`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:4px;flex-shrink:0;"></i><span>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate} — Invoice auto-created</span><button class="btn btn-outline btn-sm" style="margin-left:auto;border-color:#16a34a;color:#16a34a;font-size:.8em;padding:3px 10px;white-space:nowrap;" onclick="g('ordViewModal').remove();editBillNumberInline('${o.id}')"><i class="fas fa-edit"></i> Edit Bill No</button></div>`:''}
+        ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
         <!-- Accounts: Confirm Bill action for pending orders -->
         ${o.status==='pending'?`
         <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-top:4px;">
           <div style="font-weight:800;font-size:.95em;color:#c2410c;margin-bottom:6px;"><i class="fas fa-file-invoice" style="margin-right:7px;"></i>Confirm Bill Number</div>
-          <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the bill number — invoice entry will be auto-created from order items.</div>
+          <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <input type="text" id="modal-bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-modal-inv-${o.id}" style="flex:1;min-width:160px;padding:9px 12px;border:1.5px solid #fed7aa;border-radius:8px;font-size:.98em;font-family:'Inter',sans-serif;">
             <datalist id="dl-modal-inv-${o.id}">${(D.ac_invoices||[]).map(i=>`<option value="${esc(i.no)}">`).join('')}</datalist>
             <button class="btn btn-success" onclick="confirmBillFromModal('${o.id}')" style="padding:9px 18px;font-size:.98em;white-space:nowrap;"><i class="fas fa-check-circle"></i> Confirm Billed</button>
           </div>
-          <div style="margin-top:10px;font-size:.92em;color:var(--ink3);"><i class="fas fa-magic" style="color:var(--acc);margin-right:5px;"></i>Invoice entry auto-created from order items — no manual entry needed.</div>
+          <div style="margin-top:10px;font-size:.92em;color:var(--ink3);"><i class="fas fa-lightbulb" style="color:var(--amber);margin-right:5px;"></i>Tip: First create the invoice in the Invoices tab, then confirm here.</div>
         </div>`:''}
       </div>
     </div>
@@ -6607,7 +6879,7 @@ function addCallsToDraft(draftId){
   const usedRefs=new Set((draft.callRefs||draft.callRef||'').split(',').map(r=>r.trim()).filter(Boolean));
   // Get calls for this engineer not yet in any draft/claim
   const usedInAny=new Set(D.svc_conveyance.filter(c=>c.id!==draftId).flatMap(c=>(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean)));
-  const available=D.svc_calls.filter(c=>c.engineer===eng&&!usedRefs.has(c.no)&&!usedInAny.has(c.no)&&(c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0)))>0);
+  const available=D.svc_calls.filter(c=>c.engineer===eng&&!usedRefs.has(c.no)&&!usedInAny.has(c.no)&&((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0))>0);
   if(!available.length){
     showSuccessToast('No additional eligible calls available for this engineer','var(--amber)');return;
   }
@@ -6619,12 +6891,12 @@ function addCallsToDraft(draftId){
       </div>
       <div style="padding:16px 20px;">
         <div style="font-size:.8em;color:var(--ink3);margin-bottom:12px;">Select calls to add — amounts will be merged into the existing draft.</div>
-        ${available.map(c=>{const t=c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0));const trvLeg=parseFloat(c.convAmt)||0;const fLeg=parseFloat(c.convFood)||0;const oLeg=parseFloat(c.convOther)||0;return`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background=''">
+        ${available.map(c=>{const t=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);return`<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s;" onmouseover="this.style.background='#f0fdfa'" onmouseout="this.style.background=''">
           <input type="checkbox" class="atd-chk" data-id="${c.id}" style="margin-top:2px;accent-color:var(--svc);">
           <div style="flex:1;">
             <div style="font-weight:700;font-size:.85em;color:var(--svc);">${esc(c.no)} — ${esc(c.customer||'')}</div>
             <div style="font-size:.75em;color:var(--ink3);">${c.date}${c.issue?' · '+esc(c.issue):''}</div>
-            <div style="font-size:.75em;margin-top:3px;">${c.convRows?.length?`${c.convRows.length} leg(s)`:(`Travel: ${fmt(trvLeg)} | Food: ${fmt(fLeg)} | Other: ${fmt(oLeg)}`)} → <strong style="color:var(--svc);">${fmt(t)}</strong></div>
+            <div style="font-size:.75em;margin-top:3px;">Travel: ${fmt(parseFloat(c.convAmt)||0)} | Food: ${fmt(parseFloat(c.convFood)||0)} | Other: ${fmt(parseFloat(c.convOther)||0)} → <strong style="color:var(--svc);">${fmt(t)}</strong></div>
           </div>
         </label>`;}).join('')}
         <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
@@ -6644,15 +6916,10 @@ function confirmAddCallsToDraft(draftId){
   const newCalls=checked.map(cb=>D.svc_calls.find(c=>c.id===cb.dataset.id)).filter(Boolean);
   // Merge calls
   newCalls.forEach(c=>{
-    // For multi-leg calls, convAmt is the FULL total; legacy single-leg: convAmt=travel only
-    const _trvAdd=c.convRows?.length?(c.convAmt||0):(parseFloat(c.convAmt)||0);
-    const _foodAdd=c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.food||0),0):(parseFloat(c.convFood)||0);
-    const _otherAdd=c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.other||0),0):(parseFloat(c.convOther)||0);
-    const _total=c.convRows?.length?(c.convAmt||0):(_trvAdd+_foodAdd+_otherAdd);
-    draft.travelAmt=(draft.travelAmt||0)+_trvAdd;
-    draft.foodAmt=(draft.foodAmt||0)+_foodAdd;
-    draft.otherAmt=(draft.otherAmt||0)+_otherAdd;
-    draft.totalAmt=(draft.totalAmt||0)+_total;
+    draft.travelAmt=(draft.travelAmt||0)+(parseFloat(c.convAmt)||0);
+    draft.foodAmt=(draft.foodAmt||0)+(parseFloat(c.convFood)||0);
+    draft.otherAmt=(draft.otherAmt||0)+(parseFloat(c.convOther)||0);
+    draft.totalAmt=(draft.totalAmt||0)+(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
     const existing=(draft.callRefs||draft.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
     existing.push(c.no);
     draft.callRefs=existing.join(', ');
@@ -8195,7 +8462,8 @@ function updatePendInboxBadge(){
     +(D.orders.filter(o=>o.status==='pending').length);
   const b=g('pend-inbox-badge');if(!b)return;
   if(cnt>0){b.style.display='inline';b.textContent=cnt;b.classList.add('alert');}else{b.style.display='none';}
-}
+
+  syncMobBadges();}
 
 function renderAccDashboard(){
   const convs=D.svc_conveyance.filter(c=>c.status==='pending').sort((a,b)=>b.createdAt?.localeCompare(a.createdAt||'')||0);
@@ -9109,7 +9377,7 @@ function renderStockPicker(){
     el.innerHTML='<div style="text-align:center;padding:32px;color:var(--ink3);font-size:1em;"><i class="fas fa-boxes-stacked" style="font-size:2.5em;display:block;margin-bottom:10px;opacity:.25;"></i>No stock items found.</div>';
     return;
   }
-  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:6px;">
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,45vw),1fr));gap:10px;margin-top:6px;">
     ${items.map(i=>{
       const qty=stockQty(i.id);
       const isOut=qty<=0;
@@ -10095,7 +10363,7 @@ function updateConvSelSummary(){
   let total=0;
   checked.forEach(cb=>{
     const c=D.svc_calls.find(x=>x.id===cb.dataset.id);
-    if(c) total+=c.convRows?.length?(c.convAmt||0):((parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0));
+    if(c) total+=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
   });
   if(selCount) selCount.textContent=checked.length+' call(s) selected';
   if(selTotal) selTotal.textContent=checked.length>0?'Total: '+fmt(total):'';
@@ -10121,9 +10389,9 @@ function generateConvFromSelected(){
     rate:parseFloat(c.convRate)||0,
     amount:parseFloat(c.convAmt)||0
   }));
-  const travelTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.amt||0),0):(parseFloat(c.convAmt)||0)),0);
-  const foodTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.food||0),0):(parseFloat(c.convFood)||0)),0);
-  const otherTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(r.other||0),0):(parseFloat(c.convOther)||0)),0);
+  const travelTotal=items.reduce((a,i)=>a+i.amount,0);
+  const foodTotal=calls.reduce((a,c)=>a+(parseFloat(c.convFood)||0),0);
+  const otherTotal=calls.reduce((a,c)=>a+(parseFloat(c.convOther)||0),0);
   const grandTotal=travelTotal+foodTotal+otherTotal;
   const dates=calls.map(c=>c.date).filter(Boolean).sort();
   const dateLabel=dates.length?`${dates[0]}${dates.length>1?' to '+dates[dates.length-1]:''}`:today();
@@ -10194,6 +10462,104 @@ function calcIncProfit(){
   if(dispEl){dispEl.value=(grossProfit>=0?'+':'')+fmt(grossProfit);dispEl.style.color=grossProfit>=0?'var(--green)':'var(--red)';}
   if(npEl){npEl.value=(netProfit>=0?'+':'')+fmt(netProfit);npEl.style.color=netProfit>=0?'var(--green)':'var(--red)';}
 }
+// ════════════════════════════════════════════════════════════════
+// MOBILE ENHANCEMENTS
+// ════════════════════════════════════════════════════════════════
+
+// Mobile search toggle
+function toggleMobileSearch(){
+  const wrap = document.getElementById('searchWrap');
+  const inp  = document.getElementById('gSearch');
+  if(!wrap) return;
+  if(wrap.classList.contains('mob-open')){
+    wrap.classList.remove('mob-open');
+    inp.blur();
+    inp.value='';
+    const drop=g('searchDrop');if(drop)drop.style.display='none';
+  } else {
+    wrap.classList.add('mob-open');
+    setTimeout(()=>inp.focus(),50);
+  }
+}
+
+// Close search on outside tap (mobile)
+document.addEventListener('click', function(e){
+  if(window.innerWidth > 600) return;
+  const wrap = document.getElementById('searchWrap');
+  const drop = document.getElementById('searchDrop');
+  if(!wrap || !drop) return;
+  if(!wrap.contains(e.target) && !drop.contains(e.target)){
+    wrap.classList.remove('mob-open');
+    drop.style.display='none';
+  }
+});
+
+// Close modal on backdrop tap — enhanced for mobile bottom sheets
+document.addEventListener('click', function(e){
+  if(window.innerWidth > 600) return;
+  if(e.target.classList.contains('modal-overlay')){
+    e.target.classList.remove('on');
+  }
+});
+
+// Swipe-down to close bottom-sheet modals on mobile
+(function(){
+  let startY=0, startScrollTop=0;
+  document.addEventListener('touchstart', function(e){
+    const modal = e.target.closest('.modal');
+    if(!modal) return;
+    startY = e.touches[0].clientY;
+    startScrollTop = modal.scrollTop;
+  }, {passive:true});
+
+  document.addEventListener('touchmove', function(e){
+    const modal = e.target.closest('.modal');
+    if(!modal || window.innerWidth > 600) return;
+    const dy = e.touches[0].clientY - startY;
+    if(dy > 0 && modal.scrollTop <= 0){
+      modal.style.transform = `translateY(${Math.min(dy * 0.5, 120)}px)`;
+      modal.style.transition = 'none';
+    }
+  }, {passive:true});
+
+  document.addEventListener('touchend', function(e){
+    const modal = e.target.closest('.modal');
+    if(!modal || window.innerWidth > 600) return;
+    const dy = e.changedTouches[0].clientY - startY;
+    modal.style.transition = 'transform .25s ease';
+    if(dy > 80 && modal.scrollTop <= 0){
+      // swipe down far enough — close modal
+      const overlay = modal.closest('.modal-overlay');
+      if(overlay){
+        modal.style.transform = 'translateY(100%)';
+        setTimeout(()=>{
+          overlay.classList.remove('on');
+          modal.style.transform='';
+        }, 250);
+      }
+    } else {
+      modal.style.transform = '';
+    }
+  });
+})();
+
+// Improve tap targets — add active state feedback on mobile cards
+document.addEventListener('touchstart', function(e){
+  const card = e.target.closest('.svc-call-card,.cust-card,.conv-card,.inc-card,.sord-card');
+  if(card) card.style.opacity = '0.85';
+}, {passive:true});
+document.addEventListener('touchend', function(e){
+  const card = e.target.closest('.svc-call-card,.cust-card,.conv-card,.inc-card,.sord-card');
+  if(card) setTimeout(()=>card.style.opacity='', 150);
+}, {passive:true});
+
+// Auto-scroll active navbar item into view on mobile
+function scrollNavToActive(){
+  if(window.innerWidth > 600) return;
+  const active = document.querySelector('.nb.on');
+  if(active && active.scrollIntoView) active.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+}
+
 
 
 </script>
