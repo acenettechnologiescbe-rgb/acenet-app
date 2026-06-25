@@ -701,13 +701,12 @@ tbody tr:last-child td{border-bottom:none;}
   .tb-left{gap:8px;}
   .tb-logo{width:34px;height:34px;font-size:.75em;}
   /* collapse search to icon only on smallest screens */
-  #gSearch{width:0;min-width:0;padding:0;opacity:0;pointer-events:none;}
+  /* #gSearch mobile handled by topbar inline <style> block */
   .tb-right{gap:6px;}
   .save-ind{display:none;}
   .role-badge{font-size:.68em;padding:3px 8px;}
-  .user-nm span{display:none;}
-  .btn-logout span{display:none;}
-  .btn-logout{padding:5px 8px;}
+  /* user-nm handled by topbar inline <style> block */
+  /* btn-logout mobile style handled by topbar inline <style> block */
 
   /* ── NAVBAR — horizontal scroll, larger touch targets ── */
   .navbar{padding:0 8px;height:48px;}
@@ -990,22 +989,32 @@ tbody tr:last-child td{border-bottom:none;}
     <div><div class="tb-co">Acenet Technologies India Pvt. Ltd.</div><div class="tb-tag">Business Suite</div></div>
   </div>
   <div class="tb-right">
-    <div id="searchWrap" style="position:relative;display:flex;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 11px;gap:7px;min-width:170px;">
+    <div id="searchWrap" style="position:relative;display:flex;align-items:center;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 11px;gap:7px;min-width:170px;transition:.25s;">
       <i class="fas fa-search" style="color:rgba(255,255,255,.45);font-size:.78em;cursor:pointer;" onclick="toggleMobileSearch()"></i>
       <input type="text" id="gSearch" placeholder="Search…" oninput="doSearch(this.value)" style="background:none;border:none;outline:none;color:#fff;font-family:'Inter',sans-serif;font-size:.82em;width:100%;">
       <style>#gSearch::placeholder{color:rgba(255,255,255,.4);}</style>
     </div>
     <style>
+    /* ── Mobile search: icon-only, expands on tap ── */
     @media(max-width:600px){
-      #searchWrap{min-width:36px;width:36px;padding:6px 8px;transition:.25s;}
-      #searchWrap.mob-open{min-width:180px;width:180px;}
-      #searchWrap.mob-open #gSearch{width:100%;opacity:1;pointer-events:auto;}
+      #searchWrap{min-width:34px !important;width:34px !important;padding:6px 9px !important;overflow:hidden;}
+      #searchWrap.mob-open{min-width:160px !important;width:160px !important;padding:6px 11px !important;}
+      #searchWrap #gSearch{width:0;min-width:0;opacity:0;pointer-events:none;padding:0;}
+      #searchWrap.mob-open #gSearch{width:100%;opacity:1;pointer-events:auto;padding:0;}
+      /* ── Logout: always show with text on mobile ── */
+      .btn-logout span{display:inline !important;}
+      .btn-logout{padding:5px 10px !important;background:rgba(220,38,38,.35) !important;border-color:rgba(220,38,38,.5) !important;color:#fff !important;font-size:.72em !important;}
+      /* ── Role badge: slim ── */
+      .role-badge{font-size:.64em;padding:2px 7px;}
+      /* ── Hide username text ── */
+      .user-nm span{display:none;}
+      .user-nm{display:none;}
     }
     </style>
     <div class="save-ind" id="saveInd"><i class="fas fa-check-circle"></i> Saved</div>
     <div class="role-badge" id="roleBadge"></div>
     <div class="user-nm" id="userNm"><i class="fas fa-user-circle"></i><span id="userName"></span></div>
-    <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i><span style="margin-left:5px;"> Logout</span></button>
   </div>
 </div>
 <div id="searchDrop"></div>
