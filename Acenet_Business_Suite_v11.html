@@ -2018,41 +2018,6 @@ tbody tr:last-child td{border-bottom:none;}
       </button>
     </div>
 
-    <!-- ── Delivery Challan ── -->
-    <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:12px 15px;margin-bottom:13px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDC()">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <i class="fas fa-truck" style="color:#0369a1;font-size:.9em;"></i>
-          <span class="sora" style="font-weight:700;font-size:.84em;color:#0369a1;">Delivery Challan</span>
-          <span style="font-size:.72em;color:var(--ink3);">(optional — fill if goods dispatched)</span>
-        </div>
-        <i class="fas fa-chevron-down" id="dcChevron" style="color:#0369a1;font-size:.78em;transition:.2s;"></i>
-      </div>
-      <div id="dcPanel" style="display:none;margin-top:12px;">
-        <div class="g3" style="margin-bottom:9px;">
-          <div class="fg"><label>DC Number</label><input type="text" id="svDCNo" placeholder="DC-2026-0001"></div>
-          <div class="fg"><label>DC Date</label><input type="date" id="svDCDate"></div>
-          <div class="fg"><label>DC Type</label>
-            <select id="svDCType">
-              <option value="">-- Select Type --</option>
-              <option value="For Sale">For Sale</option>
-              <option value="For Repair">For Repair</option>
-              <option value="For Job Work">For Job Work</option>
-              <option value="Stock Transfer">Stock Transfer</option>
-              <option value="Returnable">Returnable</option>
-              <option value="Non-Returnable">Non-Returnable</option>
-            </select>
-          </div>
-        </div>
-        <div class="g3" style="margin-bottom:5px;">
-          <div class="fg"><label>Vehicle / Transport No</label><input type="text" id="svDCVehicle" placeholder="e.g. TN 37 AB 1234"></div>
-          <div class="fg"><label>Driver / Carrier</label><input type="text" id="svDCDriver" placeholder="Name or courier service"></div>
-          <div class="fg"><label>Delivery Address</label><input type="text" id="svDCAddr" placeholder="Delivery location"></div>
-        </div>
-        <div class="fg"><label>DC Remarks</label><input type="text" id="svDCRemarks" placeholder="Optional challan notes"></div>
-      </div>
-    </div>
-
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
     <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Expense Type</th><th>Expense (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addSvOrdItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--orange)"></i> Add Item</button>
@@ -2793,16 +2758,51 @@ tbody tr:last-child td{border-bottom:none;}
         </div>
         <input type="hidden" id="svcSoPurpose" value="AMC Replacement">
       </div>
+      <!-- ── Delivery Challan ── -->
+      <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:11px 14px;margin-bottom:13px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;" onclick="toggleSoDC()">
+          <i class="fas fa-truck" style="color:#0369a1;font-size:.88em;"></i>
+          <span style="font-weight:700;font-size:.84em;color:#0369a1;">Delivery Challan</span>
+          <span style="font-size:.72em;color:var(--ink3);">(optional — fill if goods dispatched)</span>
+          <i class="fas fa-chevron-down" id="soDcChevron" style="margin-left:auto;color:#0369a1;font-size:.78em;transition:.2s;"></i>
+        </div>
+        <div id="soDcPanel" style="display:none;">
+          <div class="g3" style="margin-bottom:9px;">
+            <div class="fg"><label>DC Number</label><input type="text" id="svcSoDCNo" placeholder="DC-2026-0001" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;"></div>
+            <div class="fg"><label>DC Date</label><input type="date" id="svcSoDCDate" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;"></div>
+            <div class="fg"><label>DC Type</label>
+              <select id="svcSoDCType" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+                <option value="">-- Select Type --</option>
+                <option value="For Sale">For Sale</option>
+                <option value="For Repair">For Repair</option>
+                <option value="For Job Work">For Job Work</option>
+                <option value="Stock Transfer">Stock Transfer</option>
+                <option value="Returnable">Returnable</option>
+                <option value="Non-Returnable">Non-Returnable</option>
+              </select>
+            </div>
+          </div>
+          <div class="g3" style="margin-bottom:8px;">
+            <div class="fg"><label>Vehicle / Transport No</label><input type="text" id="svcSoDCVehicle" placeholder="e.g. TN 37 AB 1234" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;"></div>
+            <div class="fg"><label>Driver / Carrier</label><input type="text" id="svcSoDCDriver" placeholder="Name or courier service" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;"></div>
+            <div class="fg"><label>Delivery Address</label><input type="text" id="svcSoDCAddr" placeholder="Delivery location" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;"></div>
+          </div>
+          <div class="fg"><label>DC Remarks</label><input type="text" id="svcSoDCRemarks" placeholder="Optional challan notes" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;"></div>
+        </div>
+      </div>
       <div class="g2" style="margin-bottom:13px;">
         <div class="fg">
-          <label>Delivery Challan No</label>
-          <input type="text" id="svcSoDC" placeholder="DC / Challan number" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
+          <label>Link to Order Checklist <span style="font-size:.78em;color:var(--ink3);font-weight:400;">(auto-deduct items from stock)</span></label>
+          <select id="svcSoOrderLink" onchange="svcSoOrderLinkChanged()" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+            <option value="">-- None --</option>
+          </select>
         </div>
         <div class="fg">
           <label>Reference (Invoice / Order No)</label>
           <input type="text" id="svcSoRef" placeholder="Optional reference" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
         </div>
       </div>
+      <div id="svcSoAutoDeductPreview" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;padding:10px 13px;margin-bottom:12px;font-size:.83em;"></div>
       <div class="fg" style="margin-bottom:18px;">
         <label>Notes</label>
         <input type="text" id="svcSoNotes" placeholder="Optional notes" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
@@ -5771,7 +5771,20 @@ function openSvcStockOutModal(preItemId){
     +(D.ac_customers||[]).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
   g('svcSoDate').value=today();
   g('svcSoQty').value=1;
-  g('svcSoRef').value='';g('svcSoDC').value='';g('svcSoNotes').value='';
+  g('svcSoRef').value='';g('svcSoNotes').value='';
+  // Reset full DC fields
+  ['svcSoDCNo','svcSoDCDate','svcSoDCVehicle','svcSoDCDriver','svcSoDCAddr','svcSoDCRemarks'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  if(g('svcSoDCType'))g('svcSoDCType').value='';
+  if(g('soDcPanel'))g('soDcPanel').style.display='none';
+  if(g('soDcChevron'))g('soDcChevron').style.transform='';
+  // Populate order link dropdown — pending orders from service
+  const orderSel=g('svcSoOrderLink');
+  if(orderSel){
+    const pendingOrders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled');
+    orderSel.innerHTML='<option value="">-- None --</option>'
+      +pendingOrders.map(o=>`<option value="${o.id}">${esc(o.orderNo||o.id)} — ${esc(o.customer||'')} (${o.items?.length||0} items)</option>`).join('');
+  }
+  if(g('svcSoAutoDeductPreview'))g('svcSoAutoDeductPreview').style.display='none';
   setSvcSoPurpose('AMC Replacement');
   svcSoItemChanged();
   openModal('svcStockOutModal');
@@ -5797,6 +5810,35 @@ function setSvcSoPurpose(type){
   });
 }
 
+function toggleSoDC(){
+  const panel=g('soDcPanel'),chev=g('soDcChevron');
+  if(!panel)return;
+  const open=panel.style.display==='block';
+  panel.style.display=open?'none':'block';
+  if(chev)chev.style.transform=open?'':'rotate(180deg)';
+}
+
+function svcSoOrderLinkChanged(){
+  const ordId=g('svcSoOrderLink')?.value||'';
+  const preview=g('svcSoAutoDeductPreview');
+  if(!ordId||!preview){if(preview)preview.style.display='none';return;}
+  const ord=(D.orders||[]).find(o=>o.id===ordId);
+  if(!ord||!ord.items?.length){preview.style.display='none';return;}
+  // Build preview of items that will be auto-deducted
+  const lines=ord.items.map(it=>{
+    const stockItem=(D.stock_items||[]).find(s=>s.name.toLowerCase()===it.material?.toLowerCase());
+    const avail=stockItem?stockQty(stockItem.id):null;
+    const availTxt=avail!==null?` (available: ${avail.toFixed(2)} ${stockItem?.unit||'Nos'})`:' (not in stock)';
+    return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #dcfce7;">
+      <span><i class="fas fa-box" style="color:#16a34a;margin-right:5px;font-size:.8em;"></i>${esc(it.material||'')}</span>
+      <span style="font-weight:700;color:${avail===null?'var(--amber)':'var(--green)'};">Qty: ${it.qty}${availTxt}</span></div>`;
+  }).join('');
+  preview.style.display='block';
+  preview.innerHTML=`<div style="font-weight:700;color:#166534;margin-bottom:6px;"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Auto Stock-Out Preview — ${esc(ord.orderNo||'')} (${esc(ord.customer||'')})</div>${lines}<div style="margin-top:6px;font-size:.8em;color:var(--ink3);">Items matching stock will be automatically deducted on save.</div>`;
+  // Also pre-fill ref with order number
+  if(g('svcSoRef')&&!g('svcSoRef').value) g('svcSoRef').value=ord.orderNo||'';
+}
+
 function saveSvcStockOut(){
   const itemId=g('svcSoItem').value;
   const qty=parseFloat(g('svcSoQty').value)||0;
@@ -5807,20 +5849,67 @@ function saveSvcStockOut(){
   const item=D.stock_items.find(i=>i.id===itemId);if(!item)return;
   const currentQty=stockQty(itemId);
   if(qty>currentQty){alert('Only '+currentQty.toFixed(2)+' '+( item.unit||'units')+' available');return;}
+  // Build DC object from new full DC fields
+  const dc={
+    no:(g('svcSoDCNo')?.value||'').trim(),
+    date:g('svcSoDCDate')?.value||'',
+    type:g('svcSoDCType')?.value||'',
+    vehicle:(g('svcSoDCVehicle')?.value||'').trim(),
+    driver:(g('svcSoDCDriver')?.value||'').trim(),
+    addr:(g('svcSoDCAddr')?.value||'').trim(),
+    remarks:(g('svcSoDCRemarks')?.value||'').trim()
+  };
   if(!D.stock_txns)D.stock_txns=[];
+  const ordId=g('svcSoOrderLink')?.value||'';
   D.stock_txns.push({
     id:uid(),date,itemId,itemName:item.name,type:'out',qty,
     custName:g('svcSoCust').value||'',
     purpose:g('svcSoPurpose').value||'',
-    challan:g('svcSoDC').value.trim(),
+    challan:dc.no,
+    dc,
     ref:g('svcSoRef').value.trim(),
     notes:g('svcSoNotes').value.trim(),
+    linkedOrderId:ordId||'',
     by:D.currentUser?.name||'Service',
     at:new Date().toISOString()
   });
   item.lastMovement=date;
+  // ── Req 3: Auto-deduct all matching order checklist items from stock ──
+  let autoDeductCount=0;
+  if(ordId){
+    const ord=(D.orders||[]).find(o=>o.id===ordId);
+    if(ord&&ord.items?.length){
+      ord.items.forEach(it=>{
+        const stkItem=(D.stock_items||[]).find(s=>s.name.toLowerCase()===(it.material||'').toLowerCase());
+        if(!stkItem)return;
+        const avail=stockQty(stkItem.id);
+        const deductQty=Math.min(parseFloat(it.qty)||1,avail);
+        if(deductQty<=0)return;
+        D.stock_txns.push({
+          id:uid(),date,itemId:stkItem.id,itemName:stkItem.name,type:'out',qty:deductQty,
+          custName:ord.customer||'',
+          purpose:'Order Checklist — '+( ord.orderNo||''),
+          challan:dc.no,
+          dc,
+          ref:ord.orderNo||'',
+          notes:'Auto-deducted from Order Checklist '+( ord.orderNo||''),
+          linkedOrderId:ordId,
+          by:D.currentUser?.name||'Service',
+          at:new Date().toISOString()
+        });
+        stkItem.lastMovement=date;
+        autoDeductCount++;
+      });
+      // Mark the order as DC dispatched
+      ord.dc=dc;
+      ord.dcDispatched=true;
+      ord.dcDispatchedAt=new Date().toISOString();
+      ord.dcDispatchedBy=D.currentUser?.name||'Service';
+    }
+  }
   saveData();closeModal('svcStockOutModal');renderSvcStockView();
-  showSuccessToast('✓ '+qty+' '+( item.unit||'units')+' issued — '+item.name,'var(--red)');
+  const extraMsg=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
+  showSuccessToast('✓ '+qty+' '+( item.unit||'units')+' issued — '+item.name+extraMsg,'var(--red)');
 }
 
 function quickStockOut(itemId,itemName){openSvcStockOutModal(itemId);}
@@ -7588,11 +7677,6 @@ function showSvcOrderForm(){
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=false;
   if(g('svOrdAddIncentive'))g('svOrdAddIncentive').checked=false;
   setOrdCallType('AMC');
-  // Reset Delivery Challan
-  ['svDCNo','svDCDate','svDCVehicle','svDCDriver','svDCAddr','svDCRemarks'].forEach(id=>{const el=g(id);if(el)el.value='';});
-  if(g('svDCType'))g('svDCType').value='';
-  if(g('dcPanel'))g('dcPanel').style.display='none';
-  if(g('dcChevron'))g('dcChevron').style.transform='';
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
   addSvOrdItem();
   g('svcOrderForm').scrollIntoView({behavior:'smooth'});
@@ -7739,17 +7823,8 @@ function sendSvcOrderToAccounts(){
           showSuccessToast(`✓ Order ${ordNo} updated & resent to Accounts!`,'var(--orange)');
         }
       } else {
-        // Capture DC data
-        const dc={
-          no:g('svDCNo')?.value.trim()||'',
-          date:g('svDCDate')?.value||'',
-          type:g('svDCType')?.value||'',
-          vehicle:g('svDCVehicle')?.value.trim()||'',
-          driver:g('svDCDriver')?.value.trim()||'',
-          addr:g('svDCAddr')?.value.trim()||'',
-          remarks:g('svDCRemarks')?.value.trim()||''
-        };
-        // CREATE new order
+        // CREATE new order (DC is now entered at Stock Out / Delivery time)
+        const dc={no:'',date:'',type:'',vehicle:'',driver:'',addr:'',remarks:''};
         D.orders.push({
           id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,baseTotal,gstType,
           supplier,purchaseVal,margin,
@@ -10214,7 +10289,14 @@ function addConvRow(data){
     </div>
     <div class="g3" style="margin-bottom:7px;">
       <div class="fg"><label style="font-size:.72em;">From</label><input type="text" class="scr-from" placeholder="Starting point" oninput="calcConvTotal()"></div>
-      <div class="fg"><label style="font-size:.72em;">To</label><input type="text" class="scr-to" placeholder="Destination" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">To</label>
+        <select class="scr-to" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+          <option value="">-- Select Customer --</option>
+          ${(D.ac_customers||[]).map(c=>`<option value="${c.name.replace(/"/g,'&quot;')}">${c.name}</option>`).join('')}
+          <option value="__other__">Other (type below)</option>
+        </select>
+        <input type="text" class="scr-to-custom" placeholder="Enter destination" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcConvTotal()">
+      </div>
       <div class="fg"><label style="font-size:.72em;">Mode of Transport</label>
         <select class="scr-mode" onchange="calcConvTotal()">
           <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
@@ -10233,10 +10315,27 @@ function addConvRow(data){
       <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="scr-remarks" placeholder="Optional notes"></div>
     </div>`;
   g('scConvRows').appendChild(div);
+  // Wire "Other" toggle for the TO field
+  const toSel=div.querySelector('.scr-to');
+  const toCustom=div.querySelector('.scr-to-custom');
+  if(toSel&&toCustom){
+    toSel.addEventListener('change',function(){
+      toCustom.style.display=this.value==='__other__'?'block':'none';
+    });
+  }
   if(data){
     const r=g('scr-'+n);
     r.querySelector('.scr-from').value=data.from||'';
-    r.querySelector('.scr-to').value=data.to||'';
+    // Populate TO: check if it matches a customer option
+    const toVal=data.to||'';
+    const custOpts=[...toSel.options].map(o=>o.value);
+    if(toVal&&custOpts.includes(toVal)){
+      toSel.value=toVal;
+      if(toCustom)toCustom.style.display='none';
+    } else if(toVal){
+      toSel.value='__other__';
+      if(toCustom){toCustom.style.display='block';toCustom.value=toVal;}
+    }
     r.querySelector('.scr-mode').value=data.mode||'Two-wheeler';
     r.querySelector('.scr-km').value=data.km||0;
     r.querySelector('.scr-rate').value=data.rate||0;
@@ -10267,7 +10366,9 @@ function getConvRows(){
   const rows=[];
   document.querySelectorAll('#scConvRows>div').forEach(row=>{
     const from=row.querySelector('.scr-from')?.value.trim()||'';
-    const to=row.querySelector('.scr-to')?.value.trim()||'';
+    const toSel=row.querySelector('.scr-to');
+    const toCustom=row.querySelector('.scr-to-custom');
+    const to=toSel?.value==='__other__'?(toCustom?.value.trim()||''):(toSel?.value.trim()||'');
     const mode=row.querySelector('.scr-mode')?.value||'Two-wheeler';
     const km=parseFloat(row.querySelector('.scr-km')?.value)||0;
     const rate=parseFloat(row.querySelector('.scr-rate')?.value)||0;
