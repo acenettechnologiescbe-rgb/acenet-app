@@ -2032,8 +2032,9 @@ tbody tr:last-child td{border-bottom:none;}
       </div>
       <div id="ordConvPanel" style="display:none;">
         <div id="ordConvRows"></div>
-        <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
           <button type="button" class="btn btn-outline btn-sm" onclick="addOrdConvRow()" style="color:var(--svc);border-color:var(--svc);"><i class="fas fa-plus"></i> Add Transport Leg</button>
+          <button type="button" class="btn btn-sm" onclick="saveOrdConvAsDraft()" style="background:var(--svc);color:#fff;font-weight:700;"><i class="fas fa-save" style="margin-right:5px;"></i> Save as Conveyance Draft</button>
           <span id="ordConvTotal" style="margin-left:auto;font-weight:700;font-size:.88em;color:var(--svc);"></span>
         </div>
       </div>
@@ -4051,8 +4052,8 @@ function viewOrderModal(id){
         <!-- Billed info -->
         ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
         ${o.stockOnly?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-top:4px;font-size:.9em;color:#166534;font-weight:600;"><i class="fas fa-boxes-stacked" style="margin-right:6px;"></i>Stock Purpose Only — Confirm Bill not required for this order.</div>`:''}
-        <!-- Accounts: Confirm Bill action for pending orders (hidden for Stock Only) -->
-        ${o.status==='pending'&&!o.stockOnly?`
+        <!-- Accounts: Confirm Bill action for pending orders (hidden for Stock Only and for Service dept) -->
+        ${o.status==='pending'&&!o.stockOnly&&D.currentUser?.role!=='service'?`
         <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-top:4px;">
           <div style="font-weight:800;font-size:.95em;color:#c2410c;margin-bottom:6px;"><i class="fas fa-file-invoice" style="margin-right:7px;"></i>Confirm Bill Number</div>
           <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
@@ -7151,13 +7152,14 @@ function renderConveyance(){
   const draftEl=g('convDraftList');
   if(draftEl){
     if(!drafts.length) draftEl.innerHTML='<div style="text-align:center;padding:12px;color:var(--ink3);font-size:.95em;background:var(--bg);border-radius:8px;margin-bottom:10px;">No drafts yet — generate a claim from the service calls below</div>';
-    else draftEl.innerHTML=drafts.map(c=>`<div class="conv-card" style="border-left:4px solid var(--svc);background:linear-gradient(135deg,#f0fdfa,#fff);">
+    else draftEl.innerHTML=drafts.map(c=>`<div class="conv-card" style="border-left:4px solid ${c.source==='order'?'var(--orange)':'var(--svc)'};background:linear-gradient(135deg,${c.source==='order'?'#fff7ed':'#f0fdfa'},#fff);">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <strong style="color:#0e7490;font-size:.9em;">${esc(c.no)}</strong>
           <span style="background:#cffafe;color:#0e7490;border-radius:8px;padding:2px 9px;font-size:.97em;font-weight:700;">DRAFT</span>
+          ${c.source==='order'?`<span style="background:#fff7ed;color:#c2410c;border-radius:8px;padding:2px 9px;font-size:.82em;font-weight:700;"><i class="fas fa-clipboard-list" style="margin-right:3px;"></i>ORDER</span>`:`<span style="background:#f0fdfa;color:var(--svc);border-radius:8px;padding:2px 9px;font-size:.82em;font-weight:700;"><i class="fas fa-phone" style="margin-right:3px;"></i>SERVICE CALL</span>`}
         </div>
-        <div style="font-size:.92em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRefs?'&nbsp;·&nbsp; Calls: '+esc(c.callRefs):c.callRef?'&nbsp;·&nbsp; Call: '+esc(c.callRef):''}</div>
+        <div style="font-size:.92em;color:var(--ink3);">${c.date} &nbsp;·&nbsp; ${esc(c.engineer)} ${c.callRefs?'&nbsp;·&nbsp; '+(c.source==='order'?'Order':'Calls')+': '+esc(c.callRefs):c.callRef?'&nbsp;·&nbsp; '+(c.source==='order'?'Order':'Call')+': '+esc(c.callRef):''}</div>
         <div style="font-size:.9em;margin-top:2px;">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
         <div style="font-size:.98em;color:var(--svc);margin-top:4px;font-style:italic;"><i class="fas fa-arrow-right" style="margin-right:3px;"></i>Click <strong>Submit to Accounts</strong> to send this for approval</div>
       </div>
@@ -8013,6 +8015,43 @@ function getOrdConvRows(){
   });
   return rows;
 }
+
+function saveOrdConvAsDraft(){
+  const legs=getOrdConvRows();
+  if(!legs.length){alert('Add at least one transport leg before saving.');return;}
+  const ordNo=(g('svOrdNo')?.value||'').trim()||'—';
+  const cust=(g('svOrdCust')?.value||'').trim();
+  const date=(g('svOrdDate')?.value)||today();
+  const engName=D.currentUser?.name||'';
+  // Calculate totals from legs
+  const travelAmt=legs.reduce((a,l)=>a+((l.km||0)*(l.rate||0)),0);
+  const foodAmt=legs.reduce((a,l)=>a+(l.food||0),0);
+  const otherAmt=legs.reduce((a,l)=>a+(l.other||0),0);
+  const totalAmt=travelAmt+foodAmt+otherAmt;
+  if(!D.svc_conveyance)D.svc_conveyance=[];
+  const no=genConvNo();
+  D.svc_conveyance.push({
+    id:uid(),no,date,
+    engineer:engName,
+    status:'draft',
+    source:'order',
+    callRef:ordNo,
+    callRefs:ordNo,
+    customer:cust,
+    legs,
+    travelAmt,foodAmt,otherAmt,totalAmt,
+    createdAt:Date.now()
+  });
+  saveData();
+  if(typeof renderConveyance==='function')renderConveyance();
+  // Reset order conv panel
+  ordConvRC=0;
+  if(g('ordConvRows'))g('ordConvRows').innerHTML='';
+  if(g('ordConvPanel'))g('ordConvPanel').style.display='none';
+  if(g('ordConvChevron'))g('ordConvChevron').style.transform='';
+  if(g('ordConvTotal'))g('ordConvTotal').textContent='';
+  showSuccessToast(`✓ Conveyance draft ${no} saved — ₹${totalAmt.toFixed(2)} (${legs.length} leg${legs.length>1?'s':''})`,'var(--svc)');
+}
 function updateStockOnlyUI(){
   const checked=g('svOrdStockOnly')?.checked||false;
   // Hide/show tot-bar and Send button label
@@ -8092,7 +8131,6 @@ function renderSvcOrders(){
         ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:4px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
-          <button class="btn" style="background:var(--red);color:#fff;font-size:.77em;padding:5px 12px;" onclick="openSvcStockOutFromOrder('${o.id}')"><i class="fas fa-arrow-up" style="margin-right:5px;"></i>Stock Out</button>
           ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
           <span style="font-size:.7em;color:var(--ink3);">Add ordered materials to inventory</span>
         </div>
