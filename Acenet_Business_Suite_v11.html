@@ -2012,16 +2012,37 @@ tbody tr:last-child td{border-bottom:none;}
           <input type="checkbox" id="svOrdAddIncentive" style="width:16px;height:16px;accent-color:#7c3aed;">
           <i class="fas fa-gift" style="color:#7c3aed;"></i> Add to Incentive
         </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.84em;font-weight:600;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;padding:8px 14px;" title="Stock purpose only — no billing required">
+          <input type="checkbox" id="svOrdStockOnly" style="width:16px;height:16px;accent-color:#16a34a;" onchange="updateStockOnlyUI()">
+          <i class="fas fa-boxes-stacked" style="color:#16a34a;"></i> Stock Purpose Only
+        </label>
       </div>
       <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()">
         <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
       </button>
     </div>
 
+    <!-- ── Conveyance for this Order ── -->
+    <div style="background:#f0fdfa;border:1.5px solid #5eead4;border-radius:10px;padding:13px 14px;margin-bottom:13px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer;" onclick="toggleOrdConv()">
+        <i class="fas fa-car-side" style="color:var(--svc);"></i>
+        <span class="sora" style="font-weight:700;font-size:.85em;color:var(--svc);">Conveyance for this Order</span>
+        <span style="font-size:.73em;color:var(--ink3);margin-left:4px;">(optional — add one row per transport leg)</span>
+        <i class="fas fa-chevron-down" id="ordConvChevron" style="margin-left:auto;color:var(--svc);font-size:.8em;transition:.2s;"></i>
+      </div>
+      <div id="ordConvPanel" style="display:none;">
+        <div id="ordConvRows"></div>
+        <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="addOrdConvRow()" style="color:var(--svc);border-color:var(--svc);"><i class="fas fa-plus"></i> Add Transport Leg</button>
+          <span id="ordConvTotal" style="margin-left:auto;font-weight:700;font-size:.88em;color:var(--svc);"></span>
+        </div>
+      </div>
+    </div>
+
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
     <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Expense Type</th><th>Expense (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addSvOrdItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--orange)"></i> Add Item</button>
-    <div class="tot-bar" style="background:linear-gradient(135deg,var(--orange),#c2410c);">
+    <div class="tot-bar" id="svOrdTotBar" style="background:linear-gradient(135deg,var(--orange),#c2410c);">
       <div class="tb-item" id="svOrdGSTRow" style="display:none;"><div class="tbl">GST @18%</div><div class="tbv" id="svOrdGSTAmt">₹0</div></div>
       <div class="tb-item"><div class="tbl">Estimated Total</div><div class="tbv big" id="svOrdTotal">₹0</div></div>
     </div>
@@ -3777,7 +3798,7 @@ function orderAccCard(o,showConfirm){
       </table></div>
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
-      ${showConfirm?`
+      ${showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
         <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
@@ -4029,8 +4050,9 @@ function viewOrderModal(id){
         ${o.notes?`<div style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.98em;color:var(--ink3);"><i class="fas fa-sticky-note" style="margin-right:6px;color:var(--amber);"></i>${esc(o.notes)}</div>`:''}
         <!-- Billed info -->
         ${o.status==='billed'?`<div style="background:#f0fdf4;border-radius:10px;padding:12px 14px;font-size:.9em;color:var(--green);font-weight:600;"><i class="fas fa-check-circle" style="margin-right:6px;"></i>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate}</div>`:''}
-        <!-- Accounts: Confirm Bill action for pending orders -->
-        ${o.status==='pending'?`
+        ${o.stockOnly?`<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-top:4px;font-size:.9em;color:#166534;font-weight:600;"><i class="fas fa-boxes-stacked" style="margin-right:6px;"></i>Stock Purpose Only — Confirm Bill not required for this order.</div>`:''}
+        <!-- Accounts: Confirm Bill action for pending orders (hidden for Stock Only) -->
+        ${o.status==='pending'&&!o.stockOnly?`
         <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px 18px;margin-top:4px;">
           <div style="font-weight:800;font-size:.95em;color:#c2410c;margin-bottom:6px;"><i class="fas fa-file-invoice" style="margin-right:7px;"></i>Confirm Bill Number</div>
           <div style="font-size:.95em;color:var(--ink3);margin-bottom:12px;">Enter the invoice/bill number you raised for this order, then click Confirm Billed.</div>
@@ -7676,7 +7698,13 @@ function showSvcOrderForm(){
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=false;
   if(g('svOrdAddIncentive'))g('svOrdAddIncentive').checked=false;
+  if(g('svOrdStockOnly')){g('svOrdStockOnly').checked=false;updateStockOnlyUI();}
   setOrdCallType('AMC');
+  // Reset order conveyance rows
+  ordConvRC=0;if(g('ordConvRows'))g('ordConvRows').innerHTML='';
+  if(g('ordConvPanel'))g('ordConvPanel').style.display='none';
+  if(g('ordConvChevron'))g('ordConvChevron').style.transform='';
+  if(g('ordConvTotal'))g('ordConvTotal').textContent='';
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
   addSvOrdItem();
   g('svcOrderForm').scrollIntoView({behavior:'smooth'});
@@ -7768,6 +7796,7 @@ function sendSvcOrderToAccounts(){
   const supplier=(g('svOrdSupplier')?.value||'').trim();
   const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
   const editId=g('svOrdEditId')?.value||'';
+  const stockOnly=g('svOrdStockOnly')?.checked||false;
   if(!date||!cust){alert('Fill date and customer');return;}
   const items=[];
   document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{
@@ -7782,6 +7811,8 @@ function sendSvcOrderToAccounts(){
   const total=gstType==='exclusive'?baseTotal*(1+GST_R):baseTotal;
   const margin=baseTotal-purchaseVal;
   const isEdit=!!editId;
+  // Capture order conveyance legs
+  const ordConvLegs=getOrdConvRows();
   showConfirm({
     icon:'ci-send', iconClass:'fa-clipboard-list',
     title:isEdit?'Resend Modified Order to Accounts?':'Send Order to Accounts?',
@@ -7792,61 +7823,203 @@ function sendSvcOrderToAccounts(){
       {k:'Customer', v:cust},
       {k:'Supplier', v:supplier||'—'},
       {k:'Items', v:items.length+' item(s)'},
-      {k:'Est. Sale Total', v:fmt(total)},
+      {k:'Est. Sale Total', v:stockOnly?'N/A (Stock Only)':fmt(total)},
       {k:'Purchase Value', v:purchaseVal?fmt(purchaseVal):'—'},
-      {k:'Margin', v:purchaseVal?fmt(margin):'—'}
+      {k:'Margin', v:purchaseVal&&!stockOnly?fmt(margin):'—'},
+      {k:'Purpose', v:stockOnly?'📦 Stock Only (No Billing)':'Standard Order'},
+      ...(ordConvLegs.length?[{k:'Conveyance Legs',v:ordConvLegs.length+' leg(s)'}]:[])
     ],
     btnLabel:isEdit?'Resend to Accounts':'Send to Accounts',
     btnColor:'var(--orange)',
     onOk:()=>{
       if(isEdit){
-        // UPDATE existing order
         const idx=D.orders.findIndex(x=>x.id===editId);
         if(idx>=0){
           const prev=D.orders[idx];
           D.orders[idx]={
             ...prev,
             date,customer:cust,notes,items,total,baseTotal,gstType,
-            supplier,purchaseVal,margin,
+            supplier,purchaseVal,margin,stockOnly,
             callType:g('svOrdCallType')?.value||prev.callType||'AMC',
             orderFrom:g('svOrdFrom')?.value||prev.orderFrom||'',
             oralConf:g('svOrdOralConf')?.checked||false,
             writeConf:g('svOrdWriteConf')?.checked||false,
             urgent:g('svOrdUrgent')?.checked||false,
-            status:'pending',
+            convLegs:ordConvLegs,
+            status:stockOnly?'stock_only':'pending',
             modified:true,
             modifiedAt:Date.now(),
             modifiedBy:D.currentUser?.name||'Service',
             modifiedCount:(prev.modifiedCount||0)+1
           };
+          // Auto stock-in on resend
+          autoStockInFromOrder(D.orders[idx],date);
           hideSvcOrderForm();saveData('new_order');renderSvcOrders();
           showSuccessToast(`✓ Order ${ordNo} updated & resent to Accounts!`,'var(--orange)');
         }
       } else {
-        // CREATE new order (DC is now entered at Stock Out / Delivery time)
         const dc={no:'',date:'',type:'',vehicle:'',driver:'',addr:'',remarks:''};
-        D.orders.push({
+        const newOrd={
           id:uid(),orderNo:ordNo,date,customer:cust,notes,items,total,baseTotal,gstType,
-          supplier,purchaseVal,margin,
+          supplier,purchaseVal,margin,stockOnly,
           callType:g('svOrdCallType')?.value||'AMC',
           orderFrom:g('svOrdFrom')?.value||'',
           oralConf:g('svOrdOralConf')?.checked||false,
           writeConf:g('svOrdWriteConf')?.checked||false,
           urgent:g('svOrdUrgent')?.checked||false,
+          convLegs:ordConvLegs,
           dc,
-          status:'pending',invoiceNo:'',billedDate:'',
+          status:stockOnly?'stock_only':'pending',
+          invoiceNo:'',billedDate:'',
           createdAt:Date.now(),source:'service',
           createdBy:D.currentUser?.name||'Service'
-        });
+        };
+        D.orders.push(newOrd);
+        // ── Auto stock-in all items on Send ──
+        autoStockInFromOrder(newOrd,date);
         hideSvcOrderForm();saveData('new_order');renderSvcOrders();
-        showSuccessToast(`✓ Order ${ordNo} sent to Accounts!`,'var(--orange)');
-        // Auto-create incentive entry if checkbox was checked
+        showSuccessToast(`✓ Order ${ordNo} sent to Accounts! Items added to stock.`,'var(--orange)');
         if(g('svOrdAddIncentive')?.checked){
           autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType:g('svOrdCallType')?.value||'AMC'});
         }
       }
     }
   });
+}
+
+function autoStockInFromOrder(ord,date){
+  if(!D.stock_items)D.stock_items=[];
+  if(!D.stock_txns)D.stock_txns=[];
+  const by=(D.currentUser?.name)||'Service';
+  ord.items.forEach(oi=>{
+    const name=(oi.material||oi.name||'').trim();if(!name)return;
+    const qty=parseFloat(oi.qty)||1;
+    let si=D.stock_items.find(s=>s.name.toLowerCase()===name.toLowerCase());
+    if(!si){
+      si={id:uid(),name,category:'Spare Parts',unit:'Nos',reorder:0,qty:0,
+          stockType:ord.callType||'General',lastMovement:date,createdAt:Date.now()};
+      D.stock_items.push(si);
+    }
+    si.qty=(parseFloat(si.qty)||0)+qty;
+    si.lastMovement=date;
+    D.stock_txns.push({
+      id:uid(),date,itemId:si.id,itemName:name,type:'in',qty,
+      ref:'Order: '+ord.orderNo,
+      notes:'Auto stock-in from Order Checklist '+ord.orderNo,
+      by,at:new Date().toISOString()
+    });
+  });
+}
+
+// ── Order Checklist Conveyance helpers ──
+let ordConvRC=0;
+function toggleOrdConv(){
+  const panel=g('ordConvPanel'),chev=g('ordConvChevron');
+  if(!panel)return;
+  const open=panel.style.display==='block';
+  panel.style.display=open?'none':'block';
+  if(chev)chev.style.transform=open?'':'rotate(180deg)';
+  if(!open&&g('ordConvRows')&&g('ordConvRows').children.length===0)addOrdConvRow();
+}
+function addOrdConvRow(data){
+  ordConvRC++;const n=ordConvRC;
+  const custs=(D.ac_customers||[]).map(c=>`<option value="${c.name.replace(/"/g,'&quot;')}">${c.name}</option>`).join('');
+  const div=document.createElement('div');
+  div.id='ocr-'+n;div.style.cssText='background:#fff;border:1px solid #b2f5ea;border-radius:9px;padding:11px 12px;margin-bottom:9px;';
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <span style="font-size:.74em;font-weight:700;color:var(--svc);">Leg ${n}</span>
+    <button type="button" onclick="removeOrdConvRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85em;padding:2px 6px;"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="g3" style="margin-bottom:7px;">
+    <div class="fg"><label style="font-size:.72em;">From</label>
+      <select class="ocr-from" onchange="calcOrdConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+        <option value="">-- Select Customer --</option>${custs}<option value="__other__">Other (type below)</option>
+      </select>
+      <input type="text" class="ocr-from-custom" placeholder="Enter starting point" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcOrdConvTotal()">
+    </div>
+    <div class="fg"><label style="font-size:.72em;">To</label>
+      <select class="ocr-to" onchange="calcOrdConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+        <option value="">-- Select Customer --</option>${custs}<option value="__other__">Other (type below)</option>
+      </select>
+      <input type="text" class="ocr-to-custom" placeholder="Enter destination" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcOrdConvTotal()">
+    </div>
+    <div class="fg"><label style="font-size:.72em;">Mode of Transport</label>
+      <select class="ocr-mode" onchange="calcOrdConvTotal()">
+        <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
+        <option>Train</option><option>Company Vehicle</option><option>Other</option>
+      </select>
+    </div>
+  </div>
+  <div class="g4" style="margin-bottom:5px;">
+    <div class="fg"><label style="font-size:.72em;">Distance (km)</label><input type="number" class="ocr-km" value="0" step="0.1" oninput="calcOrdConvTotal()"></div>
+    <div class="fg"><label style="font-size:.72em;">Rate ₹/km</label><input type="number" class="ocr-rate" value="0" step="0.01" oninput="calcOrdConvTotal()"></div>
+    <div class="fg"><label style="font-size:.72em;">Travel Amt (₹)</label><input type="text" class="ocr-amt" readonly style="background:#e0fdf4;font-weight:700;color:var(--svc);font-size:.88em;" placeholder="₹0"></div>
+    <div class="fg"><label style="font-size:.72em;">Food/Allow. (₹)</label><input type="number" class="ocr-food" value="0" step="0.01" oninput="calcOrdConvTotal()"></div>
+  </div>
+  <div class="g2">
+    <div class="fg"><label style="font-size:.72em;">Other Expenses (₹)</label><input type="number" class="ocr-other" value="0" step="0.01" oninput="calcOrdConvTotal()"></div>
+    <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="ocr-remarks" placeholder="Optional notes"></div>
+  </div>`;
+  g('ordConvRows').appendChild(div);
+  // Wire Other toggles
+  const fromSel=div.querySelector('.ocr-from'),fromCus=div.querySelector('.ocr-from-custom');
+  const toSel=div.querySelector('.ocr-to'),toCus=div.querySelector('.ocr-to-custom');
+  if(fromSel&&fromCus)fromSel.addEventListener('change',function(){fromCus.style.display=this.value==='__other__'?'block':'none';});
+  if(toSel&&toCus)toSel.addEventListener('change',function(){toCus.style.display=this.value==='__other__'?'block':'none';});
+  if(data){
+    const setDropdown=(sel,cus,val)=>{
+      const opts=[...sel.options].map(o=>o.value);
+      if(val&&opts.includes(val)){sel.value=val;cus.style.display='none';}
+      else if(val){sel.value='__other__';cus.style.display='block';cus.value=val;}
+    };
+    setDropdown(fromSel,fromCus,data.from||'');
+    setDropdown(toSel,toCus,data.to||'');
+    div.querySelector('.ocr-mode').value=data.mode||'Two-wheeler';
+    div.querySelector('.ocr-km').value=data.km||0;
+    div.querySelector('.ocr-rate').value=data.rate||0;
+    div.querySelector('.ocr-food').value=data.food||0;
+    div.querySelector('.ocr-other').value=data.other||0;
+    div.querySelector('.ocr-remarks').value=data.remarks||'';
+  }
+  calcOrdConvTotal();
+}
+function removeOrdConvRow(n){const el=g('ocr-'+n);if(el){el.remove();calcOrdConvTotal();}}
+function calcOrdConvTotal(){
+  let total=0;
+  document.querySelectorAll('#ordConvRows>div').forEach(row=>{
+    const km=parseFloat(row.querySelector('.ocr-km')?.value)||0;
+    const rate=parseFloat(row.querySelector('.ocr-rate')?.value)||0;
+    const food=parseFloat(row.querySelector('.ocr-food')?.value)||0;
+    const other=parseFloat(row.querySelector('.ocr-other')?.value)||0;
+    const trav=km*rate;
+    const amtEl=row.querySelector('.ocr-amt');
+    if(amtEl)amtEl.value='₹'+trav.toFixed(2);
+    total+=trav+food+other;
+  });
+  if(g('ordConvTotal'))g('ordConvTotal').textContent=total>0?'Total: ₹'+total.toFixed(2):'';
+}
+function getOrdConvRows(){
+  const rows=[];
+  document.querySelectorAll('#ordConvRows>div').forEach(row=>{
+    const fromSel=row.querySelector('.ocr-from'),fromCus=row.querySelector('.ocr-from-custom');
+    const toSel=row.querySelector('.ocr-to'),toCus=row.querySelector('.ocr-to-custom');
+    const from=fromSel?.value==='__other__'?(fromCus?.value.trim()||''):(fromSel?.value.trim()||'');
+    const to=toSel?.value==='__other__'?(toCus?.value.trim()||''):(toSel?.value.trim()||'');
+    const km=parseFloat(row.querySelector('.ocr-km')?.value)||0;
+    const rate=parseFloat(row.querySelector('.ocr-rate')?.value)||0;
+    const food=parseFloat(row.querySelector('.ocr-food')?.value)||0;
+    const other=parseFloat(row.querySelector('.ocr-other')?.value)||0;
+    if(from||to||km)rows.push({from,to,mode:row.querySelector('.ocr-mode')?.value||'Two-wheeler',km,rate,food,other,travel:km*rate,remarks:row.querySelector('.ocr-remarks')?.value||''});
+  });
+  return rows;
+}
+function updateStockOnlyUI(){
+  const checked=g('svOrdStockOnly')?.checked||false;
+  // Hide/show tot-bar and Send button label
+  const totBar=g('svOrdTotBar');
+  if(totBar)totBar.style.opacity=checked?'0.4':'1';
+  const label=g('svOrdSendLabel');
+  if(label)label.textContent=checked?'Save to Stock':'Send to Accounts';
 }
 
 function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType}){
@@ -7914,10 +8087,13 @@ function renderSvcOrders(){
         ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:#0369a1;margin-bottom:6px;"><i class="fas fa-truck" style="margin-right:5px;"></i>Delivery Challan</div><div style="display:flex;flex-wrap:wrap;gap:12px;">${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''} ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''} ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''} ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''} ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''} ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}</div>${o.dc.remarks?`<div style="color:var(--ink3);margin-top:4px;">${esc(o.dc.remarks)}</div>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
+        ${o.stockOnly?`<div style="font-size:.8em;background:#f0fdf4;border-left:3px solid #86efac;padding:6px 10px;border-radius:8px;margin-top:7px;color:#166534;font-weight:600;"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Stock Purpose Only — no billing required</div>`:''}
+        ${o.convLegs?.length?`<div style="background:#f0fdfa;border:1px solid #5eead4;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:var(--svc);margin-bottom:6px;"><i class="fas fa-car-side" style="margin-right:5px;"></i>Conveyance Legs</div>${o.convLegs.map((l,i)=>`<div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;border-bottom:1px dashed #b2f5ea;font-size:.92em;"><span style="color:var(--ink3);">Leg ${i+1}:</span><span>${esc(l.from||'—')} → ${esc(l.to||'—')}</span><span>${esc(l.mode||'')}</span><span>${l.km} km × ₹${l.rate} = <strong>₹${(l.km*l.rate).toFixed(2)}</strong></span>${l.food?`<span>Food: ₹${l.food}</span>`:''}</div>`).join('')}</div>`:''}
         ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:4px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
-          ${o.status==='pending'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
+          <button class="btn" style="background:var(--red);color:#fff;font-size:.77em;padding:5px 12px;" onclick="openSvcStockOutFromOrder('${o.id}')"><i class="fas fa-arrow-up" style="margin-right:5px;"></i>Stock Out</button>
+          ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
           <span style="font-size:.7em;color:var(--ink3);">Add ordered materials to inventory</span>
         </div>
       </div>
@@ -7946,6 +8122,19 @@ function receiveOrderToStock(ordId){
   saveData();
   if(typeof renderSvcStockView==='function')renderSvcStockView();
   showSuccessToast(updItems+' item(s) received to stock'+(newItems?' ('+newItems+' new)':''), 'var(--green)');
+}
+
+function openSvcStockOutFromOrder(ordId){
+  // Navigate to Stock page and open Stock Out modal pre-linked to the order
+  showPage('page-svc-stock');
+  setTimeout(()=>{
+    openSvcStockOutModal('');
+    // Pre-select the order in the link dropdown
+    setTimeout(()=>{
+      const sel=g('svcSoOrderLink');
+      if(sel){sel.value=ordId;svcSoOrderLinkChanged();}
+    },80);
+  },120);
 }
 
 function toggleSvcOrder(id){
