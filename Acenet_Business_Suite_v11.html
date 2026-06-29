@@ -1593,19 +1593,29 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="sora" style="font-weight:700;color:var(--svc);font-size:.93em;"><i class="fas fa-plus-circle" style="margin-right:7px;"></i><span id="svcCallFormTitle">New Service Call</span></div>
     <button class="btn btn-ghost btn-sm" onclick="hideSvcCallForm()"><i class="fas fa-times"></i></button>
   </div>
-  <!-- ── Call Type ── -->
-  <div style="margin-bottom:14px;">
-    <div style="font-size:.7em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink4);margin-bottom:7px;">Call Type</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+  <!-- ── Branch + Call Type ── -->
+  <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-start;">
+    <div style="flex:1;min-width:180px;">
+      <div style="font-size:.7em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink4);margin-bottom:7px;">Branch</div>
+      <select id="scBranch" style="padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);background:#fff;width:100%;">
+        <option value="Coimbatore">Coimbatore</option>
+        <option value="Madurai">Madurai</option>
+        <option value="Tirunelveli">Tirunelveli</option>
+      </select>
+    </div>
+    <div style="flex:2;min-width:220px;">
+      <div style="font-size:.7em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink4);margin-bottom:7px;">Call Type</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button type="button" class="call-type-btn active" id="ct-amc" onclick="setCallType('AMC')" data-type="AMC"><i class="fas fa-shield-halved"></i> AMC Call</button>
       <button type="button" class="call-type-btn" id="ct-asc" onclick="setCallType('ASC')" data-type="ASC"><i class="fas fa-screwdriver-wrench"></i> ASC Call</button>
       <button type="button" class="call-type-btn" id="ct-per" onclick="setCallType('Per Call')" data-type="Per Call"><i class="fas fa-receipt"></i> Per Call</button>
     </div>
     <input type="hidden" id="scCallType" value="AMC">
-  </div>
+    </div><!-- end call type col -->
+  </div><!-- end branch+calltype row -->
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Call ID</label><input type="text" id="scNo" readonly style="background:var(--bg);"></div>
-    <div class="fg"><label>Date &amp; Time</label>
+    <div class="fg"><label>Call Reported Date &amp; Time</label>
       <div style="display:flex;gap:7px;align-items:center;">
         <input type="date" id="scDateOnly" style="flex:1.4;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);">
         <input type="time" id="scTimeOnly" style="flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);">
@@ -1613,6 +1623,21 @@ tbody tr:last-child td{border-bottom:none;}
       <input type="hidden" id="scDate">
     </div>
     <div class="fg"><label>Customer / Company</label><div class="combo"><input type="text" id="scCust" list="dl-svc-cust" placeholder="Customer name…" autocomplete="off" oninput="autoFillSvcCust()" onchange="autoFillSvcCust()" onblur="autoFillSvcCust()"><i class="fas fa-chevron-down carr"></i><datalist id="dl-svc-cust"></datalist></div><div class="hint" id="svcCustHint" style="display:none;"></div></div>
+  </div>
+  <!-- Attended / Completed times -->
+  <div class="g2" style="margin-bottom:11px;">
+    <div class="fg"><label>Call Attended Date &amp; Time</label>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <input type="date" id="scAttDate" style="flex:1.4;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);">
+        <input type="time" id="scAttTime" style="flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);">
+      </div>
+    </div>
+    <div class="fg"><label>Call Completed Date &amp; Time</label>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <input type="date" id="scCompDate" style="flex:1.4;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);">
+        <input type="time" id="scCompTime" style="flex:1;padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Inter',sans-serif;font-size:.88em;color:var(--ink);">
+      </div>
+    </div>
   </div>
   <div class="g3" style="margin-bottom:11px;">
     <div class="fg"><label>Contact Person</label><input type="text" id="scContact" placeholder="Name of contact"></div>
@@ -6551,6 +6576,9 @@ function showSvcCallForm(call){
     ['scDateOnly','scTimeOnly'].forEach(id=>{const el=g(id);if(el){el.removeEventListener('change',syncScDateTime);el.addEventListener('change',syncScDateTime);}});
     g('scCust').value='';g('scContact').value='';g('scPhone').value='';g('scLocation').value='';
     setCallType('AMC');
+    if(g('scBranch'))g('scBranch').value='Coimbatore';
+    if(g('scAttDate'))g('scAttDate').value='';if(g('scAttTime'))g('scAttTime').value='';
+    if(g('scCompDate'))g('scCompDate').value='';if(g('scCompTime'))g('scCompTime').value='';
     g('scIssue').value='';g('scProduct').value='';g('scPriority').value='normal';
     // Engineer already set/locked above based on role
     if(D.currentUser?.role!=='service') g('scEngineer').value='';
@@ -6572,6 +6600,11 @@ function showSvcCallForm(call){
     g('scCust').value=call.customer;
     g('scContact').value=call.contact||'';g('scPhone').value=call.phone||'';g('scLocation').value=call.location||'';
     setCallType(call.callType||'AMC');
+    if(g('scBranch'))g('scBranch').value=call.branch||'Coimbatore';
+    if(g('scAttDate'))g('scAttDate').value=(call.attendedDatetime||'').slice(0,10);
+    if(g('scAttTime'))g('scAttTime').value=(call.attendedDatetime||'').length>=16?(call.attendedDatetime||'').slice(11,16):'';
+    if(g('scCompDate'))g('scCompDate').value=(call.completedDatetime||'').slice(0,10);
+    if(g('scCompTime'))g('scCompTime').value=(call.completedDatetime||'').length>=16?(call.completedDatetime||'').slice(11,16):'';
     g('scIssue').value=call.issue||'';g('scProduct').value=call.product||'';g('scPriority').value=call.priority||'normal';
     if(D.currentUser?.role!=='service') g('scEngineer').value=call.engineer||'';
     g('scStatus').value=call.status;g('scETA').value=call.eta||'';g('scResolution').value=call.resolution||'';
@@ -6601,12 +6634,19 @@ function saveSvcCall(){
   if(!cust||!issue){alert('Customer and issue are required');return;}
   const convRows=getConvRows();
   const convAmt=convRows.reduce((a,r)=>a+r.amt+r.food+r.other,0);
+  // Build attended/completed datetimes
+  const attD=g('scAttDate')?.value||'',attT=g('scAttTime')?.value||'';
+  const compD=g('scCompDate')?.value||'',compT=g('scCompTime')?.value||'';
+  const attendedDatetime=attD?(attD+'T'+(attT||'00:00')):'';
+  const completedDatetime=compD?(compD+'T'+(compT||'00:00')):'';
   // Keep legacy fields for backwards-compat with conveyance claims
   const firstRow=convRows[0]||{};
   const obj={
     id:g('scEditId').value||uid(),no,datetime:dt,customer:cust,
     contact:g('scContact').value.trim(),phone:g('scPhone').value.trim(),
     location:g('scLocation').value.trim(),issue,callType:g('scCallType').value||'AMC',
+    branch:g('scBranch')?.value||'Coimbatore',
+    attendedDatetime,completedDatetime,
     product:g('scProduct').value.trim(),priority:g('scPriority').value,
     engineer:g('scEngineer').value,status:g('scStatus').value,
     eta:g('scETA').value,resolution:g('scResolution').value.trim(),
@@ -6648,6 +6688,8 @@ function renderSvcCalls(){
           <div class="svc-call-meta"><span><i class="fas fa-building"></i> ${esc(c.customer)}</span>${c.engineer?`<span><i class="fas fa-user-helmet-safety"></i> ${esc(c.engineer)}</span>`:''}<span><i class="fas fa-calendar"></i> ${c.date}</span>${c.eta?`<span><i class="fas fa-clock"></i> ETA: ${c.eta}</span>`:''}</div>
         </div>
         <div style="display:flex;gap:5px;align-items:center;">
+          <button class="btn btn-outline btn-sm" title="Print Service Call Report" onclick='printSvcCallReport("${c.id}")'><i class="fas fa-file-alt" style="color:var(--svc);"></i> SCR</button>
+          <button class="btn btn-outline btn-sm" title="Send via Gmail" onclick='sendSvcCallReportGmail("${c.id}")'><i class="fas fa-envelope" style="color:#ea4335;"></i></button>
           <button class="btn btn-outline btn-sm" onclick='editSvcCall("${c.id}")'><i class="fas fa-edit"></i></button>
           <button class="btn btn-danger btn-sm" onclick='deleteSvcCall("${c.id}")'><i class="fas fa-trash"></i></button>
         </div>
@@ -6667,6 +6709,202 @@ function renderSvcCalls(){
   updateSvcBadge();
 }
 function editSvcCall(id){const c=D.svc_calls.find(x=>x.id===id);if(c)showSvcCallForm(c);}
+
+// ────────────────────────────────────────────────────────────────
+// SERVICE CALL REPORT — Print & Gmail
+// ────────────────────────────────────────────────────────────────
+function _scrDateFmt(dtStr){
+  if(!dtStr)return{dd:'',mm:'',yy:'',hh:'',min:''};
+  const d=new Date(dtStr.replace('T',' '));
+  if(isNaN(d))return{dd:'',mm:'',yy:'',hh:'',min:''};
+  return{
+    dd:String(d.getDate()).padStart(2,'0'),
+    mm:String(d.getMonth()+1).padStart(2,'0'),
+    yy:String(d.getFullYear()).slice(-2),
+    hh:String(d.getHours()).padStart(2,'0'),
+    min:String(d.getMinutes()).padStart(2,'0')
+  };
+}
+function _scrCell(val){return`<td style="border:1px solid #333;padding:4px 7px;font-size:11px;min-width:26px;text-align:center;">${val||'&nbsp;'}</td>`;}
+function _scrTimeRow(label,dtStr){
+  const t=_scrDateFmt(dtStr);
+  return`<tr>
+    <td style="border:1px solid #333;padding:5px 8px;font-size:11px;white-space:nowrap;">${label}</td>
+    <td style="border:1px solid #333;padding:0;">
+      <table style="border-collapse:collapse;width:100%;"><tr>
+        ${_scrCell(t.dd)}${_scrCell(t.mm)}${_scrCell(t.yy)}
+        <td style="border:1px solid #333;padding:4px 6px;font-size:11px;text-align:center;color:#555;">|</td>
+        ${_scrCell(t.hh)}${_scrCell(':')}${_scrCell(t.min)}
+      </tr></table>
+    </td>
+  </tr>`;
+}
+function _scrContractBadge(type){
+  const opts=['AMC','ASC','PMC','WAR','INS','UPG'];
+  return opts.map(o=>{
+    const active=(o===type||(type==='Per Call'&&o==='PMC'));
+    return active
+      ?`<strong style="background:#333;color:#fff;padding:1px 6px;border-radius:3px;margin-right:4px;font-size:11px;">${o}</strong>`
+      :`<span style="color:#888;margin-right:4px;font-size:11px;">${o}</span>`;
+  }).join(' / ');
+}
+function buildScrHtml(c){
+  const branch=c.branch||'Coimbatore';
+  const branchRow=(['Coimbatore','Madurai','Tirunelveli']).map(b=>`
+    <tr><td style="font-size:10px;padding:2px 6px;white-space:nowrap;">${b}</td>
+        <td style="padding:2px 6px;"><div style="width:12px;height:12px;border:1.5px solid #333;display:inline-block;text-align:center;line-height:12px;font-size:10px;">${b===branch?'✓':''}</div></td>
+    </tr>`).join('');
+  const css=`
+    @page{size:A4;margin:12mm 10mm;}
+    body{font-family:Arial,sans-serif;font-size:12px;color:#111;margin:0;padding:0;}
+    .outer{border:2px solid #333;padding:0;width:100%;}
+    .hdr-top{text-align:center;border-bottom:2px solid #333;padding:7px 4px 5px;}
+    .hdr-top .co{font-size:15px;font-weight:900;letter-spacing:.5px;}
+    .hdr-top .addr{font-size:9px;color:#444;margin-top:2px;}
+    .hdr-mid{display:flex;border-bottom:1.5px solid #333;}
+    .branch-col{border-right:1.5px solid #333;padding:4px 0;min-width:110px;}
+    .branch-table{border-collapse:collapse;width:100%;}
+    .scr-title{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 8px;}
+    .scr-title .t{font-size:17px;font-weight:900;letter-spacing:2px;}
+    .sc-code{display:flex;align-items:center;gap:8px;font-size:11px;margin-top:6px;}
+    .sc-code-box{border:1.5px solid #333;padding:3px 16px;border-radius:3px;font-size:12px;font-weight:700;letter-spacing:1px;min-width:100px;text-align:center;}
+    .body-table{border-collapse:collapse;width:100%;border-top:1.5px solid #333;}
+    .body-table td,.body-table th{border:1px solid #333;padding:5px 8px;font-size:11px;vertical-align:top;}
+    .label-cell{font-weight:700;white-space:nowrap;width:140px;background:#f5f5f5;}
+    .value-cell{min-height:22px;}
+    .dot-line{border-bottom:1px dotted #999;min-height:18px;margin-bottom:4px;}
+    .footer-row{display:flex;border-top:2px solid #333;}
+    .footer-col{flex:1;padding:8px 10px;border-right:1px solid #333;}
+    .footer-col:last-child{border-right:none;}
+    .sig-line{border-bottom:1px solid #555;margin-top:22px;margin-bottom:3px;}
+    .sig-label{font-size:10px;color:#555;}
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}`;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Service Call Report — ${esc(c.no)}</title><style>${css}</style></head><body>
+  <div class="outer">
+    <div class="hdr-top">
+      <div class="co">ACENET TECHNOLOGIES INDIA PVT. LTD.</div>
+      <div class="addr">Regd. Office : 1084/4, Trichy Road, Sungam, Coimbatore – 641 018 &nbsp;|&nbsp; Tel/Fax : 0422-2303646, 2300838 &nbsp;|&nbsp; E-mail : service@acenetech.in</div>
+    </div>
+    <div class="hdr-mid">
+      <div class="branch-col">
+        <table class="branch-table">
+          <tbody>${branchRow}</tbody>
+        </table>
+      </div>
+      <div class="scr-title">
+        <div class="t">SERVICE CALL REPORT</div>
+        <div class="sc-code"><span style="font-weight:700;">SERVICE CODE</span><div class="sc-code-box">${esc(c.no)}</div></div>
+      </div>
+    </div>
+    <table class="body-table">
+      <tr><td class="label-cell">CUSTOMER</td><td class="value-cell" colspan="3" style="font-weight:700;">${esc(c.customer)}</td></tr>
+      <tr><td class="label-cell">SYSTEM TYPE</td><td class="value-cell" colspan="3">${esc(c.product||'')}</td></tr>
+      <tr><td class="label-cell">CONTRACT TYPE</td><td class="value-cell" colspan="3">${_scrContractBadge(c.callType)}</td></tr>
+      <tr>
+        <td colspan="4" style="padding:0;border:none;">
+          <table style="border-collapse:collapse;width:100%;">
+            <thead><tr>
+              <th style="border:1px solid #333;padding:4px 8px;width:140px;background:#f5f5f5;font-size:10px;"></th>
+              <th colspan="3" style="border:1px solid #333;padding:4px;text-align:center;font-size:10px;letter-spacing:.5px;">DD &nbsp;&nbsp; MM &nbsp;&nbsp; YY</th>
+              <th style="border:1px solid #333;padding:4px 6px;font-size:10px;text-align:center;">|</th>
+              <th colspan="3" style="border:1px solid #333;padding:4px;text-align:center;font-size:10px;letter-spacing:.5px;">HH &nbsp;:&nbsp; MM</th>
+            </tr></thead>
+            <tbody>
+              ${_scrTimeRow('Call Reported Time',c.datetime)}
+              ${_scrTimeRow('Call Attended Time',c.attendedDatetime||'')}
+              ${_scrTimeRow('Call Completed Time',c.completedDatetime||'')}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">Problem Reported</td>
+        <td class="value-cell" colspan="3">
+          <div class="dot-line">${esc(c.issue||'')}</div>
+          <div class="dot-line">&nbsp;</div>
+          <div class="dot-line">&nbsp;</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">Action Taken</td>
+        <td class="value-cell" colspan="3">
+          <div class="dot-line">${esc(c.resolution||'')}</div>
+          <div class="dot-line">&nbsp;</div>
+          <div class="dot-line">&nbsp;</div>
+          <div class="dot-line">&nbsp;</div>
+        </td>
+      </tr>
+      <tr>
+        <td class="label-cell">Status</td>
+        <td class="value-cell" colspan="3">
+          <div class="dot-line">${c.status?c.status.replace('-',' ').replace(/\b\w/g,l=>l.toUpperCase()):''}</div>
+          <div class="dot-line">&nbsp;</div>
+        </td>
+      </tr>
+    </table>
+    <div class="footer-row">
+      <div class="footer-col">
+        <div style="font-size:11px;font-weight:700;">FE Name : <span style="font-weight:400;">${esc(c.engineer||'')}</span></div>
+        <div class="sig-line"></div>
+        <div class="sig-label">Signature</div>
+      </div>
+      <div class="footer-col">
+        <div style="font-size:11px;font-weight:700;">User Name : <span style="font-weight:400;">${esc(c.contact||'')}</span></div>
+        <div class="sig-line"></div>
+        <div class="sig-label">Signature</div>
+      </div>
+    </div>
+  </div>
+  <script>window.onload=function(){window.focus();window.print();}<\/script>
+  </body></html>`;
+  return html;
+}
+function printSvcCallReport(id){
+  const c=D.svc_calls.find(x=>x.id===id);
+  if(!c){alert('Call not found');return;}
+  const w=window.open('','_blank','width=820,height=750');
+  if(w){w.document.write(buildScrHtml(c));w.document.close();}
+  else alert('Pop-up blocked. Please allow pop-ups for this page.');
+}
+function sendSvcCallReportGmail(id){
+  const c=D.svc_calls.find(x=>x.id===id);
+  if(!c){alert('Call not found');return;}
+  const t=_scrDateFmt(c.datetime);
+  const ta=_scrDateFmt(c.attendedDatetime||'');
+  const tc=_scrDateFmt(c.completedDatetime||'');
+  const fmt2=(o)=>o.dd?`${o.dd}/${o.mm}/${o.yy} ${o.hh}:${o.min}`:'—';
+  const body=[
+    `SERVICE CALL REPORT — ${c.no}`,
+    `Branch: ${c.branch||'Coimbatore'}`,
+    ``,
+    `Customer      : ${c.customer}`,
+    `System Type   : ${c.product||'—'}`,
+    `Contract Type : ${c.callType||'—'}`,
+    ``,
+    `Call Reported : ${fmt2(t)}`,
+    `Call Attended : ${fmt2(ta)}`,
+    `Call Completed: ${fmt2(tc)}`,
+    ``,
+    `Problem Reported:`,
+    `${c.issue||'—'}`,
+    ``,
+    `Action Taken:`,
+    `${c.resolution||'—'}`,
+    ``,
+    `Status  : ${c.status||'—'}`,
+    `Engineer: ${c.engineer||'—'}`,
+    `Contact : ${c.contact||'—'}`,
+    ``,
+    `— Acenet Technologies India Pvt. Ltd.`
+  ].join('\n');
+  const subject=encodeURIComponent(`Service Call Report — ${c.no} | ${c.customer}`);
+  const bodyEnc=encodeURIComponent(body);
+  // Get customer email if stored
+  const custRec=D.ac_customers.find(x=>x.name===c.customer);
+  const toEmail=custRec?.email?encodeURIComponent(custRec.email):'';
+  const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=${toEmail}&su=${subject}&body=${bodyEnc}`;
+  window.open(gmailUrl,'_blank');
+}
 
 // ════════════════════════════════════════════════════════════════
 // SERVICE DESK — CONVEYANCE ENTRY
