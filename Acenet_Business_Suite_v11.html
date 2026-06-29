@@ -5625,9 +5625,11 @@ function openPrintWindow(title, bodyHtml){
     <div class="footer">Acenet Business Suite — Confidential</div>
     \x3cscript>window.onload=function(){window.focus();window.print();}\x3c/script>
     </body></html>`;
-  const w=window.open('','_blank','width=950,height=750');
-  if(w){w.document.write(html);w.document.close();}
-  else alert('Pop-up blocked. Please allow pop-ups for this page.');
+  const _b=new Blob([html],{type:'text/html'});
+  const _u=URL.createObjectURL(_b);
+  const w=window.open(_u,'_blank');
+  if(!w)alert('Pop-up blocked. Please allow pop-ups for this page.');
+  else setTimeout(()=>URL.revokeObjectURL(_u),30000);
 }
 
 function printSection(tableBodyId, title){
@@ -6922,9 +6924,11 @@ function buildScrHtml(c){
 function printSvcCallReport(id){
   const c=D.svc_calls.find(x=>x.id===id);
   if(!c){alert('Call not found');return;}
-  const w=window.open('','_blank','width=820,height=750');
-  if(w){w.document.write(buildScrHtml(c));w.document.close();}
-  else alert('Pop-up blocked. Please allow pop-ups for this page.');
+  const blob=new Blob([buildScrHtml(c)],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(!w)alert('Pop-up blocked. Please allow pop-ups.');
+  else setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 function sendSvcCallReportGmail(id){
   const c=D.svc_calls.find(x=>x.id===id);
@@ -7014,7 +7018,10 @@ function sendSvcCallReportGmail(id){
   const toEmail=custRec?.email||'';
   const subject=`Service Call Report — ${c.no} | ${c.customer}`;
   const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}`;
-  const previewWin=window.open('','_blank','width=720,height=820');
+  const _blob=new Blob([uiHtml],{type:'text/html'});
+  const _burl=URL.createObjectURL(_blob);
+  const previewWin=window.open(_burl,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(_burl),30000);
   if(!previewWin){alert('Pop-up blocked. Please allow pop-ups.');return;}
   const uiHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Preview — ${esc(c.no)}</title>
   <style>
@@ -7050,8 +7057,7 @@ function sendSvcCallReportGmail(id){
     }
   <\/script>
   </body></html>`;
-  previewWin.document.write(uiHtml);
-  previewWin.document.close();
+  // content already loaded via blob URL
 }
 
 // ════════════════════════════════════════════════════════════════
