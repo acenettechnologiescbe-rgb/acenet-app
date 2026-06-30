@@ -6972,59 +6972,6 @@ function buildScrHtml(c){
   </body></html>`;
   return html;
 }
-// ════════════════════════════════════════════════════════════════
-// PDF GENERATION (html2pdf.js via CDN) — used by the SCR email flow
-// ════════════════════════════════════════════════════════════════
-function loadHtml2Pdf(cb){
-  if(window.html2pdf){cb();return;}
-  const s=document.createElement('script');
-  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-  s.onload=cb;s.onerror=()=>alert('Could not load PDF library. Check internet connection.');
-  document.head.appendChild(s);
-}
-
-// Renders the SCR HTML into a hidden container and converts it to a PDF Blob.
-// onReady(blob, filename) is called once the PDF is generated.
-function generateScrPdfBlob(c, onReady, onError){
-  loadHtml2Pdf(()=>{
-    const filename=`SCR_${c.no}_${(c.customer||'').replace(/[^a-z0-9]+/gi,'_').slice(0,40)}.pdf`;
-    // Build an off-screen container with the same print HTML used by the SCR print view
-    const wrap=document.createElement('div');
-    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:900px;background:#fff;';
-    // Strip the outer <html>/<head>/<body> wrapper buildScrHtml() returns and
-    // keep just the .page content + its <style>, since html2pdf renders a DOM node directly.
-    const fullHtml=buildScrHtml(c);
-    const styleMatch=fullHtml.match(/<style>([\s\S]*?)<\/style>/);
-    const bodyMatch=fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/);
-    if(styleMatch){
-      const styleEl=document.createElement('style');
-      styleEl.textContent=styleMatch[1];
-      wrap.appendChild(styleEl);
-    }
-    const contentDiv=document.createElement('div');
-    contentDiv.innerHTML=bodyMatch?bodyMatch[1]:fullHtml;
-    // Remove the auto-print script if present (we don't want it firing in the hidden render)
-    contentDiv.querySelectorAll('script').forEach(s=>s.remove());
-    wrap.appendChild(contentDiv);
-    document.body.appendChild(wrap);
-    html2pdf().set({
-      margin:0,
-      filename,
-      image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
-      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-    }).from(wrap).outputPdf('blob').then(blob=>{
-      document.body.removeChild(wrap);
-      onReady(blob,filename);
-    }).catch(err=>{
-      document.body.removeChild(wrap);
-      console.error('PDF generation failed:',err);
-      if(onError) onError(err);
-      else alert('Could not generate PDF. Please try the Print/SCR button instead.');
-    });
-  });
-}
-
 function printSvcCallReport(id){
   const c=D.svc_calls.find(x=>x.id===id);
   if(!c){alert('Call not found');return;}
@@ -7035,29 +6982,40 @@ function printSvcCallReport(id){
   else setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 
-// ── Redesigned: Send via Gmail ──
-// Previously this built one giant inline-HTML email body and tried to paste
-// the entire report into the message itself. That approach kept breaking —
-// Gmail's compose sanitizer strips CSS (flexbox, sometimes more), so logos
-// and layout would overlap or collapse no matter how the HTML was written,
-// and it produced an unprofessional, hard-to-read wall of formatting in the
-// inbox. The standard, reliable approach instead: generate the report as a
-// proper PDF, download it, and open Gmail with a short normal email body —
-// the PDF gets attached by the user with one click, exactly like attaching
-// any other document. Browsers do not allow a webpage to auto-attach a file
-// into Gmail's compose box (a deliberate security restriction), so the one
-// manual "Attach" click is unavoidable — this function gets everything else
-// ready so that's the only step left.
+// ── Send via Gmail ──
+// Earlier versions tried two different approaches that both failed in
+// practice: (1) pasting the entire report as one giant inline-HTML email
+// body, which Gmail's compose sanitizer mangled (stripped flexbox, broke
+// the logo layout); (2) converting the report to PDF in the background
+// using html2canvas (via html2pdf.js) and attaching that — but html2canvas
+// snapshots a live DOM node, and that off-screen/overlay render produced a
+// blank PDF, a known failure mode of canvas-snapshot libraries when the
+// content's fonts/images/layout haven't fully settled before capture.
+//
+// This version sidesteps canvas-snapshotting entirely. It reuses the same
+// browser tab + window.print() path that already produces a correct,
+// fully-rendered report when you click the SCR button (that path is proven
+// to work — it's just the browser's own print engine, not a third-party
+// library trying to re-render the page into an image). The print dialog
+// that opens lets you choose "Save as PDF" as the destination, which
+// produces the PDF file you can then attach to the Gmail draft that opens
+// alongside it.
 function sendSvcCallReportGmail(id){
   const c=D.svc_calls.find(x=>x.id===id);
   if(!c){alert('Call not found');return;}
-  // ── Open the Gmail tab FIRST, synchronously, inside this click handler. ──
-  // Browsers only allow window.open() to bypass the popup blocker when it's
-  // called directly from a trusted user gesture (the click). If we wait for
-  // the PDF to finish generating first (an async operation) and THEN call
-  // window.open(), the browser no longer considers it a direct user action
-  // and silently blocks it. Opening a blank tab now and navigating it once
-  // the PDF/Gmail URL are ready avoids that.
+
+  // Open the print-ready report tab (same proven path as the SCR button)
+  const blob=new Blob([buildScrHtml(c)],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const reportTab=window.open(url,'_blank');
+  if(!reportTab){
+    alert('Pop-up blocked. Please allow pop-ups and try again.');
+    URL.revokeObjectURL(url);
+    return;
+  }
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+
+  // Build the short, normal email body
   const custRec=D.ac_customers.find(x=>x.name===c.customer);
   const toEmail=custRec?.email||'';
   const subject=`Service Call Report — ${c.no} | ${c.customer}`;
@@ -7079,26 +7037,9 @@ Regards,
 ${engineerName}
 Acenet Technologies India Pvt. Ltd.`;
   const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
-  const gmailTab=window.open('about:blank','_blank');
+  window.open(gmailUrl,'_blank');
 
-  generateScrPdfBlob(c,(blob,filename)=>{
-    // Trigger the PDF download
-    const pdfUrl=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=pdfUrl;a.download=filename;
-    document.body.appendChild(a);a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(pdfUrl),30000);
-
-    showSuccessToast(`📄 ${filename} downloaded — attach it in the Gmail tab using the Attach (📎) button.`,'var(--svc)');
-    // Navigate the already-open tab to Gmail compose
-    if(gmailTab&&!gmailTab.closed){ gmailTab.location.href=gmailUrl; }
-    else{ window.open(gmailUrl,'_blank'); } // fallback if the tab got closed/blocked anyway
-  },err=>{
-    // PDF generation failed — don't leave the user with a stranded blank tab
-    if(gmailTab&&!gmailTab.closed) gmailTab.close();
-    alert('Could not generate the PDF report. Please try the Print/SCR button instead.');
-  });
+  showSuccessToast('📄 In the report tab, use Print (Ctrl+P) → Save as PDF, then attach that file in the Gmail tab.','var(--svc)');
 }
 
 // ════════════════════════════════════════════════════════════════
