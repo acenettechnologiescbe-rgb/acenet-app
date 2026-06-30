@@ -6972,6 +6972,59 @@ function buildScrHtml(c){
   </body></html>`;
   return html;
 }
+// ════════════════════════════════════════════════════════════════
+// PDF GENERATION (html2pdf.js via CDN) — used by the SCR email flow
+// ════════════════════════════════════════════════════════════════
+function loadHtml2Pdf(cb){
+  if(window.html2pdf){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+  s.onload=cb;s.onerror=()=>alert('Could not load PDF library. Check internet connection.');
+  document.head.appendChild(s);
+}
+
+// Renders the SCR HTML into a hidden container and converts it to a PDF Blob.
+// onReady(blob, filename) is called once the PDF is generated.
+function generateScrPdfBlob(c, onReady, onError){
+  loadHtml2Pdf(()=>{
+    const filename=`SCR_${c.no}_${(c.customer||'').replace(/[^a-z0-9]+/gi,'_').slice(0,40)}.pdf`;
+    // Build an off-screen container with the same print HTML used by the SCR print view
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;left:-9999px;top:0;width:900px;background:#fff;';
+    // Strip the outer <html>/<head>/<body> wrapper buildScrHtml() returns and
+    // keep just the .page content + its <style>, since html2pdf renders a DOM node directly.
+    const fullHtml=buildScrHtml(c);
+    const styleMatch=fullHtml.match(/<style>([\s\S]*?)<\/style>/);
+    const bodyMatch=fullHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/);
+    if(styleMatch){
+      const styleEl=document.createElement('style');
+      styleEl.textContent=styleMatch[1];
+      wrap.appendChild(styleEl);
+    }
+    const contentDiv=document.createElement('div');
+    contentDiv.innerHTML=bodyMatch?bodyMatch[1]:fullHtml;
+    // Remove the auto-print script if present (we don't want it firing in the hidden render)
+    contentDiv.querySelectorAll('script').forEach(s=>s.remove());
+    wrap.appendChild(contentDiv);
+    document.body.appendChild(wrap);
+    html2pdf().set({
+      margin:0,
+      filename,
+      image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+    }).from(wrap).outputPdf('blob').then(blob=>{
+      document.body.removeChild(wrap);
+      onReady(blob,filename);
+    }).catch(err=>{
+      document.body.removeChild(wrap);
+      console.error('PDF generation failed:',err);
+      if(onError) onError(err);
+      else alert('Could not generate PDF. Please try the Print/SCR button instead.');
+    });
+  });
+}
+
 function printSvcCallReport(id){
   const c=D.svc_calls.find(x=>x.id===id);
   if(!c){alert('Call not found');return;}
@@ -6981,151 +7034,71 @@ function printSvcCallReport(id){
   if(!w)alert('Pop-up blocked. Please allow pop-ups.');
   else setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
+
+// ── Redesigned: Send via Gmail ──
+// Previously this built one giant inline-HTML email body and tried to paste
+// the entire report into the message itself. That approach kept breaking —
+// Gmail's compose sanitizer strips CSS (flexbox, sometimes more), so logos
+// and layout would overlap or collapse no matter how the HTML was written,
+// and it produced an unprofessional, hard-to-read wall of formatting in the
+// inbox. The standard, reliable approach instead: generate the report as a
+// proper PDF, download it, and open Gmail with a short normal email body —
+// the PDF gets attached by the user with one click, exactly like attaching
+// any other document. Browsers do not allow a webpage to auto-attach a file
+// into Gmail's compose box (a deliberate security restriction), so the one
+// manual "Attach" click is unavoidable — this function gets everything else
+// ready so that's the only step left.
 function sendSvcCallReportGmail(id){
   const c=D.svc_calls.find(x=>x.id===id);
   if(!c){alert('Call not found');return;}
-  const LOGO='data:image/jpeg;base64,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';
-  const t=_scrDateFmt(c.datetime);
-  const ta=_scrDateFmt(c.attendedDatetime||'');
-  const tc=_scrDateFmt(c.completedDatetime||'');
-  const fmt2=(o)=>o.dd?`${o.dd}/${o.mm}/${o.yy} ${o.hh}:${o.min}`:'—';
-  const statusColor={pending:'#d97706',completed:'#059669','in-progress':'#2563eb',escalated:'#dc2626'};
-  const statusClr=statusColor[c.status]||'#64748b';
-  const ctOpts=['AMC','ASC','PMC','WAR','INS','UPG'];
-  const ctBadgesEmail=ctOpts.map(o=>{
-    const sel=(o===c.callType||(c.callType==='Per Call'&&o==='PMC'));
-    return sel
-      ?`<span style="background:#0e7490;color:#fff;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700;margin-right:4px;">${o}</span>`
-      :`<span style="color:#94a3b8;font-size:11px;margin-right:3px;">/ ${o}</span>`;
-  }).join('');
-  const row=(lbl,val,bg)=>`<tr><td style="background:${bg||'#f8fafc'};padding:8px 14px;font-size:11px;font-weight:700;color:#334155;border-right:1px solid #e2e8f0;width:150px;vertical-align:top;white-space:nowrap;">${lbl}</td><td style="padding:8px 14px;font-size:12px;color:#0f172a;border-bottom:1px solid #f1f5f9;">${val||'—'}</td></tr>`;
-  const timeRow=(lbl,dtStr)=>{
-    const td=_scrDateFmt(dtStr);
-    const v=td.dd?`<span style="font-weight:700;">${td.dd}/${td.mm}/${td.yy}</span> &nbsp;&nbsp; ${td.hh}:${td.min}`:'<span style="color:#94a3b8;">—</span>';
-    return row(lbl,v,'#f0f9ff');
-  };
-  const emailHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:24px;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
-  <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12);">
-    <!-- Header (table layout — Gmail's compose sanitizer strips display:flex on paste, which was causing the logo and title to overlap with a dead gap on the right) -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#0e7490;background-image:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#06b6d4 100%);">
-      <tr>
-        <td style="padding:18px 14px 18px 24px;width:84px;vertical-align:middle;">
-          <img src="${LOGO}" alt="Acenet Technologies" width="70" style="display:block;height:auto;max-height:44px;width:70px;object-fit:contain;background:#fff;border-radius:6px;padding:4px 6px;">
-        </td>
-        <td style="padding:18px 24px 18px 0;vertical-align:middle;">
-          <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:.4px;line-height:1.3;">ACENET TECHNOLOGIES INDIA PVT. LTD.</div>
-          <div style="color:rgba(255,255,255,.78);font-size:9px;margin-top:4px;line-height:1.5;">Regd. Office : 1084/4, Trichy Road, Sungam, Coimbatore – 641 018</div>
-          <div style="color:rgba(255,255,255,.78);font-size:9px;line-height:1.5;">Tel : 0422-2303646 &nbsp;|&nbsp; E-mail : service@acenetech.in</div>
-        </td>
-      </tr>
-    </table>
-    <!-- Title bar -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#0e7490;">
-      <tr>
-        <td style="padding:8px 24px;color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px;">SERVICE CALL REPORT</td>
-        <td style="padding:8px 24px;text-align:right;"><span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:3px 14px;font-size:13px;font-weight:800;letter-spacing:1px;">${esc(c.no)}</span></td>
-      </tr>
-    </table>
-    <!-- Branch + date pill -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#f0f9ff;border-bottom:1px solid #bae6fd;">
-      <tr>
-        <td style="padding:8px 24px;font-size:10.5px;color:#0e7490;font-weight:700;">🏢 Branch: ${esc(c.branch||'Coimbatore')}</td>
-        <td style="padding:8px 24px;text-align:right;font-size:10.5px;color:#64748b;">📅 Date: ${fmt2(t)}</td>
-      </tr>
-    </table>
-    <!-- Info table -->
-    <table style="border-collapse:collapse;width:100%;border-top:1px solid #e2e8f0;">
-      ${row('Customer',`<strong style="font-size:13px;">${esc(c.customer)}</strong>`)}
-      ${row('System Type',esc(c.product||'—'))}
-      <tr><td style="background:#f8fafc;padding:8px 14px;font-size:11px;font-weight:700;color:#334155;border-right:1px solid #e2e8f0;width:150px;white-space:nowrap;">Contract Type</td><td style="padding:8px 14px;border-bottom:1px solid #f1f5f9;">${ctBadgesEmail}</td></tr>
-    </table>
-    <!-- Times -->
-    <div style="background:#f0f9ff;border-top:2px solid #bae6fd;border-bottom:2px solid #bae6fd;padding:6px 0;">
-      <table style="border-collapse:collapse;width:100%;">
-        ${timeRow('📞 Call Reported',c.datetime||'')}
-        ${timeRow('🔧 Call Attended',c.attendedDatetime||'')}
-        ${timeRow('✅ Call Completed',c.completedDatetime||'')}
-      </table>
-    </div>
-    <!-- Problem -->
-    <div style="padding:14px 24px 10px;border-bottom:1px solid #e2e8f0;">
-      <div style="font-size:10px;font-weight:800;color:#0e7490;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">🔴 Problem Reported</div>
-      <div style="background:#fef2f2;border-left:3px solid #ef4444;border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:#0f172a;line-height:1.65;">${esc(c.issue||'—')}</div>
-    </div>
-    <!-- Action -->
-    <div style="padding:14px 24px 10px;border-bottom:1px solid #e2e8f0;">
-      <div style="font-size:10px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;">🟢 Action Taken</div>
-      <div style="background:#f0fdf4;border-left:3px solid #10b981;border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:#0f172a;line-height:1.65;">${esc(c.resolution||'—')}</div>
-    </div>
-    <!-- Status + Engineer -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;border-bottom:2px solid #e2e8f0;">
-      <tr>
-        <td style="padding:12px 24px;">
-          <span style="font-size:10.5px;font-weight:700;color:#64748b;">STATUS</span>
-          <span style="background:${statusClr}20;color:${statusClr};border:1.5px solid ${statusClr}55;border-radius:20px;padding:3px 16px;font-size:11px;font-weight:700;margin-left:8px;">${c.status?c.status.replace('-',' ').replace(/\w/g,l=>l.toUpperCase()):'—'}</span>
-        </td>
-        <td style="padding:12px 24px;text-align:right;font-size:10.5px;color:#64748b;">👷 Engineer: <strong style="color:#0f172a;">${esc(c.engineer||'—')}</strong></td>
-      </tr>
-    </table>
-    <!-- Footer -->
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#0c4a6e;background-image:linear-gradient(90deg,#0c4a6e,#0e7490);">
-      <tr>
-        <td style="padding:11px 24px;text-align:center;color:rgba(255,255,255,.85);font-size:9px;line-height:1.7;">
-          This is a computer-generated Service Call Report from Acenet Business Suite — please do not reply to this email.<br>
-          For further information, please contact the Acenet Service Team at <span style="color:#fff;font-weight:700;">0422-2303646</span> or <span style="color:#fff;font-weight:700;">service@acenetech.in</span>.
-        </td>
-      </tr>
-    </table>
-  </div>
-  </body></html>`;
-  // Open a preview window with copy-to-clipboard for Gmail
+  // ── Open the Gmail tab FIRST, synchronously, inside this click handler. ──
+  // Browsers only allow window.open() to bypass the popup blocker when it's
+  // called directly from a trusted user gesture (the click). If we wait for
+  // the PDF to finish generating first (an async operation) and THEN call
+  // window.open(), the browser no longer considers it a direct user action
+  // and silently blocks it. Opening a blank tab now and navigating it once
+  // the PDF/Gmail URL are ready avoids that.
   const custRec=D.ac_customers.find(x=>x.name===c.customer);
   const toEmail=custRec?.email||'';
   const subject=`Service Call Report — ${c.no} | ${c.customer}`;
-  const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}`;
-  // ── Bug fix: uiHtml must be built BEFORE it's used in the Blob below.
-  // It was previously referenced here while still declared further down,
-  // throwing a ReferenceError (temporal dead zone) and silently aborting
-  // the whole function — which is why the Gmail button did nothing. ──
-  const uiHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Email Preview — ${esc(c.no)}</title>
-  <style>
-    body{margin:0;font-family:'Segoe UI',Arial,sans-serif;background:#e2e8f0;}
-    .toolbar{background:#1e293b;padding:10px 20px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:99;}
-    .toolbar h3{color:#fff;font-size:13px;margin:0;flex:1;}
-    .btn{padding:7px 18px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;gap:6px;}
-    .btn-gmail{background:#ea4335;color:#fff;}
-    .btn-copy{background:#0e7490;color:#fff;}
-    .btn-close{background:#475569;color:#fff;}
-    .notice{background:#fef9c3;border:1px solid #fde047;border-radius:8px;padding:10px 16px;font-size:12px;color:#78350f;margin:14px 20px;}
-    .preview{margin:0 20px 20px;border-radius:10px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.15);}
-    .copied{background:#10b981 !important;}
-  </style>
-  </head><body>
-  <div class="toolbar">
-    <h3>📧 Email Preview — ${esc(c.no)}</h3>
-    <button class="btn btn-gmail" onclick="window.open('${gmailUrl}','_blank')">🚀 Open Gmail</button>
-    <button class="btn btn-copy" id="copyBtn" onclick="copyHtml()">📋 Copy Email HTML</button>
-    <button class="btn btn-close" onclick="window.close()">✕ Close</button>
-  </div>
-  <div class="notice">👆 Click <strong>Open Gmail</strong> to open Gmail compose (To &amp; Subject pre-filled). Then click <strong>Copy Email HTML</strong>, paste it into Gmail body (Ctrl+V).</div>
-  <div class="preview" id="preview">${emailHtml.replace(/<script[\s\S]*?<\/script>/gi,'')}</div>
-  <script>
-    const HTML=document.getElementById('preview').innerHTML;
-    function copyHtml(){
-      const el=document.createElement('div');el.innerHTML=HTML;document.body.appendChild(el);
-      const range=document.createRange();range.selectNodeContents(el);
-      const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);
-      document.execCommand('copy');sel.removeAllRanges();document.body.removeChild(el);
-      const b=document.getElementById('copyBtn');b.classList.add('copied');b.textContent='✓ Copied!';
-      setTimeout(()=>{b.classList.remove('copied');b.innerHTML='📋 Copy Email HTML';},2500);
-    }
-  <\/script>
-  </body></html>`;
-  const _blob=new Blob([uiHtml],{type:'text/html'});
-  const _burl=URL.createObjectURL(_blob);
-  const previewWin=window.open(_burl,'_blank');
-  if(!previewWin){alert('Pop-up blocked. Please allow pop-ups.');URL.revokeObjectURL(_burl);return;}
-  setTimeout(()=>URL.revokeObjectURL(_burl),30000);
+  const engineerName=c.engineer||D.currentUser?.name||'';
+  const bodyText=
+`Dear ${c.customer||'Sir/Madam'},
+
+Please find attached the Service Call Report for Call ID ${c.no}, dated ${c.date||''}.
+
+Issue Reported: ${c.issue||'—'}
+Action Taken: ${c.resolution||'—'}
+Status: ${c.status?c.status.replace('-',' '):'—'}
+
+If you have any questions regarding this report, please contact our service team at 0422-2303646 or service@acenetech.in.
+
+Thank you for choosing Acenet Technologies.
+
+Regards,
+${engineerName}
+Acenet Technologies India Pvt. Ltd.`;
+  const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+  const gmailTab=window.open('about:blank','_blank');
+
+  generateScrPdfBlob(c,(blob,filename)=>{
+    // Trigger the PDF download
+    const pdfUrl=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=pdfUrl;a.download=filename;
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(pdfUrl),30000);
+
+    showSuccessToast(`📄 ${filename} downloaded — attach it in the Gmail tab using the Attach (📎) button.`,'var(--svc)');
+    // Navigate the already-open tab to Gmail compose
+    if(gmailTab&&!gmailTab.closed){ gmailTab.location.href=gmailUrl; }
+    else{ window.open(gmailUrl,'_blank'); } // fallback if the tab got closed/blocked anyway
+  },err=>{
+    // PDF generation failed — don't leave the user with a stranded blank tab
+    if(gmailTab&&!gmailTab.closed) gmailTab.close();
+    alert('Could not generate the PDF report. Please try the Print/SCR button instead.');
+  });
 }
 
 // ════════════════════════════════════════════════════════════════
