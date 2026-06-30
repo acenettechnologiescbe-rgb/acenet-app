@@ -7006,25 +7006,33 @@ function sendSvcCallReportGmail(id){
   };
   const emailHtml=`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:24px;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
   <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12);">
-    <!-- Header -->
-    <div style="background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#06b6d4 100%);padding:20px 24px;display:flex;align-items:center;gap:16px;">
-      <img src="${LOGO}" alt="Acenet Technologies" style="height:38px;width:auto;max-width:140px;object-fit:contain;flex-shrink:0;background:#fff;border-radius:6px;padding:4px 8px;">
-      <div>
-        <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:.4px;">ACENET TECHNOLOGIES INDIA PVT. LTD.</div>
-        <div style="color:rgba(255,255,255,.75);font-size:8.5px;margin-top:3px;">Regd. Office : 1084/4, Trichy Road, Sungam, Coimbatore – 641 018</div>
-        <div style="color:rgba(255,255,255,.75);font-size:8.5px;">Tel : 0422-2303646 &nbsp;|&nbsp; E-mail : service@acenetech.in</div>
-      </div>
-    </div>
+    <!-- Header (table layout — Gmail's compose sanitizer strips display:flex on paste, which was causing the logo and title to overlap with a dead gap on the right) -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#0e7490;background-image:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#06b6d4 100%);">
+      <tr>
+        <td style="padding:18px 14px 18px 24px;width:84px;vertical-align:middle;">
+          <img src="${LOGO}" alt="Acenet Technologies" width="70" style="display:block;height:auto;max-height:44px;width:70px;object-fit:contain;background:#fff;border-radius:6px;padding:4px 6px;">
+        </td>
+        <td style="padding:18px 24px 18px 0;vertical-align:middle;">
+          <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:.4px;line-height:1.3;">ACENET TECHNOLOGIES INDIA PVT. LTD.</div>
+          <div style="color:rgba(255,255,255,.78);font-size:9px;margin-top:4px;line-height:1.5;">Regd. Office : 1084/4, Trichy Road, Sungam, Coimbatore – 641 018</div>
+          <div style="color:rgba(255,255,255,.78);font-size:9px;line-height:1.5;">Tel : 0422-2303646 &nbsp;|&nbsp; E-mail : service@acenetech.in</div>
+        </td>
+      </tr>
+    </table>
     <!-- Title bar -->
-    <div style="background:#0e7490;padding:8px 24px;display:flex;align-items:center;justify-content:space-between;">
-      <span style="color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px;">SERVICE CALL REPORT</span>
-      <span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:3px 14px;font-size:13px;font-weight:800;letter-spacing:1px;">${esc(c.no)}</span>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#0e7490;">
+      <tr>
+        <td style="padding:8px 24px;color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px;">SERVICE CALL REPORT</td>
+        <td style="padding:8px 24px;text-align:right;"><span style="background:rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:3px 14px;font-size:13px;font-weight:800;letter-spacing:1px;">${esc(c.no)}</span></td>
+      </tr>
+    </table>
     <!-- Branch + date pill -->
-    <div style="background:#f0f9ff;border-bottom:1px solid #bae6fd;padding:8px 24px;display:flex;align-items:center;justify-content:space-between;font-size:10.5px;">
-      <span style="color:#0e7490;font-weight:700;">🏢 Branch: ${esc(c.branch||'Coimbatore')}</span>
-      <span style="color:#64748b;">📅 Date: ${fmt2(t)}</span>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#f0f9ff;border-bottom:1px solid #bae6fd;">
+      <tr>
+        <td style="padding:8px 24px;font-size:10.5px;color:#0e7490;font-weight:700;">🏢 Branch: ${esc(c.branch||'Coimbatore')}</td>
+        <td style="padding:8px 24px;text-align:right;font-size:10.5px;color:#64748b;">📅 Date: ${fmt2(t)}</td>
+      </tr>
+    </table>
     <!-- Info table -->
     <table style="border-collapse:collapse;width:100%;border-top:1px solid #e2e8f0;">
       ${row('Customer',`<strong style="font-size:13px;">${esc(c.customer)}</strong>`)}
@@ -7050,18 +7058,24 @@ function sendSvcCallReportGmail(id){
       <div style="background:#f0fdf4;border-left:3px solid #10b981;border-radius:0 6px 6px 0;padding:10px 14px;font-size:12px;color:#0f172a;line-height:1.65;">${esc(c.resolution||'—')}</div>
     </div>
     <!-- Status + Engineer -->
-    <div style="padding:12px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;flex-wrap:wrap;gap:8px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span style="font-size:10.5px;font-weight:700;color:#64748b;">STATUS</span>
-        <span style="background:${statusClr}20;color:${statusClr};border:1.5px solid ${statusClr}55;border-radius:20px;padding:3px 16px;font-size:11px;font-weight:700;">${c.status?c.status.replace('-',' ').replace(/\w/g,l=>l.toUpperCase()):'—'}</span>
-      </div>
-      <div style="font-size:10.5px;color:#64748b;">👷 Engineer: <strong style="color:#0f172a;">${esc(c.engineer||'—')}</strong></div>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;border-bottom:2px solid #e2e8f0;">
+      <tr>
+        <td style="padding:12px 24px;">
+          <span style="font-size:10.5px;font-weight:700;color:#64748b;">STATUS</span>
+          <span style="background:${statusClr}20;color:${statusClr};border:1.5px solid ${statusClr}55;border-radius:20px;padding:3px 16px;font-size:11px;font-weight:700;margin-left:8px;">${c.status?c.status.replace('-',' ').replace(/\w/g,l=>l.toUpperCase()):'—'}</span>
+        </td>
+        <td style="padding:12px 24px;text-align:right;font-size:10.5px;color:#64748b;">👷 Engineer: <strong style="color:#0f172a;">${esc(c.engineer||'—')}</strong></td>
+      </tr>
+    </table>
     <!-- Footer -->
-    <div style="background:linear-gradient(90deg,#0c4a6e,#0e7490);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;">
-      <span style="color:rgba(255,255,255,.7);font-size:8.5px;">This is a system-generated service call report from Acenet Business Suite.</span>
-      <span style="color:rgba(255,255,255,.7);font-size:8.5px;">service@acenetech.in</span>
-    </div>
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:collapse;background-color:#0c4a6e;background-image:linear-gradient(90deg,#0c4a6e,#0e7490);">
+      <tr>
+        <td style="padding:11px 24px;text-align:center;color:rgba(255,255,255,.85);font-size:9px;line-height:1.7;">
+          This is a computer-generated Service Call Report from Acenet Business Suite — please do not reply to this email.<br>
+          For further information, please contact the Acenet Service Team at <span style="color:#fff;font-weight:700;">0422-2303646</span> or <span style="color:#fff;font-weight:700;">service@acenetech.in</span>.
+        </td>
+      </tr>
+    </table>
   </div>
   </body></html>`;
   // Open a preview window with copy-to-clipboard for Gmail
