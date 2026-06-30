@@ -456,6 +456,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .st-pending{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
 .st-billed{background:var(--green-l);color:#065f46;border:1px solid #86efac;}
 .st-cancelled{background:var(--red-l);color:var(--red);}
+.st-stockonly{background:#f0fdf4;color:#166534;border:1px solid #86efac;}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.71em;font-weight:700;}
 .badge::before{content:'●';font-size:.65em;}
 .b-paid{background:var(--green-l);color:#065f46;}
@@ -2995,6 +2996,7 @@ const FIREBASE_CONFIG = {
 
 // Firebase SDK (loaded dynamically so the file stays self-contained)
 let _db = null;   // Firestore instance — set after SDK loads
+let _lastSeenSavedAt = null;  // most recent server _savedAt this device has observed (sync conflict guard)
 let _fbReady = false;
 
 // Check if the config has been filled in (not still placeholder values)
@@ -3017,6 +3019,7 @@ function _initFirestore(){
     _db.collection('acenet').doc('appdata').onSnapshot(snap => {
       if(!snap.exists) return;
       const remote = snap.data();
+      if(remote._savedAt) _lastSeenSavedAt = remote._savedAt;
       const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                     'ac_invoices','ac_payments','ac_advances','ac_customers',
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
@@ -3149,6 +3152,7 @@ async function loadData(){
       const snap = await _db.collection('acenet').doc('appdata').get();
       if(snap.exists){
         const remote = snap.data();
+        if(remote._savedAt) _lastSeenSavedAt = remote._savedAt;
         const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                       'ac_invoices','ac_payments','ac_advances','ac_customers',
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
@@ -3193,7 +3197,48 @@ async function saveData(notifyType){
   // Then write the full state to Firestore so all users get the update
   if(_fbReady && _db){
     try {
-      await _db.collection('acenet').doc('appdata').set({
+      // ── Bug fix: mobile/PC sync conflict guard ──
+      // Previously this always overwrote the entire Firestore document with
+      // whatever was in local D, with no check for whether another device
+      // had saved more recently. If this device's local D was stale (e.g.
+      // the realtime onSnapshot listener hadn't yet delivered another
+      // device's edit — common right after waking from background on
+      // mobile, or on a slow connection), this write would silently
+      // overwrite and permanently discard that other device's changes.
+      // Now we compare the server's last-saved timestamp against the most
+      // recent timestamp this device has actually seen (_lastSeenSavedAt,
+      // updated by the onSnapshot listener). If the server has moved on
+      // without us, we refuse to blindly overwrite — we pull the latest
+      // data in, notify the user, and ask them to retry their change
+      // against the up-to-date data instead of losing someone else's work.
+      const _docRef=_db.collection('acenet').doc('appdata');
+      let _conflict=false;
+      try{
+        const _snap=await _docRef.get({source:'server'});
+        if(_snap.exists){
+          const _serverSavedAt=_snap.data()._savedAt;
+          if(_serverSavedAt && _lastSeenSavedAt && _serverSavedAt!==_lastSeenSavedAt){
+            _conflict=true;
+            // Pull the newer remote data into D immediately so nothing is lost
+            const remote=_snap.data();
+            const keys=['pl_bills','pl_ledger','pl_customers','pl_materials',
+                        'ac_invoices','ac_payments','ac_advances','ac_customers',
+                        'orders','svc_calls','svc_conveyance','svc_conv_advances',
+                        'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances'];
+            keys.forEach(k=>{ if(remote[k]!==undefined) D[k]=remote[k]; });
+            _lastSeenSavedAt=_serverSavedAt;
+          }
+        }
+      }catch(e){ /* offline or read failed — proceed with local write as best effort */ }
+      if(_conflict){
+        showSuccessToast('⚠️ Another device just updated this data. Your last change wasn\'t saved — please redo it.','var(--red)');
+        refreshUI();
+        flashSaved();
+        refreshDataLists();
+        return;
+      }
+      const _nowIso=new Date().toISOString();
+      await _docRef.set({
         users:              D.users,
         pl_bills:           D.pl_bills,
         pl_ledger:          D.pl_ledger,
@@ -3215,9 +3260,10 @@ async function saveData(notifyType){
         salary_advances:    D.salary_advances || [],
         fy_archives:        D.fy_archives || [],
         _lastNotify:        notifyType || 'sync',
-        _savedAt:           new Date().toISOString(),
+        _savedAt:           _nowIso,
         _savedBy:           D.currentUser?.name || 'system'
       });
+      _lastSeenSavedAt=_nowIso;
     } catch(err) {
       console.warn('Firestore write failed, data saved locally only:', err);
       showFirebaseError();
@@ -3752,6 +3798,7 @@ function renderOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="oc-${o.id}">
       <div class="order-card-hdr" onclick="toggleOrder('${o.id}')">
@@ -3978,6 +4025,7 @@ function viewOrderModal(id){
   const statusBadge=o.status==='billed'
     ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`
     :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+    :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`
     :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`;
   const isSource=o.source==='service'?'SERVICE ORDER':'MARKETING ORDER';
   // Build customer detail HTML from master
@@ -4653,7 +4701,7 @@ function renderMgmt(){
     :recentOrders.map(o=>`<div class="mgmt-row-item">
         <div><div style="font-weight:700;font-size:.85em;">${esc(o.orderNo)} <span style="font-size:.82em;color:var(--ink3);font-weight:400;">· ${esc(o.customer)}</span></div>
         <div style="font-size:.73em;color:var(--ink3);">${o.date} · ${o.items.length} item(s)</div></div>
-        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
+        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
       </div>`).join('');
 
   // ── Overdue Invoices ─────────────────────────────────
@@ -6787,7 +6835,7 @@ function buildScrHtml(c){
     body{font-family:'Segoe UI',Arial,sans-serif;background:#f1f5f9;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:24px 0;}
     .page{width:900px;background:#fff;border-radius:0;box-shadow:0 4px 32px rgba(0,0,0,.13);}
     .hdr-band{background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#06b6d4 100%);padding:22px 28px 18px;display:flex;align-items:center;gap:22px;}
-    .hdr-logo{height:64px;width:auto;object-fit:contain;flex-shrink:0;background:#fff;border-radius:8px;padding:5px 10px;}
+    .hdr-logo{height:42px;width:auto;max-width:150px;object-fit:contain;flex-shrink:0;background:#fff;border-radius:6px;padding:4px 8px;}
     .hdr-info{flex:1;color:#fff;}
     .hdr-co{font-size:20px;font-weight:800;letter-spacing:.5px;line-height:1.2;}
     .hdr-addr{font-size:11px;opacity:.85;margin-top:4px;line-height:1.6;}
@@ -6960,7 +7008,7 @@ function sendSvcCallReportGmail(id){
   <div style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12);">
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#06b6d4 100%);padding:20px 24px;display:flex;align-items:center;gap:16px;">
-      <img src="${LOGO}" alt="Acenet Technologies" style="height:46px;width:auto;object-fit:contain;flex-shrink:0;background:#fff;border-radius:6px;padding:4px 8px;">
+      <img src="${LOGO}" alt="Acenet Technologies" style="height:38px;width:auto;max-width:140px;object-fit:contain;flex-shrink:0;background:#fff;border-radius:6px;padding:4px 8px;">
       <div>
         <div style="color:#fff;font-size:15px;font-weight:800;letter-spacing:.4px;">ACENET TECHNOLOGIES INDIA PVT. LTD.</div>
         <div style="color:rgba(255,255,255,.75);font-size:8.5px;margin-top:3px;">Regd. Office : 1084/4, Trichy Road, Sungam, Coimbatore – 641 018</div>
@@ -8585,6 +8633,7 @@ function renderSvcOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="soc-${o.id}">
       <div class="order-card-hdr" onclick="toggleSvcOrder('${o.id}')">
@@ -10997,7 +11046,14 @@ function addConvRow(data){
       <button type="button" onclick="removeConvRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85em;padding:2px 6px;"><i class="fas fa-times"></i></button>
     </div>
     <div class="g3" style="margin-bottom:7px;">
-      <div class="fg"><label style="font-size:.72em;">From</label><input type="text" class="scr-from" placeholder="Starting point" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">From</label>
+        <select class="scr-from" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+          <option value="">-- Select Customer --</option>
+          ${(D.ac_customers||[]).map(c=>`<option value="${c.name.replace(/"/g,'&quot;')}">${c.name}</option>`).join('')}
+          <option value="__other__">Other (type below)</option>
+        </select>
+        <input type="text" class="scr-from-custom" placeholder="Enter starting point" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcConvTotal()">
+      </div>
       <div class="fg"><label style="font-size:.72em;">To</label>
         <select class="scr-to" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
           <option value="">-- Select Customer --</option>
@@ -11024,6 +11080,14 @@ function addConvRow(data){
       <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="scr-remarks" placeholder="Optional notes"></div>
     </div>`;
   g('scConvRows').appendChild(div);
+  // Wire "Other" toggle for the FROM field
+  const fromSel=div.querySelector('.scr-from');
+  const fromCustom=div.querySelector('.scr-from-custom');
+  if(fromSel&&fromCustom){
+    fromSel.addEventListener('change',function(){
+      fromCustom.style.display=this.value==='__other__'?'block':'none';
+    });
+  }
   // Wire "Other" toggle for the TO field
   const toSel=div.querySelector('.scr-to');
   const toCustom=div.querySelector('.scr-to-custom');
@@ -11034,7 +11098,16 @@ function addConvRow(data){
   }
   if(data){
     const r=g('scr-'+n);
-    r.querySelector('.scr-from').value=data.from||'';
+    // Populate FROM: check if it matches a customer option
+    const fromVal=data.from||'';
+    const fromOpts=[...fromSel.options].map(o=>o.value);
+    if(fromVal&&fromOpts.includes(fromVal)){
+      fromSel.value=fromVal;
+      if(fromCustom)fromCustom.style.display='none';
+    } else if(fromVal){
+      fromSel.value='__other__';
+      if(fromCustom){fromCustom.style.display='block';fromCustom.value=fromVal;}
+    }
     // Populate TO: check if it matches a customer option
     const toVal=data.to||'';
     const custOpts=[...toSel.options].map(o=>o.value);
@@ -11074,7 +11147,9 @@ function calcConvTotal(){
 function getConvRows(){
   const rows=[];
   document.querySelectorAll('#scConvRows>div').forEach(row=>{
-    const from=row.querySelector('.scr-from')?.value.trim()||'';
+    const fromSel=row.querySelector('.scr-from');
+    const fromCustom=row.querySelector('.scr-from-custom');
+    const from=fromSel?.value==='__other__'?(fromCustom?.value.trim()||''):(fromSel?.value.trim()||'');
     const toSel=row.querySelector('.scr-to');
     const toCustom=row.querySelector('.scr-to-custom');
     const to=toSel?.value==='__other__'?(toCustom?.value.trim()||''):(toSel?.value.trim()||'');
