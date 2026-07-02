@@ -456,7 +456,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .st-pending{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
 .st-billed{background:var(--green-l);color:#065f46;border:1px solid #86efac;}
 .st-cancelled{background:var(--red-l);color:var(--red);}
-.st-stockonly{background:#f0fdf4;color:#166534;border:1px solid #86efac;}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.71em;font-weight:700;}
 .badge::before{content:'●';font-size:.65em;}
 .b-paid{background:var(--green-l);color:#065f46;}
@@ -1279,8 +1278,6 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="stats" id="accOrderStats"></div>
   <div class="sdiv" style="margin-top:0;">Pending Orders</div>
   <div id="pendingOrdersList"></div>
-  <div class="sdiv">Stock Only Orders <span style="font-size:.75em;font-weight:400;color:var(--ink3);">(no billing required)</span></div>
-  <div id="stockOnlyOrdersList"></div>
   <div class="sdiv">Billed Orders</div>
   <div id="billedOrdersList"></div>
 </div>
@@ -3257,7 +3254,7 @@ function refreshDataLists(){
   const allCustNames=[
     ...D.ac_customers.map(c=>c.name),              // Accounts master (primary)
     ...D.pl_customers.filter(n=>!acNames.has(n))   // Marketing-only extras
-  ];
+  ].sort((a,b)=>a.localeCompare(b));               // Alphabetical order
   const unifiedCu=allCustNames.map(n=>`<option value="${esc(n)}">`).join('');
   // All department customer datalists now share the unified master
   ['dl-mkt-cust','dl-mkt-cust2','dl-ord-cust','dl-ord-cust2',
@@ -3755,7 +3752,6 @@ function renderOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
-      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="oc-${o.id}">
       <div class="order-card-hdr" onclick="toggleOrder('${o.id}')">
@@ -3785,21 +3781,17 @@ function renderOrders(){
 // ACCOUNTS — ORDER PROCESSING
 // ════════════════════════════════════════════════════════════════
 function renderAccOrders(){
-  const pEl=g('pendingOrdersList'),bEl=g('billedOrdersList'),sEl=g('stockOnlyOrdersList');
-  if(!pEl||!bEl)return;
+  const pEl=g('pendingOrdersList'),bEl=g('billedOrdersList');if(!pEl||!bEl)return;
   const pending=D.orders.filter(o=>o.status==='pending');
   const billed=D.orders.filter(o=>o.status==='billed');
-  const stockOnly=D.orders.filter(o=>o.status==='stock_only');
+  // Stats
   const el=g('accOrderStats');
-  if(el) el.innerHTML=`<div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed</div><div class="stat-value">${billed.length}</div></div><div class="stat" style="background:#f0fdf4;"><div class="stat-bar" style="background:#86efac;"></div><div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div><div class="stat-label">Stock Only</div><div class="stat-value">${stockOnly.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Total</div><div class="stat-value">${D.orders.length}</div></div>`;
+  if(el) el.innerHTML=`<div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed</div><div class="stat-value">${billed.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Total Orders</div><div class="stat-value">${D.orders.length}</div></div>`;
+
   // Pending
   if(!pending.length){pEl.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No pending orders. All done!</p></div>';}
   else{pEl.innerHTML=pending.map(o=>orderAccCard(o,true)).join('');}
-  // Stock Only
-  if(sEl){
-    if(!stockOnly.length){sEl.innerHTML='<div class="empty" style="padding:14px;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><p>No stock-only orders.</p></div>';}
-    else{sEl.innerHTML=stockOnly.map(o=>orderAccCard(o,false)).join('');}
-  }
+
   // Billed
   if(!billed.length){bEl.innerHTML='<div class="empty" style="padding:18px;"><i class="fas fa-inbox"></i><p>No billed orders yet.</p></div>';}
   else{bEl.innerHTML=billed.map(o=>orderAccCard(o,false)).join('');}
@@ -3813,7 +3805,7 @@ function orderAccCard(o,showConfirm){
         <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span><span>${o.items.length} item(s)</span></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        ${o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
+        ${o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
         <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
             <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);margin-top:2px;"><i class="fas fa-eye"></i> View</button>
           </div>
@@ -3832,7 +3824,7 @@ function orderAccCard(o,showConfirm){
       </table></div>
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
-      ${o.status==='stock_only'?`<div style="display:flex;align-items:center;gap:10px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:8px 12px;border-radius:8px;border:1px solid #86efac;"><i class="fas fa-boxes-stacked" style="margin-right:4px;flex-shrink:0;color:#16a34a;"></i><span>Stock Purpose Only — No billing required for this order.</span></div>`:showConfirm&&!o.stockOnly?`
+      ${showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
         <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
@@ -3986,7 +3978,6 @@ function viewOrderModal(id){
   const statusBadge=o.status==='billed'
     ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`
     :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
-    :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`
     :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`;
   const isSource=o.source==='service'?'SERVICE ORDER':'MARKETING ORDER';
   // Build customer detail HTML from master
@@ -4662,7 +4653,7 @@ function renderMgmt(){
     :recentOrders.map(o=>`<div class="mgmt-row-item">
         <div><div style="font-weight:700;font-size:.85em;">${esc(o.orderNo)} <span style="font-size:.82em;color:var(--ink3);font-weight:400;">· ${esc(o.customer)}</span></div>
         <div style="font-size:.73em;color:var(--ink3);">${o.date} · ${o.items.length} item(s)</div></div>
-        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
+        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
       </div>`).join('');
 
   // ── Overdue Invoices ─────────────────────────────────
@@ -5792,10 +5783,7 @@ function renderSvcStockView(){
     ${txns.map(t=>`<tr><td style="font-size:.92em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
     <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.87em;font-weight:700;">${t.type==='in'?'▼ Stock In':'▲ Stock Out'}</span></td>
     <td class="num" style="font-weight:700;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
-    <td style="font-size:.92em;color:#0369a1;">${esc(t.custName||'—')}</td>
-    <td style="font-size:.92em;color:var(--ink3);">${esc(t.purpose||'—')}</td>
-    <td style="font-size:.92em;color:var(--ink3);">${esc(t.challan||t.dc?.no||'—')}</td>
-    <td style="font-size:.92em;color:var(--ink4);">${esc(t.ref||'—')}</td>
+    <td style="font-size:.92em;color:#0369a1;">${esc(t.ref||'—')}</td>
     <td style="font-size:.92em;color:var(--ink3);">${esc(t.notes||'—')}</td>
     <td style="font-size:.92em;">${esc(t.by||'—')}</td></tr>`).join('')}
     </tbody></table></div>`;
@@ -5842,14 +5830,7 @@ function openSvcStockOutModal(preItemId){
   // Populate order link dropdown — pending orders from service
   const orderSel=g('svcSoOrderLink');
   if(orderSel){
-    const myName=D.currentUser?.name||'';
-    // Only show current engineer's own orders that haven't been dispatched yet
-    const pendingOrders=(D.orders||[]).filter(o=>
-      o.source==='service' &&
-      o.status!=='cancelled' &&
-      o.engineer===myName &&
-      !o.dcDispatched
-    );
+    const pendingOrders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled');
     orderSel.innerHTML='<option value="">-- None --</option>'
       +pendingOrders.map(o=>`<option value="${o.id}">${esc(o.orderNo||o.id)} — ${esc(o.customer||'')} (${o.items?.length||0} items)</option>`).join('');
   }
@@ -5912,17 +5893,12 @@ function saveSvcStockOut(){
   const itemId=g('svcSoItem').value;
   const qty=parseFloat(g('svcSoQty').value)||0;
   const date=g('svcSoDate').value;
-  const ordId=g('svcSoOrderLink')?.value||'';
-  // When an order is linked, item selection is optional — auto-deduct handles it
-  if(!itemId && !ordId){alert('Please select an item or link an Order Checklist');return;}
+  if(!itemId){alert('Please select an item');return;}
+  if(!qty||qty<=0){alert('Enter a valid quantity');return;}
   if(!date){alert('Please select a date');return;}
-  const item=itemId?D.stock_items.find(i=>i.id===itemId):null;
-  if(itemId){
-    if(!item)return;
-    if(!qty||qty<=0){alert('Enter a valid quantity');return;}
-    const currentQty=stockQty(itemId);
-    if(qty>currentQty){alert('Only '+currentQty.toFixed(2)+' '+(item.unit||'units')+' available');return;}
-  }
+  const item=D.stock_items.find(i=>i.id===itemId);if(!item)return;
+  const currentQty=stockQty(itemId);
+  if(qty>currentQty){alert('Only '+currentQty.toFixed(2)+' '+( item.unit||'units')+' available');return;}
   // Build DC object from new full DC fields
   const dc={
     no:(g('svcSoDCNo')?.value||'').trim(),
@@ -5934,23 +5910,21 @@ function saveSvcStockOut(){
     remarks:(g('svcSoDCRemarks')?.value||'').trim()
   };
   if(!D.stock_txns)D.stock_txns=[];
-  // Only push a manual stock-out transaction if a real item was selected
-  if(item){
-    D.stock_txns.push({
-      id:uid(),date,itemId,itemName:item.name,type:'out',qty,
-      custName:g('svcSoCust').value||'',
-      purpose:g('svcSoPurpose').value||'',
-      challan:dc.no,
-      dc,
-      ref:g('svcSoRef').value.trim(),
-      notes:g('svcSoNotes').value.trim(),
-      linkedOrderId:ordId||'',
-      by:D.currentUser?.name||'Service',
-      at:new Date().toISOString()
-    });
-    item.lastMovement=date;
-  }
-  // Auto-deduct all matching order checklist items from stock
+  const ordId=g('svcSoOrderLink')?.value||'';
+  D.stock_txns.push({
+    id:uid(),date,itemId,itemName:item.name,type:'out',qty,
+    custName:g('svcSoCust').value||'',
+    purpose:g('svcSoPurpose').value||'',
+    challan:dc.no,
+    dc,
+    ref:g('svcSoRef').value.trim(),
+    notes:g('svcSoNotes').value.trim(),
+    linkedOrderId:ordId||'',
+    by:D.currentUser?.name||'Service',
+    at:new Date().toISOString()
+  });
+  item.lastMovement=date;
+  // ── Req 3: Auto-deduct all matching order checklist items from stock ──
   let autoDeductCount=0;
   if(ordId){
     const ord=(D.orders||[]).find(o=>o.id===ordId);
@@ -5964,11 +5938,11 @@ function saveSvcStockOut(){
         D.stock_txns.push({
           id:uid(),date,itemId:stkItem.id,itemName:stkItem.name,type:'out',qty:deductQty,
           custName:ord.customer||'',
-          purpose:'Order Checklist — '+(ord.orderNo||''),
+          purpose:'Order Checklist — '+( ord.orderNo||''),
           challan:dc.no,
           dc,
           ref:ord.orderNo||'',
-          notes:'Auto-deducted from Order Checklist '+(ord.orderNo||''),
+          notes:'Auto-deducted from Order Checklist '+( ord.orderNo||''),
           linkedOrderId:ordId,
           by:D.currentUser?.name||'Service',
           at:new Date().toISOString()
@@ -5976,7 +5950,7 @@ function saveSvcStockOut(){
         stkItem.lastMovement=date;
         autoDeductCount++;
       });
-      // Mark the order as DC dispatched so it disappears from the dropdown
+      // Mark the order as DC dispatched
       ord.dc=dc;
       ord.dcDispatched=true;
       ord.dcDispatchedAt=new Date().toISOString();
@@ -5984,9 +5958,8 @@ function saveSvcStockOut(){
     }
   }
   saveData();closeModal('svcStockOutModal');renderSvcStockView();
-  const autoMsg=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
-  const mainMsg=item?`✓ ${qty} ${item.unit||'units'} issued — ${item.name}`:`✓ Order ${(D.orders||[]).find(o=>o.id===ordId)?.orderNo||''} dispatched`;
-  showSuccessToast(mainMsg+autoMsg,'var(--red)');
+  const extraMsg=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
+  showSuccessToast('✓ '+qty+' '+( item.unit||'units')+' issued — '+item.name+extraMsg,'var(--red)');
 }
 
 function quickStockOut(itemId,itemName){openSvcStockOutModal(itemId);}
@@ -6520,9 +6493,17 @@ function renderMktOutstanding(){
 
 function renderSvcOutstanding(){
   const sortBy=g('svcOutSort')?.value||'days';
+  const myName=D.currentUser?.name||'';
+  const isService=D.currentUser?.role==='service';
+  // For service role: only show outstanding for customers this engineer has served
+  const myCustomers=isService
+    ? new Set(D.svc_calls.filter(c=>c.engineer===myName).map(c=>c.customer).filter(Boolean))
+    : null; // null = show all (accounts/management)
   const custMap={};
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{
     const out=getOut(i.id);if(!out)return;
+    // If in service role, only show outstanding for this engineer's own customers
+    if(myCustomers&&!myCustomers.has(i.custName))return;
     const od=daysOD(i);
     const cust=D.ac_customers.find(c=>c.name===i.custName);
     if(!custMap[i.custName])custMap[i.custName]={name:i.custName,phone:cust?.phone||'',total:0,maxDays:0,invoices:[]};
@@ -6705,7 +6686,11 @@ function renderSvcCalls(){
   if(D.currentUser?.role==='service') calls=calls.filter(c=>c.engineer===D.currentUser.name);
   if(filt) calls=calls.filter(c=>(c.customer||'').toLowerCase().includes(filt)||(c.no||'').toLowerCase().includes(filt)||(c.engineer||'').toLowerCase().includes(filt));
   if(statusFilt) calls=calls.filter(c=>c.status===statusFilt);
-  const total=D.svc_calls.length,pending=D.svc_calls.filter(c=>c.status==='pending').length,inprog=D.svc_calls.filter(c=>c.status==='in-progress').length,completed=D.svc_calls.filter(c=>c.status==='completed').length,escalated=D.svc_calls.filter(c=>c.status==='escalated').length;
+  // Stats — scoped to engineer for service role so count matches filtered list
+  const myRole=D.currentUser?.role||'';
+  const myEng=D.currentUser?.name||'';
+  const statCalls=myRole==='service'?D.svc_calls.filter(c=>c.engineer===myEng):D.svc_calls;
+  const total=statCalls.length,pending=statCalls.filter(c=>c.status==='pending').length,inprog=statCalls.filter(c=>c.status==='in-progress').length,completed=statCalls.filter(c=>c.status==='completed').length,escalated=statCalls.filter(c=>c.status==='escalated').length;
   g('svcCallStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total</div><div class="stat-value">${total}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">In Progress</div><div class="stat-value">${inprog}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Completed</div><div class="stat-value">${completed}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Escalated</div><div class="stat-value">${escalated}</div></div>`;
   g('svcCallCount').textContent=calls.length+' call(s)';
   if(!calls.length){g('svcCallsList').innerHTML='<div class="empty"><i class="fas fa-headset"></i><p>No service calls found.</p></div>';return;}
@@ -8312,16 +8297,6 @@ function autoStockInFromOrder(ord,date){
   if(!D.stock_items)D.stock_items=[];
   if(!D.stock_txns)D.stock_txns=[];
   const by=(D.currentUser?.name)||'Service';
-  // Idempotency: reverse any prior auto-stock-in for this order before re-applying,
-  // so resending an order doesn't stack duplicate +qty entries.
-  const existingIn=D.stock_txns.filter(t=>t.type==='in'&&t.autoFromOrderId===ord.id);
-  if(existingIn.length){
-    existingIn.forEach(t=>{
-      const si=D.stock_items.find(s=>s.id===t.itemId);
-      if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));
-    });
-    D.stock_txns=D.stock_txns.filter(t=>!(t.type==='in'&&t.autoFromOrderId===ord.id));
-  }
   ord.items.forEach(oi=>{
     const name=(oi.material||oi.name||'').trim();if(!name)return;
     const qty=parseFloat(oi.qty)||1;
@@ -8335,11 +8310,8 @@ function autoStockInFromOrder(ord,date){
     si.lastMovement=date;
     D.stock_txns.push({
       id:uid(),date,itemId:si.id,itemName:name,type:'in',qty,
-      custName:ord.customer||'',
-      purpose:'Auto stock-in from Order Checklist '+ord.orderNo,
       ref:'Order: '+ord.orderNo,
       notes:'Auto stock-in from Order Checklist '+ord.orderNo,
-      autoFromOrderId:ord.id,
       by,at:new Date().toISOString()
     });
   });
@@ -8535,7 +8507,6 @@ function renderSvcOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
-      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="soc-${o.id}">
       <div class="order-card-hdr" onclick="toggleSvcOrder('${o.id}')">
@@ -10948,7 +10919,14 @@ function addConvRow(data){
       <button type="button" onclick="removeConvRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85em;padding:2px 6px;"><i class="fas fa-times"></i></button>
     </div>
     <div class="g3" style="margin-bottom:7px;">
-      <div class="fg"><label style="font-size:.72em;">From</label><input type="text" class="scr-from" placeholder="Starting point" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">From</label>
+        <select class="scr-from" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+          <option value="">-- Select Customer --</option>
+          ${(D.ac_customers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('')}
+          <option value="__other__">Other (type below)</option>
+        </select>
+        <input type="text" class="scr-from-custom" placeholder="Enter starting point" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcConvTotal()">
+      </div>
       <div class="fg"><label style="font-size:.72em;">To</label>
         <select class="scr-to" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
           <option value="">-- Select Customer --</option>
@@ -10975,6 +10953,14 @@ function addConvRow(data){
       <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="scr-remarks" placeholder="Optional notes"></div>
     </div>`;
   g('scConvRows').appendChild(div);
+  // Wire "Other" toggle for the FROM field
+  const fromSel=div.querySelector('.scr-from');
+  const fromCustom=div.querySelector('.scr-from-custom');
+  if(fromSel&&fromCustom){
+    fromSel.addEventListener('change',function(){
+      fromCustom.style.display=this.value==='__other__'?'block':'none';
+    });
+  }
   // Wire "Other" toggle for the TO field
   const toSel=div.querySelector('.scr-to');
   const toCustom=div.querySelector('.scr-to-custom');
@@ -10985,7 +10971,18 @@ function addConvRow(data){
   }
   if(data){
     const r=g('scr-'+n);
-    r.querySelector('.scr-from').value=data.from||'';
+    // Populate FROM: check if it matches a customer option
+    const fromVal=data.from||'';
+    if(fromSel){
+      const fromOpts=[...fromSel.options].map(o=>o.value);
+      if(fromVal&&fromOpts.includes(fromVal)){
+        fromSel.value=fromVal;
+        if(fromCustom)fromCustom.style.display='none';
+      } else if(fromVal){
+        fromSel.value='__other__';
+        if(fromCustom){fromCustom.style.display='block';fromCustom.value=fromVal;}
+      }
+    }
     // Populate TO: check if it matches a customer option
     const toVal=data.to||'';
     const custOpts=[...toSel.options].map(o=>o.value);
@@ -11025,7 +11022,9 @@ function calcConvTotal(){
 function getConvRows(){
   const rows=[];
   document.querySelectorAll('#scConvRows>div').forEach(row=>{
-    const from=row.querySelector('.scr-from')?.value.trim()||'';
+    const fromSel=row.querySelector('.scr-from');
+    const fromCustom=row.querySelector('.scr-from-custom');
+    const from=fromSel?.value==='__other__'?(fromCustom?.value.trim()||''):(fromSel?.value.trim()||'');
     const toSel=row.querySelector('.scr-to');
     const toCustom=row.querySelector('.scr-to-custom');
     const to=toSel?.value==='__other__'?(toCustom?.value.trim()||''):(toSel?.value.trim()||'');
@@ -11068,16 +11067,19 @@ function renderConvCallTable(){
   const fromDate=g('gcFromDate2')?.value||'';
   const toDate=g('gcToDate2')?.value||'';
 
-  // Filter calls that have conveyance data
+  // Filter calls that have conveyance data (support both old flat fields and new convRows array)
   let calls=D.svc_calls.filter(c=>{
-    if(!c.convFrom&&!c.convAmt&&!c.convKm) return false; // no conv data
+    const hasConvData=c.convFrom||c.convAmt||c.convKm||(c.convRows&&c.convRows.length>0);
+    if(!hasConvData) return false;
     if(engFilter&&c.engineer!==engFilter) return false;
     if(fromDate&&c.date<fromDate) return false;
     if(toDate&&c.date>toDate) return false;
-    // exclude calls already in a submitted conveyance claim
-    const alreadyClaimed=D.svc_conveyance.some(cv=>
-      cv.status!=='draft'&&Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)
-    );
+    // Exclude calls already in ANY conveyance claim (draft or submitted)
+    const alreadyClaimed=D.svc_conveyance.some(cv=>{
+      if(Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)) return true;
+      const refs=(cv.callRefs||cv.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+      return refs.includes(c.no);
+    });
     if(alreadyClaimed) return false;
     return true;
   });
@@ -11098,19 +11100,29 @@ function renderConvCallTable(){
   empty.style.display='none';
 
   tbody.innerHTML=calls.map(c=>{
-    const convAmt=parseFloat(c.convAmt)||0;
-    const food=parseFloat(c.convFood)||0;
-    const other=parseFloat(c.convOther)||0;
+    const convAmt=c.convRows?.length
+      ? c.convRows.reduce((s,r)=>s+(parseFloat(r.amt)||0)+(parseFloat(r.travel)||0),0)
+      : (parseFloat(c.convAmt)||0);
+    const food=c.convRows?.length
+      ? c.convRows.reduce((s,r)=>s+(parseFloat(r.food)||0),0)
+      : (parseFloat(c.convFood)||0);
+    const other=c.convRows?.length
+      ? c.convRows.reduce((s,r)=>s+(parseFloat(r.other)||0),0)
+      : (parseFloat(c.convOther)||0);
     const total=convAmt+food+other;
+    const fromDisp=c.convRows?.length?(c.convRows[0]?.from||'—'):(c.convFrom||'—');
+    const toDisp=c.convRows?.length?(c.convRows[0]?.to||'—'):(c.convTo||'—');
+    const modeDisp=c.convRows?.length?(c.convRows[0]?.mode||'—'):(c.convMode||'—');
+    const kmDisp=c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.km)||0),0):(c.convKm||0);
     return `<tr>
       <td><input type="checkbox" class="conv-call-chk" data-id="${c.id}" onchange="updateConvSelSummary()" style="cursor:pointer;"></td>
       <td><span style="font-weight:700;color:var(--svc);">${esc(c.no)}</span></td>
       <td style="color:var(--ink3);">${c.date||''}</td>
       <td>${esc(c.customer||'')}</td>
-      <td>${esc(c.convFrom||'—')}</td>
-      <td>${esc(c.convTo||'—')}</td>
-      <td>${esc(c.convMode||'—')}</td>
-      <td style="text-align:right;">${c.convKm>0?c.convKm:c.convKm===0?'—':c.convKm||'—'}</td>
+      <td>${esc(fromDisp)}</td>
+      <td>${esc(toDisp)}</td>
+      <td>${esc(modeDisp)}</td>
+      <td style="text-align:right;">${kmDisp>0?kmDisp:'—'}</td>
       <td style="text-align:right;color:var(--svc);">${convAmt>0?fmt(convAmt):'—'}</td>
       <td style="text-align:right;">${food>0?fmt(food):'—'}</td>
       <td style="text-align:right;">${other>0?fmt(other):'—'}</td>
