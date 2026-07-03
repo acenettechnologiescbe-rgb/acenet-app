@@ -456,6 +456,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .st-pending{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
 .st-billed{background:var(--green-l);color:#065f46;border:1px solid #86efac;}
 .st-cancelled{background:var(--red-l);color:var(--red);}
+.st-stockonly{background:#f0fdf4;color:#166534;border:1px solid #86efac;}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.71em;font-weight:700;}
 .badge::before{content:'●';font-size:.65em;}
 .b-paid{background:var(--green-l);color:#065f46;}
@@ -2160,7 +2161,12 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="form-panel fp-incentive" id="svcIncForm" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
       <div class="sora" style="font-weight:700;color:#7c3aed;font-size:.93em;"><i class="fas fa-gift" style="margin-right:7px;"></i><span id="svcIncFormTitle">New Incentive Entry</span></div>
-      <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-sm" style="background:#f0fdf4;color:#166534;border:1.5px solid #86efac;font-size:.78em;" onclick="pickIncFromOrder()" title="Auto-fill from a sent Order Checklist entry">
+          <i class="fas fa-clipboard-list" style="margin-right:5px;"></i>Get from Order Checklist
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
+      </div>
     </div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Entry No</label><input type="text" id="incNo" readonly style="background:var(--bg);" placeholder="INC-2025-0001"></div>
@@ -3254,7 +3260,7 @@ function refreshDataLists(){
   const allCustNames=[
     ...D.ac_customers.map(c=>c.name),              // Accounts master (primary)
     ...D.pl_customers.filter(n=>!acNames.has(n))   // Marketing-only extras
-  ].sort((a,b)=>a.localeCompare(b));               // Alphabetical order
+  ];
   const unifiedCu=allCustNames.map(n=>`<option value="${esc(n)}">`).join('');
   // All department customer datalists now share the unified master
   ['dl-mkt-cust','dl-mkt-cust2','dl-ord-cust','dl-ord-cust2',
@@ -3805,7 +3811,7 @@ function orderAccCard(o,showConfirm){
         <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span><span>${o.items.length} item(s)</span></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        ${o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
+        ${o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`:o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
         <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
             <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);margin-top:2px;"><i class="fas fa-eye"></i> View</button>
           </div>
@@ -3824,9 +3830,16 @@ function orderAccCard(o,showConfirm){
       </table></div>
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
-      ${showConfirm&&!o.stockOnly?`
+      ${o.status==='stock_only'?`
+      <div style="display:flex;align-items:center;gap:10px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;">
+        <i class="fas fa-boxes-stacked" style="color:#16a34a;flex-shrink:0;"></i>
+        <span>Stock Purpose Only — No billing required for this order.</span>
+        ${o.stockReceived?`<span style="margin-left:auto;background:#dcfce7;color:#166534;border-radius:6px;padding:2px 10px;font-size:.88em;">✓ Stock Received</span>`:`<span style="margin-left:auto;background:#fef9c3;color:#854d0e;border-radius:6px;padding:2px 10px;font-size:.88em;">⏳ Awaiting Stock Receipt</span>`}
+      </div>`:showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
+        ${!o.dc?.no?`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:.81em;color:#c2410c;font-weight:600;"><i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>Delivery Challan not yet raised — add DC details in Service Stock Out before confirming bill.</div>`:''}
+        ${!o.dcDispatched?`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:.81em;color:#c2410c;font-weight:600;"><i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>Stock Out not yet confirmed — ensure stock has been issued before confirming bill.</div>`:''}
         <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
         <div class="bill-confirm-input">
           <input type="text" id="bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-open-all-inv">
@@ -6493,17 +6506,9 @@ function renderMktOutstanding(){
 
 function renderSvcOutstanding(){
   const sortBy=g('svcOutSort')?.value||'days';
-  const myName=D.currentUser?.name||'';
-  const isService=D.currentUser?.role==='service';
-  // For service role: only show outstanding for customers this engineer has served
-  const myCustomers=isService
-    ? new Set(D.svc_calls.filter(c=>c.engineer===myName).map(c=>c.customer).filter(Boolean))
-    : null; // null = show all (accounts/management)
   const custMap={};
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{
     const out=getOut(i.id);if(!out)return;
-    // If in service role, only show outstanding for this engineer's own customers
-    if(myCustomers&&!myCustomers.has(i.custName))return;
     const od=daysOD(i);
     const cust=D.ac_customers.find(c=>c.name===i.custName);
     if(!custMap[i.custName])custMap[i.custName]={name:i.custName,phone:cust?.phone||'',total:0,maxDays:0,invoices:[]};
@@ -6686,11 +6691,7 @@ function renderSvcCalls(){
   if(D.currentUser?.role==='service') calls=calls.filter(c=>c.engineer===D.currentUser.name);
   if(filt) calls=calls.filter(c=>(c.customer||'').toLowerCase().includes(filt)||(c.no||'').toLowerCase().includes(filt)||(c.engineer||'').toLowerCase().includes(filt));
   if(statusFilt) calls=calls.filter(c=>c.status===statusFilt);
-  // Stats — scoped to engineer for service role so count matches filtered list
-  const myRole=D.currentUser?.role||'';
-  const myEng=D.currentUser?.name||'';
-  const statCalls=myRole==='service'?D.svc_calls.filter(c=>c.engineer===myEng):D.svc_calls;
-  const total=statCalls.length,pending=statCalls.filter(c=>c.status==='pending').length,inprog=statCalls.filter(c=>c.status==='in-progress').length,completed=statCalls.filter(c=>c.status==='completed').length,escalated=statCalls.filter(c=>c.status==='escalated').length;
+  const total=D.svc_calls.length,pending=D.svc_calls.filter(c=>c.status==='pending').length,inprog=D.svc_calls.filter(c=>c.status==='in-progress').length,completed=D.svc_calls.filter(c=>c.status==='completed').length,escalated=D.svc_calls.filter(c=>c.status==='escalated').length;
   g('svcCallStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total</div><div class="stat-value">${total}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">In Progress</div><div class="stat-value">${inprog}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Completed</div><div class="stat-value">${completed}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Escalated</div><div class="stat-value">${escalated}</div></div>`;
   g('svcCallCount').textContent=calls.length+' call(s)';
   if(!calls.length){g('svcCallsList').innerHTML='<div class="empty"><i class="fas fa-headset"></i><p>No service calls found.</p></div>';return;}
@@ -8551,17 +8552,42 @@ function receiveOrderToStock(ordId){
   if(!confirm('Receive materials to Stock?\nOrder: '+ord.orderNo+'\n\n'+itemList+'\n\nNew items will be created in stock if not already there.'))return;
   var date=today(),ref=ord.orderNo,by=(D.currentUser&&D.currentUser.name)||'Service';
   if(!D.stock_txns)D.stock_txns=[];
+  // Idempotency: reverse any prior auto-stock-in for this order
+  var existingIn=D.stock_txns.filter(function(t){return t.type==='in'&&t.autoFromOrderId===ord.id;});
+  if(existingIn.length){
+    existingIn.forEach(function(t){
+      var si=D.stock_items.find(function(s){return s.id===t.itemId;});
+      if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));
+    });
+    D.stock_txns=D.stock_txns.filter(function(t){return !(t.type==='in'&&t.autoFromOrderId===ord.id);});
+  }
   var newItems=0,updItems=0;
   ord.items.forEach(function(oi){
     var name=oi.material||oi.name||oi.desc||'Item';
     var qty=parseFloat(oi.qty)||1;
     var si=D.stock_items.find(function(s){return s.name.toLowerCase()===name.toLowerCase();});
     if(!si){si={id:uid(),name:name,category:'Spare Parts',unit:'Nos',reorder:0,qty:0,stockType:ord.callType||'General',lastMovement:date,createdAt:Date.now()};D.stock_items.push(si);newItems++;}
-    si.qty=(si.qty||0)+qty;si.lastMovement=date;
-    D.stock_txns.push({id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,ref:'Order: '+ref,notes:'Received from '+ord.orderNo,by:by});
+    si.qty=(parseFloat(si.qty)||0)+qty;si.lastMovement=date;
+    D.stock_txns.push({
+      id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,
+      custName:ord.customer||'',
+      purpose:'Received from Order Checklist '+ref,
+      ref:'Order: '+ref,
+      notes:'Received from '+ord.orderNo,
+      autoFromOrderId:ord.id,
+      by:by
+    });
     updItems++;
   });
+  // Mark the order as stock-received so it leaves "Pending — Awaiting Accounts"
+  ord.stockReceived=true;
+  ord.stockReceivedAt=new Date().toISOString();
+  ord.stockReceivedBy=by;
+  if(ord.stockOnly||ord.status==='stock_only'){
+    ord.status='stock_only';
+  }
   saveData();
+  if(typeof renderSvcOrders==='function')renderSvcOrders();
   if(typeof renderSvcStockView==='function')renderSvcStockView();
   showSuccessToast(updItems+' item(s) received to stock'+(newItems?' ('+newItems+' new)':''), 'var(--green)');
 }
@@ -8589,6 +8615,83 @@ function toggleSvcOrder(id){
 // SERVICE — INCENTIVE ENTRIES
 // ════════════════════════════════════════════════════════════════
 function genIncNo(){return 'INC-'+new Date().getFullYear()+'-'+String((D.svc_incentives||[]).length+1).padStart(4,'0');}
+
+function pickIncFromOrder(){
+  // Show sent orders for this engineer to pick from
+  const myName=D.currentUser?.name||'';
+  const isService=D.currentUser?.role==='service';
+  const orders=(D.orders||[]).filter(o=>
+    o.source==='service' &&
+    o.status!=='cancelled' &&
+    (!isService||o.engineer===myName)
+  ).slice().reverse();
+  if(!orders.length){
+    showSuccessToast('No sent orders found to import from.','var(--ink3)');
+    return;
+  }
+  // Build a simple selection modal
+  const opts=orders.map(o=>`<option value="${o.id}">${esc(o.orderNo)} — ${esc(o.customer||'')} (${o.items?.length||0} items, ₹${fmt(o.total||0)})</option>`).join('');
+  const html=`<div style="padding:18px 20px;">
+    <div style="font-weight:700;font-size:.95em;color:#7c3aed;margin-bottom:12px;"><i class="fas fa-clipboard-list" style="margin-right:7px;"></i>Pick an Order Checklist entry</div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.82em;font-weight:700;color:var(--ink3);margin-bottom:4px;display:block;">Select Order</label>
+      <select id="incOrdPick" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:.88em;">
+        <option value="">-- Select Order --</option>
+        ${opts}
+      </select>
+    </div>
+    <div id="incOrdPreview" style="background:#f8fafc;border-radius:8px;padding:10px 13px;font-size:.82em;color:var(--ink3);min-height:40px;margin-bottom:14px;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('incOrdPickModal')">Cancel</button>
+      <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="applyIncFromOrder()"><i class="fas fa-check" style="margin-right:5px;"></i>Import</button>
+    </div>
+  </div>`;
+  // Reuse the generic modal system
+  let m=g('incOrdPickModal');
+  if(!m){
+    m=document.createElement('div');
+    m.id='incOrdPickModal';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;';
+    m.innerHTML=`<div style="background:#fff;border-radius:14px;min-width:460px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.22);">${html}</div>`;
+    document.body.appendChild(m);
+    m.addEventListener('click',e=>{if(e.target===m)closeModal('incOrdPickModal');});
+  } else {
+    m.querySelector('div').innerHTML=html;
+    m.style.display='flex';
+  }
+  // Wire up preview
+  setTimeout(()=>{
+    const sel=g('incOrdPick');
+    if(sel) sel.addEventListener('change',function(){
+      const ord=(D.orders||[]).find(o=>o.id===this.value);
+      const prev=g('incOrdPreview');
+      if(!ord||!prev){if(prev)prev.textContent='';return;}
+      const itemNames=ord.items.map(it=>esc(it.material||it.name||'Item')+' ×'+(it.qty||1)).join(', ');
+      prev.innerHTML=`<div style="font-weight:700;color:var(--ink2);margin-bottom:3px;">${esc(ord.customer)}</div>
+        <div style="margin-bottom:2px;">${itemNames}</div>
+        <div style="color:var(--orange);font-weight:700;">Total: ₹${fmt(ord.total||0)} | Supplier: ${esc(ord.supplier||'—')} | Purchase: ₹${fmt(ord.purchaseTotal||0)}</div>`;
+    });
+  },50);
+}
+
+function applyIncFromOrder(){
+  const sel=g('incOrdPick');
+  if(!sel||!sel.value){alert('Please select an order');return;}
+  const ord=(D.orders||[]).find(o=>o.id===sel.value);
+  if(!ord){alert('Order not found');return;}
+  // Populate incentive form fields from order
+  if(g('incCust')) g('incCust').value=ord.customer||'';
+  const itemName=ord.items?.map(it=>it.material||it.name||'Item').join(', ')||'';
+  if(g('incProduct')) g('incProduct').value=itemName;
+  if(g('incRef')) g('incRef').value=ord.orderNo||'';
+  if(g('incSaleAmt')) g('incSaleAmt').value=(ord.total||0).toFixed(2);
+  if(g('incPurchaseAmt')) g('incPurchaseAmt').value=(ord.purchaseTotal||0).toFixed(2);
+  // Set GST type from order
+  if(g('incGST')&&ord.gstType) g('incGST').value=ord.gstType==='none'?'none':ord.gstType==='exclusive'?'exclusive':'inclusive';
+  calcIncProfit();
+  closeModal('incOrdPickModal');
+  showSuccessToast('✓ Incentive form filled from '+ord.orderNo,'#7c3aed');
+}
 
 function showSvcIncForm(){
   g('svcIncForm').style.display='block';
@@ -10919,14 +11022,7 @@ function addConvRow(data){
       <button type="button" onclick="removeConvRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85em;padding:2px 6px;"><i class="fas fa-times"></i></button>
     </div>
     <div class="g3" style="margin-bottom:7px;">
-      <div class="fg"><label style="font-size:.72em;">From</label>
-        <select class="scr-from" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
-          <option value="">-- Select Customer --</option>
-          ${(D.ac_customers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('')}
-          <option value="__other__">Other (type below)</option>
-        </select>
-        <input type="text" class="scr-from-custom" placeholder="Enter starting point" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcConvTotal()">
-      </div>
+      <div class="fg"><label style="font-size:.72em;">From</label><input type="text" class="scr-from" placeholder="Starting point" oninput="calcConvTotal()"></div>
       <div class="fg"><label style="font-size:.72em;">To</label>
         <select class="scr-to" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
           <option value="">-- Select Customer --</option>
@@ -10953,14 +11049,6 @@ function addConvRow(data){
       <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="scr-remarks" placeholder="Optional notes"></div>
     </div>`;
   g('scConvRows').appendChild(div);
-  // Wire "Other" toggle for the FROM field
-  const fromSel=div.querySelector('.scr-from');
-  const fromCustom=div.querySelector('.scr-from-custom');
-  if(fromSel&&fromCustom){
-    fromSel.addEventListener('change',function(){
-      fromCustom.style.display=this.value==='__other__'?'block':'none';
-    });
-  }
   // Wire "Other" toggle for the TO field
   const toSel=div.querySelector('.scr-to');
   const toCustom=div.querySelector('.scr-to-custom');
@@ -10971,18 +11059,7 @@ function addConvRow(data){
   }
   if(data){
     const r=g('scr-'+n);
-    // Populate FROM: check if it matches a customer option
-    const fromVal=data.from||'';
-    if(fromSel){
-      const fromOpts=[...fromSel.options].map(o=>o.value);
-      if(fromVal&&fromOpts.includes(fromVal)){
-        fromSel.value=fromVal;
-        if(fromCustom)fromCustom.style.display='none';
-      } else if(fromVal){
-        fromSel.value='__other__';
-        if(fromCustom){fromCustom.style.display='block';fromCustom.value=fromVal;}
-      }
-    }
+    r.querySelector('.scr-from').value=data.from||'';
     // Populate TO: check if it matches a customer option
     const toVal=data.to||'';
     const custOpts=[...toSel.options].map(o=>o.value);
@@ -11022,9 +11099,7 @@ function calcConvTotal(){
 function getConvRows(){
   const rows=[];
   document.querySelectorAll('#scConvRows>div').forEach(row=>{
-    const fromSel=row.querySelector('.scr-from');
-    const fromCustom=row.querySelector('.scr-from-custom');
-    const from=fromSel?.value==='__other__'?(fromCustom?.value.trim()||''):(fromSel?.value.trim()||'');
+    const from=row.querySelector('.scr-from')?.value.trim()||'';
     const toSel=row.querySelector('.scr-to');
     const toCustom=row.querySelector('.scr-to-custom');
     const to=toSel?.value==='__other__'?(toCustom?.value.trim()||''):(toSel?.value.trim()||'');
@@ -11067,19 +11142,16 @@ function renderConvCallTable(){
   const fromDate=g('gcFromDate2')?.value||'';
   const toDate=g('gcToDate2')?.value||'';
 
-  // Filter calls that have conveyance data (support both old flat fields and new convRows array)
+  // Filter calls that have conveyance data
   let calls=D.svc_calls.filter(c=>{
-    const hasConvData=c.convFrom||c.convAmt||c.convKm||(c.convRows&&c.convRows.length>0);
-    if(!hasConvData) return false;
+    if(!c.convFrom&&!c.convAmt&&!c.convKm) return false; // no conv data
     if(engFilter&&c.engineer!==engFilter) return false;
     if(fromDate&&c.date<fromDate) return false;
     if(toDate&&c.date>toDate) return false;
-    // Exclude calls already in ANY conveyance claim (draft or submitted)
-    const alreadyClaimed=D.svc_conveyance.some(cv=>{
-      if(Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)) return true;
-      const refs=(cv.callRefs||cv.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
-      return refs.includes(c.no);
-    });
+    // exclude calls already in a submitted conveyance claim
+    const alreadyClaimed=D.svc_conveyance.some(cv=>
+      cv.status!=='draft'&&Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)
+    );
     if(alreadyClaimed) return false;
     return true;
   });
@@ -11100,29 +11172,19 @@ function renderConvCallTable(){
   empty.style.display='none';
 
   tbody.innerHTML=calls.map(c=>{
-    const convAmt=c.convRows?.length
-      ? c.convRows.reduce((s,r)=>s+(parseFloat(r.amt)||0)+(parseFloat(r.travel)||0),0)
-      : (parseFloat(c.convAmt)||0);
-    const food=c.convRows?.length
-      ? c.convRows.reduce((s,r)=>s+(parseFloat(r.food)||0),0)
-      : (parseFloat(c.convFood)||0);
-    const other=c.convRows?.length
-      ? c.convRows.reduce((s,r)=>s+(parseFloat(r.other)||0),0)
-      : (parseFloat(c.convOther)||0);
+    const convAmt=parseFloat(c.convAmt)||0;
+    const food=parseFloat(c.convFood)||0;
+    const other=parseFloat(c.convOther)||0;
     const total=convAmt+food+other;
-    const fromDisp=c.convRows?.length?(c.convRows[0]?.from||'—'):(c.convFrom||'—');
-    const toDisp=c.convRows?.length?(c.convRows[0]?.to||'—'):(c.convTo||'—');
-    const modeDisp=c.convRows?.length?(c.convRows[0]?.mode||'—'):(c.convMode||'—');
-    const kmDisp=c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.km)||0),0):(c.convKm||0);
     return `<tr>
       <td><input type="checkbox" class="conv-call-chk" data-id="${c.id}" onchange="updateConvSelSummary()" style="cursor:pointer;"></td>
       <td><span style="font-weight:700;color:var(--svc);">${esc(c.no)}</span></td>
       <td style="color:var(--ink3);">${c.date||''}</td>
       <td>${esc(c.customer||'')}</td>
-      <td>${esc(fromDisp)}</td>
-      <td>${esc(toDisp)}</td>
-      <td>${esc(modeDisp)}</td>
-      <td style="text-align:right;">${kmDisp>0?kmDisp:'—'}</td>
+      <td>${esc(c.convFrom||'—')}</td>
+      <td>${esc(c.convTo||'—')}</td>
+      <td>${esc(c.convMode||'—')}</td>
+      <td style="text-align:right;">${c.convKm>0?c.convKm:c.convKm===0?'—':c.convKm||'—'}</td>
       <td style="text-align:right;color:var(--svc);">${convAmt>0?fmt(convAmt):'—'}</td>
       <td style="text-align:right;">${food>0?fmt(food):'—'}</td>
       <td style="text-align:right;">${other>0?fmt(other):'—'}</td>
