@@ -36,6 +36,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .confirm-icon{width:56px;height:56px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:1.4em;margin-bottom:14px;}
 .confirm-icon.ci-send{background:#dbeafe;color:#1d4ed8;}
 .confirm-icon.ci-warn{background:#fef9c3;color:#d97706;}
+.confirm-icon.ci-delete{background:#fee2e2;color:#dc2626;}
 .confirm-title{font-family:'Sora',sans-serif;font-weight:800;font-size:1.05em;color:var(--ink);margin-bottom:7px;}
 .confirm-msg{font-size:.84em;color:var(--ink3);margin-bottom:16px;line-height:1.5;}
 .confirm-detail{background:var(--bg);border-radius:10px;padding:11px 14px;margin-bottom:18px;font-size:.82em;text-align:left;border:1px solid var(--line);}
@@ -2045,9 +2046,11 @@ tbody tr:last-child td{border-bottom:none;}
           <i class="fas fa-boxes-stacked" style="color:#16a34a;"></i> Stock Purpose Only
         </label>
       </div>
-      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;margin-top:10px;" onclick="openStockPickerModal()">
-        <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
-      </button>
+      <div style="margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);">
+        <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()">
+          <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
+        </button>
+      </div>
     </div>
 
     <!-- ── Conveyance for this Order ── -->
@@ -2163,8 +2166,12 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="form-panel fp-incentive" id="svcIncForm" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
       <div class="sora" style="font-weight:700;color:#7c3aed;font-size:.93em;"><i class="fas fa-gift" style="margin-right:7px;"></i><span id="svcIncFormTitle">New Incentive Entry</span></div>
-      <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-outline btn-sm" style="border-color:#86efac;background:#f0fdf4;color:#166534;font-weight:700;" onclick="pickOrderForIncentive()"><i class="fas fa-clipboard-check"></i> Get from Order Checklist</button>
+        <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
+      </div>
     </div>
+    <div id="incOrderPickerPanel" style="display:none;margin-bottom:12px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;padding:10px 13px;"></div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Entry No</label><input type="text" id="incNo" readonly style="background:var(--bg);" placeholder="INC-2025-0001"></div>
       <div class="fg"><label>Date</label><input type="date" id="incDate"></div>
@@ -2235,6 +2242,7 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
     <div class="fg" style="margin-bottom:12px;max-width:400px;"><label>Notes</label><input type="text" id="incNotes" placeholder="Optional notes"></div>
     <input type="hidden" id="incEditId">
+    <input type="hidden" id="incFromOrderId" value="">
     <div class="btn-row">
       <button class="btn" style="background:#7c3aed;color:#fff;" onclick="saveSvcIncDraft()"><i class="fas fa-save"></i> Save Draft</button>
       <button class="btn" style="background:#0e7490;color:#fff;" onclick="saveSvcIncDraftAndAddAnother()"><i class="fas fa-plus-circle"></i> Save &amp; Add Another</button>
@@ -3812,7 +3820,10 @@ function orderAccCard(o,showConfirm){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
         ${o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`:o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
         <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
-            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);margin-top:2px;"><i class="fas fa-eye"></i> View</button>
+            <div style="display:flex;gap:6px;margin-top:2px;">
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
+              <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();deleteOrderChecklist('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--red);color:var(--red);"><i class="fas fa-trash"></i> Delete</button>
+            </div>
           </div>
       </div>
     </div>
@@ -3844,6 +3855,24 @@ function orderAccCard(o,showConfirm){
       </div>`:`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.82em;color:var(--green);margin-top:10px;font-weight:600;background:var(--green-l);padding:8px 12px;border-radius:8px;"><i class="fas fa-check-circle" style="margin-right:4px;flex-shrink:0;"></i><span>Billed as <strong>${esc(o.invoiceNo)}</strong> on ${o.billedDate} — Invoice auto-created &amp; sent to Marketing</span><button class="btn btn-outline btn-sm" style="margin-left:auto;font-size:.8em;padding:3px 10px;border-color:#16a34a;color:#16a34a;white-space:nowrap;" onclick="event.stopPropagation();editBillNumberInline('${o.id}')"><i class="fas fa-edit"></i> Edit Bill No</button></div>`}
     </div>
   </div>`;
+}
+
+function deleteOrderChecklist(ordId){
+  const o=D.orders.find(x=>x.id===ordId);if(!o)return;
+  showConfirm({
+    icon:'ci-delete',iconClass:'fa-trash',
+    title:'Delete this Order?',
+    msg:o.status==='billed'?'⚠️ This order has already been billed. Deleting it will NOT remove the linked invoice — please delete that separately if needed.':'This order will be permanently removed from the Order Checklist. This cannot be undone.',
+    details:[{k:'Order No',v:o.orderNo},{k:'Customer',v:o.customer},{k:'Date',v:o.date},{k:'Total',v:fmt(o.total)},{k:'Status',v:o.status}],
+    btnLabel:'Delete Order',btnColor:'var(--red)',
+    onOk:()=>{
+      D.orders=D.orders.filter(x=>x.id!==ordId);
+      saveData('sync');
+      renderAccOrders();
+      if(bc)try{bc.postMessage('order_deleted');}catch(e){}
+      showSuccessToast(`✓ Order ${o.orderNo} deleted`,'var(--red)');
+    }
+  });
 }
 
 function confirmBillOrder(ordId){
@@ -5842,7 +5871,7 @@ function openSvcStockOutModal(preItemId){
     const pendingOrders=(D.orders||[]).filter(o=>
       o.source==='service' &&
       o.status!=='cancelled' &&
-      o.engineer===myName &&
+      (o.engineer===myName||o.createdBy===myName) &&
       !o.dcDispatched
     );
     orderSel.innerHTML='<option value="">-- None --</option>'
@@ -8283,6 +8312,7 @@ function sendSvcOrderToAccounts(){
             urgent:g('svOrdUrgent')?.checked||false,
             convLegs:ordConvLegs,
             status:stockOnly?'stock_only':'pending',
+            engineer:D.currentUser?.name||prev.engineer||prev.createdBy||'',
             modified:true,
             modifiedAt:Date.now(),
             modifiedBy:D.currentUser?.name||'Service',
@@ -8308,7 +8338,8 @@ function sendSvcOrderToAccounts(){
           status:stockOnly?'stock_only':'pending',
           invoiceNo:'',billedDate:'',
           createdAt:Date.now(),source:'service',
-          createdBy:D.currentUser?.name||'Service'
+          createdBy:D.currentUser?.name||'Service',
+          engineer:D.currentUser?.name||''
         };
         D.orders.push(newOrd);
         // ── Auto stock-in all items on Send ──
@@ -8661,6 +8692,8 @@ function showSvcIncForm(){
   if(g('incExpAmt'))g('incExpAmt').value=0;
   if(g('incNetProfit'))g('incNetProfit').value='₹0.00';
   g('incProfitDisplay').value='₹0.00';
+  if(g('incFromOrderId'))g('incFromOrderId').value='';
+  if(g('incOrderPickerPanel'))g('incOrderPickerPanel').style.display='none';
   g('svcIncForm').scrollIntoView({behavior:'smooth'});
 }
 function hideSvcIncForm(){g('svcIncForm').style.display='none';}
@@ -8681,6 +8714,44 @@ function populateSvcIncEngDropdown(){
   }
 }
 
+function pickOrderForIncentive(){
+  const panel=g('incOrderPickerPanel');if(!panel)return;
+  const myName=D.currentUser?.name||'';
+  const eligible=(D.orders||[]).filter(o=>
+    o.source==='service' &&
+    o.status!=='cancelled' &&
+    (o.engineer===myName||o.createdBy===myName) &&
+    !o.incentiveImported
+  ).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  if(!eligible.length){
+    panel.style.display='none';
+    showSuccessToast('No sent orders found to import from.','var(--amber)');
+    return;
+  }
+  panel.style.display='block';
+  panel.innerHTML=`<label style="font-size:.78em;font-weight:700;color:#166534;display:block;margin-bottom:6px;"><i class="fas fa-clipboard-list" style="margin-right:5px;"></i>Select an Order Checklist entry to import</label>
+    <select onchange="applyOrderToIncentive(this.value)" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.88em;background:#fff;">
+      <option value="">-- Select Order --</option>
+      ${eligible.map(o=>`<option value="${o.id}">${esc(o.orderNo)} — ${esc(o.customer)} (${fmt(o.total)})</option>`).join('')}
+    </select>`;
+}
+
+function applyOrderToIncentive(ordId){
+  if(!ordId)return;
+  const o=(D.orders||[]).find(x=>x.id===ordId);
+  if(!o)return;
+  g('incCust').value=o.customer||'';
+  g('incProduct').value=(o.items||[]).map(it=>it.material).filter(Boolean).join(', ');
+  g('incRef').value=o.orderNo||'';
+  g('incSaleAmt').value=o.total||0;
+  g('incPurchaseAmt').value=o.purchaseVal||0;
+  if(g('incGST'))g('incGST').value=o.gstType||'none';
+  if(g('incFromOrderId'))g('incFromOrderId').value=ordId;
+  calcIncProfit();
+  if(g('incOrderPickerPanel'))g('incOrderPickerPanel').style.display='none';
+  showSuccessToast(`✓ Imported from Order ${o.orderNo||''}`,'var(--green)');
+}
+
 function saveSvcIncDraft(){
   const no=g('incNo').value.trim(),date=g('incDate').value,eng=g('incEngineer').value,
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
@@ -8695,10 +8766,12 @@ function saveSvcIncDraft(){
   const profit=netSale-purchase;
   const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
+  const fromOrderId=g('incFromOrderId')?.value||'';
   if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',fromOrderId,createdAt:new Date().toISOString()};
   if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
   else D.svc_incentives.push(obj);
+  if(fromOrderId){const ord=D.orders.find(o=>o.id===fromOrderId);if(ord)ord.incentiveImported=true;}
   hideSvcIncForm();saveData();renderSvcIncentives();
   showSuccessToast(`✓ Entry ${no} saved as draft`,'#7c3aed');
 }
@@ -8725,10 +8798,12 @@ function sendSvcIncToAccounts(){
     btnLabel:'Send to Accounts',btnColor:'#7c3aed',
     onOk:()=>{
       const editId=g('incEditId').value;
+      const fromOrderId=g('incFromOrderId')?.value||'';
       if(!D.svc_incentives)D.svc_incentives=[];
-      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',fromOrderId,createdAt:new Date().toISOString()};
       if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
       else D.svc_incentives.push(obj);
+      if(fromOrderId){const ord=D.orders.find(o=>o.id===fromOrderId);if(ord)ord.incentiveImported=true;}
       hideSvcIncForm();saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
       showSuccessToast(`✓ Entry ${no} sent to Accounts!`,'var(--green)');
     }
@@ -8762,6 +8837,8 @@ function editDraftInc(id){
   const gEl=g('incGST');if(gEl)gEl.value=e.gstType||'none';
   if(g('incExpType'))g('incExpType').value=e.expType||'';
   if(g('incExpAmt'))g('incExpAmt').value=e.expAmt||0;
+  if(g('incFromOrderId'))g('incFromOrderId').value=e.fromOrderId||'';
+  if(g('incOrderPickerPanel'))g('incOrderPickerPanel').style.display='none';
   g('svcIncFormTitle').textContent='Edit Draft Entry';
   calcIncProfit();
   g('svcIncForm').style.display='block';
@@ -8770,6 +8847,8 @@ function editDraftInc(id){
 
 function delDraftInc(id){
   if(!confirm('Delete this draft entry?'))return;
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);
+  if(e?.fromOrderId){const ord=D.orders.find(o=>o.id===e.fromOrderId);if(ord)ord.incentiveImported=false;}
   D.svc_incentives=(D.svc_incentives||[]).filter(x=>x.id!==id);
   saveData();renderSvcIncentives();
   showSuccessToast('Draft deleted','var(--red)');
