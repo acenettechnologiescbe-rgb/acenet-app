@@ -2045,7 +2045,7 @@ tbody tr:last-child td{border-bottom:none;}
           <i class="fas fa-boxes-stacked" style="color:#16a34a;"></i> Stock Purpose Only
         </label>
       </div>
-      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;margin-top:10px;display:block;" onclick="openStockPickerModal()">
+      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()" style="margin-top:10px;display:block;">
         <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
       </button>
     </div>
@@ -2163,10 +2163,8 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="form-panel fp-incentive" id="svcIncForm" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
       <div class="sora" style="font-weight:700;color:#7c3aed;font-size:.93em;"><i class="fas fa-gift" style="margin-right:7px;"></i><span id="svcIncFormTitle">New Incentive Entry</span></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button class="btn btn-sm" style="background:#f0fdf4;color:#166534;border:1.5px solid #86efac;font-size:.78em;padding:5px 12px;" onclick="pickIncFromOrder()" title="Auto-fill from a sent Order Checklist entry">
-          <i class="fas fa-clipboard-list" style="margin-right:5px;"></i>Get from Order Checklist
-        </button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-sm" style="background:#f0fdf4;color:#166534;border:1.5px solid #86efac;font-size:.78em;padding:5px 12px;" onclick="pickIncFromOrder()"><i class="fas fa-clipboard-list" style="margin-right:4px;"></i>Get from Order Checklist</button>
         <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
       </div>
     </div>
@@ -3262,7 +3260,7 @@ function refreshDataLists(){
   const allCustNames=[
     ...D.ac_customers.map(c=>c.name),              // Accounts master (primary)
     ...D.pl_customers.filter(n=>!acNames.has(n))   // Marketing-only extras
-  ].sort((a,b)=>a.localeCompare(b));  // Alphabetical order
+  ].sort((a,b)=>a.localeCompare(b));
   const unifiedCu=allCustNames.map(n=>`<option value="${esc(n)}">`).join('');
   // All department customer datalists now share the unified master
   ['dl-mkt-cust','dl-mkt-cust2','dl-ord-cust','dl-ord-cust2',
@@ -3760,7 +3758,7 @@ function renderOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
-      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
+      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only—No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="oc-${o.id}">
       <div class="order-card-hdr" onclick="toggleOrder('${o.id}')">
@@ -3773,12 +3771,12 @@ function renderOrders(){
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
             <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
-            ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.82em;padding:4px 11px;background:var(--red);color:#fff;" title="Delete this order"><i class="fas fa-trash"></i></button>`:''}
           </div>
         </div>
       </div>
       <div class="order-body">
         <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
       </div>
@@ -3796,26 +3794,47 @@ function renderAccOrders(){
   const billed=D.orders.filter(o=>o.status==='billed');
   const stockOnly=D.orders.filter(o=>o.status==='stock_only');
   const el=g('accOrderStats');
-  if(el) el.innerHTML=`<div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed</div><div class="stat-value">${billed.length}</div></div><div class="stat" style="background:#f0fdf4;"><div class="stat-bar" style="background:#86efac;"></div><div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div><div class="stat-label">Stock Only</div><div class="stat-value">${stockOnly.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Total</div><div class="stat-value">${D.orders.length}</div></div>`;
-  if(!pending.length){pEl.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No pending orders. All done!</p></div>';}
-  else{pEl.innerHTML=pending.map(o=>orderAccCard(o,true)).join('');}
-  if(sEl){
-    if(!stockOnly.length){sEl.innerHTML='<div class="empty" style="padding:14px;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><p>No stock-only orders.</p></div>';}
-    else{sEl.innerHTML=stockOnly.map(o=>orderAccCard(o,false)).join('');}
-  }
-  if(!billed.length){bEl.innerHTML='<div class="empty" style="padding:18px;"><i class="fas fa-inbox"></i><p>No billed orders yet.</p></div>';}
-  else{bEl.innerHTML=billed.map(o=>orderAccCard(o,false)).join('');}
+  if(el)el.innerHTML=`<div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed</div><div class="stat-value">${billed.length}</div></div><div class="stat" style="background:#f0fdf4;"><div class="stat-bar" style="background:#86efac;"></div><div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div><div class="stat-label">Stock Only</div><div class="stat-value">${stockOnly.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Total</div><div class="stat-value">${D.orders.length}</div></div>`;
+  if(!pending.length)pEl.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No pending orders. All done!</p></div>';
+  else pEl.innerHTML=pending.map(o=>orderAccCard(o,true)).join('');
+  if(sEl){if(!stockOnly.length)sEl.innerHTML='<div class="empty" style="padding:14px;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><p>No stock-only orders.</p></div>';else sEl.innerHTML=stockOnly.map(o=>orderAccCard(o,false)).join('');}
+  if(!billed.length)bEl.innerHTML='<div class="empty" style="padding:18px;"><i class="fas fa-inbox"></i><p>No billed orders yet.</p></div>';
+  else bEl.innerHTML=billed.map(o=>orderAccCard(o,false)).join('');
 }
 
 function deleteAccOrder(id){
-  const o=D.orders.find(x=>x.id===id);
-  if(!o)return;
+  const o=D.orders.find(x=>x.id===id);if(!o)return;
   if(o.status==='billed'){showSuccessToast('Cannot delete a billed order.','var(--red)');return;}
-  confirmOkAction('Delete Order '+o.orderNo+'?','This will permanently remove the order and cannot be undone.',()=>{
+  confirmOkAction('Delete '+o.orderNo+'?','This will permanently remove this order.',()=>{
     D.orders=D.orders.filter(x=>x.id!==id);
     saveData();renderAccOrders();
     showSuccessToast('Order '+o.orderNo+' deleted.','var(--green)');
   });
+}
+
+function pickIncFromOrder(){
+  const myName=D.currentUser?.name||'';const isService=D.currentUser?.role==='service';
+  const orders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled'&&(!isService||o.engineer===myName)).slice().reverse();
+  if(!orders.length){showSuccessToast('No sent orders found for this engineer.','var(--ink3)');return;}
+  const opts=orders.map(o=>`<option value="${o.id}">${esc(o.orderNo)} — ${esc(o.customer||'')} (₹${fmt(o.total||0)}) [${o.status}]</option>`).join('');
+  let m=g('incOrdPickModal');
+  const html=`<div style="padding:18px 20px;min-width:440px;max-width:90vw;"><div style="font-weight:700;font-size:.95em;color:#7c3aed;margin-bottom:12px;"><i class="fas fa-clipboard-list" style="margin-right:7px;"></i>Pick an Order</div><select id="incOrdPick" style="width:100%;padding:9px;border-radius:8px;border:1.5px solid var(--line);font-size:.88em;margin-bottom:10px;"><option value="">-- Select --</option>${opts}</select><div id="incOrdPreview" style="background:#f8fafc;border-radius:8px;padding:10px;font-size:.82em;color:var(--ink3);min-height:36px;margin-bottom:14px;"></div><div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn btn-outline btn-sm" onclick="closeModal('incOrdPickModal')">Cancel</button><button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="applyIncFromOrder()"><i class="fas fa-check" style="margin-right:5px;"></i>Import</button></div></div>`;
+  if(!m){m=document.createElement('div');m.id='incOrdPickModal';m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;';m.innerHTML='<div style="background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.22);">'+html+'</div>';document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)closeModal('incOrdPickModal');});}
+  else{m.querySelector('div').innerHTML=html;m.style.display='flex';}
+  setTimeout(()=>{const sel=g('incOrdPick');if(sel)sel.addEventListener('change',function(){const ord=(D.orders||[]).find(o=>o.id===this.value);const prev=g('incOrdPreview');if(!ord||!prev){if(prev)prev.textContent='';return;}prev.innerHTML=`<strong>${esc(ord.customer)}</strong> — ${ord.items.map(it=>esc(it.material||it.name||'')+' ×'+(it.qty||1)).join(', ')}<br><span style="color:var(--orange);font-weight:700;">₹${fmt(ord.total||0)}</span>`;});},60);
+}
+
+function applyIncFromOrder(){
+  const sel=g('incOrdPick');if(!sel||!sel.value){alert('Select an order');return;}
+  const ord=(D.orders||[]).find(o=>o.id===sel.value);if(!ord)return;
+  if(g('incCust'))g('incCust').value=ord.customer||'';
+  if(g('incProduct'))g('incProduct').value=ord.items?.map(it=>it.material||it.name||'Item').join(', ')||'';
+  if(g('incRef'))g('incRef').value=ord.orderNo||'';
+  if(g('incSaleAmt'))g('incSaleAmt').value=(ord.total||0).toFixed(2);
+  if(g('incPurchaseAmt'))g('incPurchaseAmt').value=(ord.purchaseTotal||0).toFixed(2);
+  if(typeof calcIncProfit==='function')calcIncProfit();
+  closeModal('incOrdPickModal');
+  showSuccessToast('✓ Form filled from '+ord.orderNo,'#7c3aed');
 }
 
 function orderAccCard(o,showConfirm){
@@ -3827,8 +3846,11 @@ function orderAccCard(o,showConfirm){
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
         ${o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
-        <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
-            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);margin-top:2px;"><i class="fas fa-eye"></i> View</button>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+          <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
+          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
+          ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.77em;padding:3px 9px;background:var(--red);color:#fff;" title="Delete"><i class="fas fa-trash"></i></button>`:''}
+        </div>
           </div>
       </div>
     </div>
@@ -3845,7 +3867,7 @@ function orderAccCard(o,showConfirm){
       </table></div>
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
-      ${o.status==='stock_only'?`<div style="display:flex;align-items:center;gap:10px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;"><i class="fas fa-boxes-stacked" style="color:#16a34a;flex-shrink:0;"></i><span>Stock Purpose Only — No billing required.${o.stockReceived?'<span style="margin-left:8px;background:#dcfce7;border-radius:6px;padding:2px 9px;font-size:.88em;">✓ Stock Received</span>':'<span style="margin-left:8px;background:#fef9c3;color:#854d0e;border-radius:6px;padding:2px 9px;font-size:.88em;">⏳ Awaiting Receipt</span>'}</span></div>`:showConfirm&&!o.stockOnly?`
+      ${o.status==='stock_only'?`<div style="display:flex;align-items:center;gap:8px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><span>Stock Purpose Only — No billing required.</span></div>`:showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
         <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
@@ -5855,19 +5877,16 @@ function openSvcStockOutModal(preItemId){
   // Populate order link dropdown — pending orders from service
   const orderSel=g('svcSoOrderLink');
   if(orderSel){
-    const _myN=D.currentUser?.name||'';
-    const pendingOrders=(D.orders||[]).filter(o=>
-      o.source==='service'&&o.status!=='cancelled'&&o.engineer===_myN&&!o.dcDispatched);
+    const _myStockName=D.currentUser?.name||'';
+    const pendingOrders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled'&&o.engineer===_myStockName&&!o.dcDispatched);
     orderSel.innerHTML='<option value="">-- None --</option>'
       +pendingOrders.map(o=>`<option value="${o.id}">${esc(o.orderNo||o.id)} — ${esc(o.customer||'')} (${o.items?.length||0} items)</option>`).join('');
-    orderSel.value='';
   }
   if(g('svcSoAutoDeductPreview'))g('svcSoAutoDeductPreview').style.display='none';
   setSvcSoPurpose('AMC Replacement');
   svcSoItemChanged();
-  // Reset field visibility
-  const _ir=g('svcSoItemRow'),_cr=g('svcSoCustRow');
-  if(_ir)_ir.style.display='';if(_cr)_cr.style.display='';
+  const _ir2=g('svcSoItemRow'),_cr2=g('svcSoCustRow');
+  if(_ir2)_ir2.style.display='';if(_cr2)_cr2.style.display='';
   openModal('svcStockOutModal');
 }
 
@@ -5901,7 +5920,6 @@ function toggleSoDC(){
 
 function svcSoOrderLinkChanged(){
   const ordId=g('svcSoOrderLink')?.value||'';
-  // Hide item/qty/customer fields when an order is linked (auto-deduct handles it)
   const _ir=g('svcSoItemRow'),_cr=g('svcSoCustRow');
   if(_ir)_ir.style.display=ordId?'none':'';
   if(_cr)_cr.style.display=ordId?'none':'';
@@ -5989,9 +6007,9 @@ function saveSvcStockOut(){
     }
   }
   saveData();closeModal('svcStockOutModal');renderSvcStockView();
-  const _autoMsg=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
-  const _mainMsg=item?`✓ ${qty} ${item.unit||'units'} issued — ${item.name}`:`✓ Order dispatched`;
-  showSuccessToast(_mainMsg+_autoMsg,'var(--red)');
+  const _aM=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
+  const _mM=item?`✓ ${qty} ${item.unit||'units'} issued — ${item.name}`:`✓ Order dispatched`;
+  showSuccessToast(_mM+_aM,'var(--red)');
 }
 
 function quickStockOut(itemId,itemName){openSvcStockOutModal(itemId);}
@@ -6525,13 +6543,12 @@ function renderMktOutstanding(){
 
 function renderSvcOutstanding(){
   const sortBy=g('svcOutSort')?.value||'days';
-  const _outName=D.currentUser?.name||'';
-  const _outRole=D.currentUser?.role||'';
-  const _myCusts=_outRole==='service'?new Set(D.svc_calls.filter(c=>c.engineer===_outName).map(c=>c.customer).filter(Boolean)):null;
+  const _outN=D.currentUser?.name||'',_outR=D.currentUser?.role||'';
+  const _oCust=_outR==='service'?new Set(D.svc_calls.filter(c=>c.engineer===_outN).map(c=>c.customer).filter(Boolean)):null;
   const custMap={};
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{
     const out=getOut(i.id);if(!out)return;
-    if(_myCusts&&!_myCusts.has(i.custName))return;
+    if(_oCust&&!_oCust.has(i.custName))return;
     const od=daysOD(i);
     const cust=D.ac_customers.find(c=>c.name===i.custName);
     if(!custMap[i.custName])custMap[i.custName]={name:i.custName,phone:cust?.phone||'',total:0,maxDays:0,invoices:[]};
@@ -6714,8 +6731,8 @@ function renderSvcCalls(){
   if(D.currentUser?.role==='service') calls=calls.filter(c=>c.engineer===D.currentUser.name);
   if(filt) calls=calls.filter(c=>(c.customer||'').toLowerCase().includes(filt)||(c.no||'').toLowerCase().includes(filt)||(c.engineer||'').toLowerCase().includes(filt));
   if(statusFilt) calls=calls.filter(c=>c.status===statusFilt);
-  const _myRole=D.currentUser?.role||'';const _myEng=D.currentUser?.name||'';
-  const statCalls=_myRole==='service'?D.svc_calls.filter(c=>c.engineer===_myEng):D.svc_calls;
+  const _sRole=D.currentUser?.role||'',_sEng=D.currentUser?.name||'';
+  const statCalls=_sRole==='service'?D.svc_calls.filter(c=>c.engineer===_sEng):D.svc_calls;
   const total=statCalls.length,pending=statCalls.filter(c=>c.status==='pending').length,inprog=statCalls.filter(c=>c.status==='in-progress').length,completed=statCalls.filter(c=>c.status==='completed').length,escalated=statCalls.filter(c=>c.status==='escalated').length;
   g('svcCallStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total</div><div class="stat-value">${total}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">In Progress</div><div class="stat-value">${inprog}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Completed</div><div class="stat-value">${completed}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Escalated</div><div class="stat-value">${escalated}</div></div>`;
   g('svcCallCount').textContent=calls.length+' call(s)';
@@ -8323,12 +8340,8 @@ function autoStockInFromOrder(ord,date){
   if(!D.stock_items)D.stock_items=[];
   if(!D.stock_txns)D.stock_txns=[];
   const by=(D.currentUser?.name)||'Service';
-  // Idempotency: reverse prior auto stock-in for this order to prevent duplicates on resend
-  const existingIn=D.stock_txns.filter(t=>t.type==='in'&&t.autoFromOrderId===ord.id);
-  if(existingIn.length){
-    existingIn.forEach(t=>{const si=D.stock_items.find(s=>s.id===t.itemId);if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));});
-    D.stock_txns=D.stock_txns.filter(t=>!(t.type==='in'&&t.autoFromOrderId===ord.id));
-  }
+  const exIn=D.stock_txns.filter(t=>t.type==='in'&&t.autoFromOrderId===ord.id);
+  if(exIn.length){exIn.forEach(t=>{const si=D.stock_items.find(s=>s.id===t.itemId);if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));});D.stock_txns=D.stock_txns.filter(t=>!(t.type==='in'&&t.autoFromOrderId===ord.id));}
   ord.items.forEach(oi=>{
     const name=(oi.material||oi.name||'').trim();if(!name)return;
     const qty=parseFloat(oi.qty)||1;
@@ -8416,7 +8429,7 @@ function addOrdConvRow(data){
 }
 function removeOrdConvRow(n){const el=g('ocr-'+n);if(el){el.remove();calcOrdConvTotal();}}
 function calcOrdConvTotal(){
-  let travel=0,food=0,other=0;
+  let _tv=0,_fd=0,_ot=0;
   document.querySelectorAll('#ordConvRows>div').forEach(row=>{
     const km=parseFloat(row.querySelector('.ocr-km')?.value)||0;
     const rate=parseFloat(row.querySelector('.ocr-rate')?.value)||0;
@@ -8425,16 +8438,15 @@ function calcOrdConvTotal(){
     const trav=km*rate;
     const amtEl=row.querySelector('.ocr-amt');
     if(amtEl)amtEl.value='₹'+trav.toFixed(2);
-    travel+=trav;food+=f;other+=o;
+    _tv+=trav;_fd+=f;_ot+=o;
   });
-  const total=travel+food+other;
-  if(g('ordConvTotal'))g('ordConvTotal').textContent=total>0?'Total: ₹'+total.toFixed(2):'';
-  // Auto-fill Expense Type=Travel + Expense Amount on first order item row
+  const _ct=_tv+_fd+_ot;
+  if(g('ordConvTotal'))g('ordConvTotal').textContent=_ct>0?'Total: ₹'+_ct.toFixed(2):'';
   const firstRow=document.querySelector('#svOrdItemsBody tr');
-  if(firstRow&&total>0){
+  if(firstRow&&_ct>0){
     const etSel=firstRow.querySelector('.soet');const eaInp=firstRow.querySelector('.soea');
     if(etSel&&!etSel.value)etSel.value='Travel';
-    if(eaInp)eaInp.value=total.toFixed(2);
+    if(eaInp)eaInp.value=_ct.toFixed(2);
     if(typeof recalcSvOrd==='function')recalcSvOrd();
   }
 }
@@ -8541,7 +8553,7 @@ function renderSvcOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
-      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
+      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only—No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="soc-${o.id}">
       <div class="order-card-hdr" onclick="toggleSvcOrder('${o.id}')">
@@ -8624,71 +8636,6 @@ function toggleSvcOrder(id){
 // SERVICE — INCENTIVE ENTRIES
 // ════════════════════════════════════════════════════════════════
 function genIncNo(){return 'INC-'+new Date().getFullYear()+'-'+String((D.svc_incentives||[]).length+1).padStart(4,'0');}
-
-function pickIncFromOrder(){
-  const myName=D.currentUser?.name||'';
-  const isService=D.currentUser?.role==='service';
-  // Include ALL sent orders for this engineer regardless of billing status
-  const orders=(D.orders||[]).filter(o=>
-    o.source==='service' &&
-    o.status!=='cancelled' &&
-    (!isService||o.engineer===myName)
-  ).slice().reverse();
-  if(!orders.length){
-    showSuccessToast('No sent orders found for this engineer.','var(--ink3)');
-    return;
-  }
-  const opts=orders.map(o=>`<option value="${o.id}">${esc(o.orderNo)} — ${esc(o.customer||'')} (₹${fmt(o.total||0)}) [${o.status}]</option>`).join('');
-  let m=g('incOrdPickModal');
-  const html=`<div style="padding:18px 20px;min-width:440px;max-width:90vw;">
-    <div style="font-weight:700;font-size:.95em;color:#7c3aed;margin-bottom:12px;"><i class="fas fa-clipboard-list" style="margin-right:7px;"></i>Pick an Order Checklist Entry</div>
-    <select id="incOrdPick" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:.88em;margin-bottom:10px;">
-      <option value="">-- Select Order --</option>${opts}
-    </select>
-    <div id="incOrdPreview" style="background:#f8fafc;border-radius:8px;padding:10px 13px;font-size:.82em;color:var(--ink3);min-height:36px;margin-bottom:14px;"></div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button class="btn btn-outline btn-sm" onclick="closeModal('incOrdPickModal')">Cancel</button>
-      <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="applyIncFromOrder()"><i class="fas fa-check" style="margin-right:5px;"></i>Import</button>
-    </div>
-  </div>`;
-  if(!m){
-    m=document.createElement('div');m.id='incOrdPickModal';
-    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;';
-    m.innerHTML='<div style="background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.22);">'+html+'</div>';
-    document.body.appendChild(m);
-    m.addEventListener('click',e=>{if(e.target===m)closeModal('incOrdPickModal');});
-  } else { m.querySelector('div').innerHTML=html; m.style.display='flex'; }
-  setTimeout(()=>{
-    const sel=g('incOrdPick');
-    if(sel)sel.addEventListener('change',function(){
-      const ord=(D.orders||[]).find(o=>o.id===this.value);
-      const prev=g('incOrdPreview');
-      if(!ord||!prev){if(prev)prev.textContent='';return;}
-      const names=ord.items.map(it=>esc(it.material||it.name||'Item')+' ×'+(it.qty||1)).join(', ');
-      prev.innerHTML=`<div style="font-weight:700;color:var(--ink2);margin-bottom:2px;">${esc(ord.customer)}</div><div>${names}</div><div style="color:var(--orange);font-weight:700;margin-top:3px;">Total: ₹${fmt(ord.total||0)} | Purchase: ₹${fmt(ord.purchaseTotal||0)}</div>`;
-    });
-  },60);
-}
-
-function applyIncFromOrder(){
-  const sel=g('incOrdPick');
-  if(!sel||!sel.value){alert('Please select an order');return;}
-  const ord=(D.orders||[]).find(o=>o.id===sel.value);
-  if(!ord){alert('Order not found');return;}
-  if(g('incCust'))g('incCust').value=ord.customer||'';
-  const itemName=ord.items?.map(it=>it.material||it.name||'Item').join(', ')||'';
-  if(g('incProduct'))g('incProduct').value=itemName;
-  if(g('incRef'))g('incRef').value=ord.orderNo||'';
-  if(g('incSaleAmt'))g('incSaleAmt').value=(ord.total||0).toFixed(2);
-  if(g('incPurchaseAmt'))g('incPurchaseAmt').value=(ord.purchaseTotal||0).toFixed(2);
-  if(g('incGST')&&ord.gstType){
-    const gt=ord.gstType==='none'?'none':ord.gstType==='exclusive'?'exclusive':'inclusive';
-    g('incGST').value=gt;
-  }
-  if(typeof calcIncProfit==='function')calcIncProfit();
-  closeModal('incOrdPickModal');
-  showSuccessToast('✓ Incentive form filled from '+ord.orderNo,'#7c3aed');
-}
 
 function showSvcIncForm(){
   g('svcIncForm').style.display='block';
@@ -11019,7 +10966,14 @@ function addConvRow(data){
       <button type="button" onclick="removeConvRow(${n})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85em;padding:2px 6px;"><i class="fas fa-times"></i></button>
     </div>
     <div class="g3" style="margin-bottom:7px;">
-      <div class="fg"><label style="font-size:.72em;">From</label><input type="text" class="scr-from" placeholder="Starting point" oninput="calcConvTotal()"></div>
+      <div class="fg"><label style="font-size:.72em;">From</label>
+        <select class="scr-from" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
+          <option value="">-- Select Customer --</option>
+          ${(D.ac_customers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${c.name.replace(/"/g,'&quot;')}">${c.name}</option>`).join('')}
+          <option value="__other__">Other (type below)</option>
+        </select>
+        <input type="text" class="scr-from-custom" placeholder="Enter starting point" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcConvTotal()">
+      </div>
       <div class="fg"><label style="font-size:.72em;">To</label>
         <select class="scr-to" onchange="calcConvTotal()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;">
           <option value="">-- Select Customer --</option>
@@ -11046,6 +11000,10 @@ function addConvRow(data){
       <div class="fg"><label style="font-size:.72em;">Remarks</label><input type="text" class="scr-remarks" placeholder="Optional notes"></div>
     </div>`;
   g('scConvRows').appendChild(div);
+  // Wire "Other" toggle for FROM field
+  const fromSel=div.querySelector('.scr-from');
+  const fromCustom=div.querySelector('.scr-from-custom');
+  if(fromSel&&fromCustom){fromSel.addEventListener('change',function(){fromCustom.style.display=this.value==='__other__'?'block':'none';});}
   // Wire "Other" toggle for the TO field
   const toSel=div.querySelector('.scr-to');
   const toCustom=div.querySelector('.scr-to-custom');
@@ -11056,7 +11014,12 @@ function addConvRow(data){
   }
   if(data){
     const r=g('scr-'+n);
-    r.querySelector('.scr-from').value=data.from||'';
+    // Prefill FROM
+    const _fromVal=data.from||'';
+    if(fromSel){const _fOpts=[...fromSel.options].map(o=>o.value);
+      if(_fromVal&&_fOpts.includes(_fromVal)){fromSel.value=_fromVal;if(fromCustom)fromCustom.style.display='none';}
+      else if(_fromVal){fromSel.value='__other__';if(fromCustom){fromCustom.style.display='block';fromCustom.value=_fromVal;}}
+    }
     // Populate TO: check if it matches a customer option
     const toVal=data.to||'';
     const custOpts=[...toSel.options].map(o=>o.value);
@@ -11096,7 +11059,8 @@ function calcConvTotal(){
 function getConvRows(){
   const rows=[];
   document.querySelectorAll('#scConvRows>div').forEach(row=>{
-    const from=row.querySelector('.scr-from')?.value.trim()||'';
+    const _fSel=row.querySelector('.scr-from');const _fCus=row.querySelector('.scr-from-custom');
+    const from=_fSel?.value==='__other__'?(_fCus?.value.trim()||''):(_fSel?.value.trim()||'');
     const toSel=row.querySelector('.scr-to');
     const toCustom=row.querySelector('.scr-to-custom');
     const to=toSel?.value==='__other__'?(toCustom?.value.trim()||''):(toSel?.value.trim()||'');
@@ -11139,18 +11103,20 @@ function renderConvCallTable(){
   const fromDate=g('gcFromDate2')?.value||'';
   const toDate=g('gcToDate2')?.value||'';
 
+  // Filter calls that have conveyance data
   let calls=D.svc_calls.filter(c=>{
     const hasConv=c.convFrom||c.convAmt||c.convKm||(c.convRows&&c.convRows.length>0);
-    if(!hasConv)return false;
-    if(engFilter&&c.engineer!==engFilter)return false;
-    if(fromDate&&c.date<fromDate)return false;
-    if(toDate&&c.date>toDate)return false;
+    if(!hasConv) return false;
+    if(engFilter&&c.engineer!==engFilter) return false;
+    if(fromDate&&c.date<fromDate) return false;
+    if(toDate&&c.date>toDate) return false;
+    // exclude calls already in a submitted conveyance claim
     const alreadyClaimed=D.svc_conveyance.some(cv=>{
       if(Array.isArray(cv.callIds)&&cv.callIds.includes(c.id))return true;
       const refs=(cv.callRefs||cv.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
       return refs.includes(c.no);
     });
-    if(alreadyClaimed)return false;
+    if(alreadyClaimed) return false;
     return true;
   });
   calls=[...calls].reverse();
@@ -11184,7 +11150,9 @@ function renderConvCallTable(){
       <td><span style="font-weight:700;color:var(--svc);">${esc(c.no)}</span></td>
       <td style="color:var(--ink3);">${c.date||''}</td>
       <td>${esc(c.customer||'')}</td>
-      <td>${esc(fromD)}</td><td>${esc(toD)}</td><td>${esc(modeD)}</td>
+      <td>${esc(fromD)}</td>
+      <td>${esc(toD)}</td>
+      <td>${esc(modeD)}</td>
       <td style="text-align:right;">${kmD>0?kmD:'—'}</td>
       <td style="text-align:right;color:var(--svc);">${convAmt>0?fmt(convAmt):'—'}</td>
       <td style="text-align:right;">${food>0?fmt(food):'—'}</td>
@@ -11209,9 +11177,8 @@ function updateConvSelSummary(){
   checked.forEach(cb=>{
     const c=D.svc_calls.find(x=>x.id===cb.dataset.id);
     if(!c)return;
-    if(c.convRows&&c.convRows.length>0){
-      total+=c.convRows.reduce((s,r)=>s+(parseFloat(r.amt)||parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
-    }else{total+=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);}
+    if(c.convRows&&c.convRows.length)total+=c.convRows.reduce((s,r)=>s+(parseFloat(r.amt)||parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
+    else total+=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
   });
   if(selCount) selCount.textContent=checked.length+' call(s) selected';
   if(selTotal) selTotal.textContent=checked.length>0?'Total: '+fmt(total):'';
@@ -11228,15 +11195,8 @@ function generateConvFromSelected(){
   const calls=callIds.map(id=>D.svc_calls.find(c=>c.id===id)).filter(Boolean);
 
   const items=calls.flatMap(c=>{
-    if(c.convRows&&c.convRows.length>0){
-      return c.convRows.map(r=>({callNo:c.no,customer:c.customer||'',
-        mode:r.mode||c.convMode||'Two-wheeler',from:r.from||'',to:r.to||'',
-        km:parseFloat(r.km)||0,rate:parseFloat(r.rate)||0,
-        amount:(parseFloat(r.amt)||parseFloat(r.travel)||0)}));
-    }
-    return [{callNo:c.no,customer:c.customer||'',mode:c.convMode||'Two-wheeler',
-      from:c.convFrom||'',to:c.convTo||'',km:parseFloat(c.convKm)||0,
-      rate:parseFloat(c.convRate)||0,amount:parseFloat(c.convAmt)||0}];
+    if(c.convRows&&c.convRows.length)return c.convRows.map(r=>({callNo:c.no,customer:c.customer||'',mode:r.mode||'Two-wheeler',from:r.from||'',to:r.to||'',km:parseFloat(r.km)||0,rate:parseFloat(r.rate)||0,amount:(parseFloat(r.amt)||parseFloat(r.travel)||0)}));
+    return [{callNo:c.no,customer:c.customer||'',mode:c.convMode||'Two-wheeler',from:c.convFrom||'',to:c.convTo||'',km:parseFloat(c.convKm)||0,rate:parseFloat(c.convRate)||0,amount:parseFloat(c.convAmt)||0}];
   });
   const travelTotal=items.reduce((a,i)=>a+i.amount,0);
   const foodTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.food)||0),0):(parseFloat(c.convFood)||0)),0);
