@@ -1279,6 +1279,8 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="stats" id="accOrderStats"></div>
   <div class="sdiv" style="margin-top:0;">Pending Orders</div>
   <div id="pendingOrdersList"></div>
+  <div class="sdiv">Stock Only Orders <span style="font-size:.75em;font-weight:400;color:var(--ink3);">(no billing required)</span></div>
+  <div id="stockOnlyOrdersList"></div>
   <div class="sdiv">Billed Orders</div>
   <div id="billedOrdersList"></div>
 </div>
@@ -2043,7 +2045,7 @@ tbody tr:last-child td{border-bottom:none;}
           <i class="fas fa-boxes-stacked" style="color:#16a34a;"></i> Stock Purpose Only
         </label>
       </div>
-      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()">
+      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;margin-top:10px;" onclick="openStockPickerModal()">
         <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
       </button>
     </div>
@@ -2161,12 +2163,7 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="form-panel fp-incentive" id="svcIncForm" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
       <div class="sora" style="font-weight:700;color:#7c3aed;font-size:.93em;"><i class="fas fa-gift" style="margin-right:7px;"></i><span id="svcIncFormTitle">New Incentive Entry</span></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button class="btn btn-sm" style="background:#f0fdf4;color:#166534;border:1.5px solid #86efac;font-size:.78em;" onclick="pickIncFromOrder()" title="Auto-fill from a sent Order Checklist entry">
-          <i class="fas fa-clipboard-list" style="margin-right:5px;"></i>Get from Order Checklist
-        </button>
-        <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
-      </div>
+      <button class="btn btn-ghost btn-sm" onclick="hideSvcIncForm()"><i class="fas fa-times"></i></button>
     </div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Entry No</label><input type="text" id="incNo" readonly style="background:var(--bg);" placeholder="INC-2025-0001"></div>
@@ -2776,7 +2773,7 @@ tbody tr:last-child td{border-bottom:none;}
       <button class="modal-close" style="color:#fff;opacity:.8;" onclick="closeModal('svcStockOutModal')"><i class="fas fa-times"></i></button>
     </div>
     <div style="padding:18px;">
-      <div class="g2" style="margin-bottom:13px;">
+      <div class="g2" id="svcSoItemRow" style="margin-bottom:13px;">
         <div class="fg">
           <label>Item *</label>
           <select id="svcSoItem" onchange="svcSoItemChanged()" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
@@ -2794,7 +2791,7 @@ tbody tr:last-child td{border-bottom:none;}
           <label>Date *</label>
           <input type="date" id="svcSoDate" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
         </div>
-        <div class="fg">
+        <div class="fg" id="svcSoCustRow">
           <label>Customer Name</label>
           <select id="svcSoCust" style="width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.92em;">
             <option value="">-- Select Customer --</option>
@@ -3260,7 +3257,7 @@ function refreshDataLists(){
   const allCustNames=[
     ...D.ac_customers.map(c=>c.name),              // Accounts master (primary)
     ...D.pl_customers.filter(n=>!acNames.has(n))   // Marketing-only extras
-  ];
+  ].sort((a,b)=>a.localeCompare(b));              // Alphabetical order
   const unifiedCu=allCustNames.map(n=>`<option value="${esc(n)}">`).join('');
   // All department customer datalists now share the unified master
   ['dl-mkt-cust','dl-mkt-cust2','dl-ord-cust','dl-ord-cust2',
@@ -3758,6 +3755,7 @@ function renderOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="oc-${o.id}">
       <div class="order-card-hdr" onclick="toggleOrder('${o.id}')">
@@ -3787,18 +3785,19 @@ function renderOrders(){
 // ACCOUNTS — ORDER PROCESSING
 // ════════════════════════════════════════════════════════════════
 function renderAccOrders(){
-  const pEl=g('pendingOrdersList'),bEl=g('billedOrdersList');if(!pEl||!bEl)return;
+  const pEl=g('pendingOrdersList'),bEl=g('billedOrdersList'),sEl=g('stockOnlyOrdersList');
+  if(!pEl||!bEl)return;
   const pending=D.orders.filter(o=>o.status==='pending');
   const billed=D.orders.filter(o=>o.status==='billed');
-  // Stats
+  const stockOnly=D.orders.filter(o=>o.status==='stock_only');
   const el=g('accOrderStats');
-  if(el) el.innerHTML=`<div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed</div><div class="stat-value">${billed.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Total Orders</div><div class="stat-value">${D.orders.length}</div></div>`;
-
-  // Pending
+  if(el) el.innerHTML=`<div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Billed</div><div class="stat-value">${billed.length}</div></div><div class="stat" style="background:#f0fdf4;"><div class="stat-bar" style="background:#86efac;"></div><div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div><div class="stat-label">Stock Only</div><div class="stat-value">${stockOnly.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clipboard-list"></i></div><div class="stat-label">Total</div><div class="stat-value">${D.orders.length}</div></div>`;
   if(!pending.length){pEl.innerHTML='<div class="empty"><i class="fas fa-check-circle" style="color:var(--green);"></i><p>No pending orders. All done!</p></div>';}
   else{pEl.innerHTML=pending.map(o=>orderAccCard(o,true)).join('');}
-
-  // Billed
+  if(sEl){
+    if(!stockOnly.length){sEl.innerHTML='<div class="empty" style="padding:14px;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><p>No stock-only orders.</p></div>';}
+    else{sEl.innerHTML=stockOnly.map(o=>orderAccCard(o,false)).join('');}
+  }
   if(!billed.length){bEl.innerHTML='<div class="empty" style="padding:18px;"><i class="fas fa-inbox"></i><p>No billed orders yet.</p></div>';}
   else{bEl.innerHTML=billed.map(o=>orderAccCard(o,false)).join('');}
 }
@@ -3830,16 +3829,9 @@ function orderAccCard(o,showConfirm){
       </table></div>
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
-      ${o.status==='stock_only'?`
-      <div style="display:flex;align-items:center;gap:10px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;">
-        <i class="fas fa-boxes-stacked" style="color:#16a34a;flex-shrink:0;"></i>
-        <span>Stock Purpose Only — No billing required for this order.</span>
-        ${o.stockReceived?`<span style="margin-left:auto;background:#dcfce7;color:#166534;border-radius:6px;padding:2px 10px;font-size:.88em;">✓ Stock Received</span>`:`<span style="margin-left:auto;background:#fef9c3;color:#854d0e;border-radius:6px;padding:2px 10px;font-size:.88em;">⏳ Awaiting Stock Receipt</span>`}
-      </div>`:showConfirm&&!o.stockOnly?`
+      ${o.status==='stock_only'?`<div style="display:flex;align-items:center;gap:10px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;"><i class="fas fa-boxes-stacked" style="color:#16a34a;flex-shrink:0;"></i><span>Stock Purpose Only — No billing required.${o.stockReceived?'<span style="margin-left:8px;background:#dcfce7;color:#166534;border-radius:6px;padding:2px 9px;font-size:.88em;">✓ Stock Received</span>':'<span style="margin-left:8px;background:#fef9c3;color:#854d0e;border-radius:6px;padding:2px 9px;font-size:.88em;">⏳ Awaiting Receipt</span>'}</span></div>`:showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
-        ${!o.dc?.no?`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:.81em;color:#c2410c;font-weight:600;"><i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>Delivery Challan not yet raised — add DC details in Service Stock Out before confirming bill.</div>`:''}
-        ${!o.dcDispatched?`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:.81em;color:#c2410c;font-weight:600;"><i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>Stock Out not yet confirmed — ensure stock has been issued before confirming bill.</div>`:''}
         <p style="font-size:.79em;color:var(--ink3);margin-bottom:10px;">Enter the invoice/bill number you raised for this order:</p>
         <div class="bill-confirm-input">
           <input type="text" id="bill-inp-${o.id}" placeholder="e.g. INV-2025-0007" list="dl-open-all-inv">
@@ -3991,6 +3983,7 @@ function viewOrderModal(id){
   const statusBadge=o.status==='billed'
     ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`
     :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+    :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`
     :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`;
   const isSource=o.source==='service'?'SERVICE ORDER':'MARKETING ORDER';
   // Build customer detail HTML from master
@@ -4666,7 +4659,7 @@ function renderMgmt(){
     :recentOrders.map(o=>`<div class="mgmt-row-item">
         <div><div style="font-weight:700;font-size:.85em;">${esc(o.orderNo)} <span style="font-size:.82em;color:var(--ink3);font-weight:400;">· ${esc(o.customer)}</span></div>
         <div style="font-size:.73em;color:var(--ink3);">${o.date} · ${o.items.length} item(s)</div></div>
-        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
+        ${o.status==='billed'?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> ${esc(o.invoiceNo)}</span>`:o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>`}
       </div>`).join('');
 
   // ── Overdue Invoices ─────────────────────────────────
@@ -5796,7 +5789,10 @@ function renderSvcStockView(){
     ${txns.map(t=>`<tr><td style="font-size:.92em;">${t.date}</td><td><strong>${esc(t.itemName||t.item||'—')}</strong></td>
     <td><span style="background:${t.type==='in'?'#dcfce7':'#fee2e2'};color:${t.type==='in'?'#166534':'#991b1b'};border-radius:6px;padding:2px 8px;font-size:.87em;font-weight:700;">${t.type==='in'?'▼ Stock In':'▲ Stock Out'}</span></td>
     <td class="num" style="font-weight:700;color:${t.type==='in'?'var(--green)':'var(--red)'};">${t.type==='in'?'+':'−'}${t.qty}</td>
-    <td style="font-size:.92em;color:#0369a1;">${esc(t.ref||'—')}</td>
+    <td style="font-size:.92em;color:#0369a1;">${esc(t.custName||'—')}</td>
+    <td style="font-size:.92em;color:var(--ink3);">${esc(t.purpose||'—')}</td>
+    <td style="font-size:.92em;color:var(--ink3);">${esc(t.challan||t.dc?.no||'—')}</td>
+    <td style="font-size:.92em;color:var(--ink4);">${esc(t.ref||'—')}</td>
     <td style="font-size:.92em;color:var(--ink3);">${esc(t.notes||'—')}</td>
     <td style="font-size:.92em;">${esc(t.by||'—')}</td></tr>`).join('')}
     </tbody></table></div>`;
@@ -5831,26 +5827,42 @@ function openSvcStockOutModal(preItemId){
   if(preItemId)sel.value=preItemId;
   const custSel=g('svcSoCust');
   custSel.innerHTML='<option value="">-- Select Customer --</option>'
-    +(D.ac_customers||[]).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+    +(D.ac_customers||[]).slice().sort((a,b)=>a.name.localeCompare(b.name)).map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
   g('svcSoDate').value=today();
   g('svcSoQty').value=1;
   g('svcSoRef').value='';g('svcSoNotes').value='';
-  // Reset full DC fields
   ['svcSoDCNo','svcSoDCDate','svcSoDCVehicle','svcSoDCDriver','svcSoDCAddr','svcSoDCRemarks'].forEach(id=>{const el=g(id);if(el)el.value='';});
   if(g('svcSoDCType'))g('svcSoDCType').value='';
   if(g('soDcPanel'))g('soDcPanel').style.display='none';
   if(g('soDcChevron'))g('soDcChevron').style.transform='';
-  // Populate order link dropdown — pending orders from service
+  // Fix 1: Only show current engineer's OWN orders that have NOT been dispatched yet
   const orderSel=g('svcSoOrderLink');
   if(orderSel){
-    const pendingOrders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled');
+    const myName=D.currentUser?.name||'';
+    const pendingOrders=(D.orders||[]).filter(o=>
+      o.source==='service' &&
+      o.status!=='cancelled' &&
+      o.engineer===myName &&
+      !o.dcDispatched
+    );
     orderSel.innerHTML='<option value="">-- None --</option>'
       +pendingOrders.map(o=>`<option value="${o.id}">${esc(o.orderNo||o.id)} — ${esc(o.customer||'')} (${o.items?.length||0} items)</option>`).join('');
+    orderSel.value='';
   }
   if(g('svcSoAutoDeductPreview'))g('svcSoAutoDeductPreview').style.display='none';
+  // Fix 2: Reset field visibility — item/qty/customer visible when no order linked
+  _svcSoToggleOrderMode(false);
   setSvcSoPurpose('AMC Replacement');
   svcSoItemChanged();
   openModal('svcStockOutModal');
+}
+
+// Fix 2 helper: Show/hide item+qty+customer rows based on order link state
+function _svcSoToggleOrderMode(orderLinked){
+  const itemRow=g('svcSoItemRow');
+  const custRow=g('svcSoCustRow');
+  if(itemRow) itemRow.style.display=orderLinked?'none':'';
+  if(custRow) custRow.style.display=orderLinked?'none':'';
 }
 
 function svcSoItemChanged(){
@@ -5883,6 +5895,8 @@ function toggleSoDC(){
 
 function svcSoOrderLinkChanged(){
   const ordId=g('svcSoOrderLink')?.value||'';
+  // Fix 2: Hide item/qty/customer fields when order is linked (auto-deduct handles it)
+  _svcSoToggleOrderMode(!!ordId);
   const preview=g('svcSoAutoDeductPreview');
   if(!ordId||!preview){if(preview)preview.style.display='none';return;}
   const ord=(D.orders||[]).find(o=>o.id===ordId);
@@ -5906,12 +5920,17 @@ function saveSvcStockOut(){
   const itemId=g('svcSoItem').value;
   const qty=parseFloat(g('svcSoQty').value)||0;
   const date=g('svcSoDate').value;
-  if(!itemId){alert('Please select an item');return;}
-  if(!qty||qty<=0){alert('Enter a valid quantity');return;}
+  const ordId=g('svcSoOrderLink')?.value||'';
+  // When order is linked, item selection is optional — auto-deduct handles it
+  if(!itemId && !ordId){alert('Please select an item or link an Order Checklist');return;}
   if(!date){alert('Please select a date');return;}
-  const item=D.stock_items.find(i=>i.id===itemId);if(!item)return;
-  const currentQty=stockQty(itemId);
-  if(qty>currentQty){alert('Only '+currentQty.toFixed(2)+' '+( item.unit||'units')+' available');return;}
+  const item=itemId?D.stock_items.find(i=>i.id===itemId):null;
+  if(itemId){
+    if(!item)return;
+    if(!qty||qty<=0){alert('Enter a valid quantity');return;}
+    const currentQty=stockQty(itemId);
+    if(qty>currentQty){alert('Only '+currentQty.toFixed(2)+' '+(item.unit||'units')+' available');return;}
+  }
   // Build DC object from new full DC fields
   const dc={
     no:(g('svcSoDCNo')?.value||'').trim(),
@@ -5923,21 +5942,22 @@ function saveSvcStockOut(){
     remarks:(g('svcSoDCRemarks')?.value||'').trim()
   };
   if(!D.stock_txns)D.stock_txns=[];
-  const ordId=g('svcSoOrderLink')?.value||'';
-  D.stock_txns.push({
-    id:uid(),date,itemId,itemName:item.name,type:'out',qty,
-    custName:g('svcSoCust').value||'',
-    purpose:g('svcSoPurpose').value||'',
-    challan:dc.no,
-    dc,
-    ref:g('svcSoRef').value.trim(),
-    notes:g('svcSoNotes').value.trim(),
-    linkedOrderId:ordId||'',
-    by:D.currentUser?.name||'Service',
-    at:new Date().toISOString()
-  });
-  item.lastMovement=date;
-  // ── Req 3: Auto-deduct all matching order checklist items from stock ──
+  // Only push manual stock-out txn if an item was selected
+  if(item){
+    D.stock_txns.push({
+      id:uid(),date,itemId,itemName:item.name,type:'out',qty,
+      custName:g('svcSoCust').value||'',
+      purpose:g('svcSoPurpose').value||'',
+      challan:dc.no,dc,
+      ref:g('svcSoRef').value.trim(),
+      notes:g('svcSoNotes').value.trim(),
+      linkedOrderId:ordId||'',
+      by:D.currentUser?.name||'Service',
+      at:new Date().toISOString()
+    });
+    item.lastMovement=date;
+  }
+  // Auto-deduct all matching order checklist items from stock
   let autoDeductCount=0;
   if(ordId){
     const ord=(D.orders||[]).find(o=>o.id===ordId);
@@ -5951,11 +5971,10 @@ function saveSvcStockOut(){
         D.stock_txns.push({
           id:uid(),date,itemId:stkItem.id,itemName:stkItem.name,type:'out',qty:deductQty,
           custName:ord.customer||'',
-          purpose:'Order Checklist — '+( ord.orderNo||''),
-          challan:dc.no,
-          dc,
+          purpose:'Order Checklist — '+(ord.orderNo||''),
+          challan:dc.no,dc,
           ref:ord.orderNo||'',
-          notes:'Auto-deducted from Order Checklist '+( ord.orderNo||''),
+          notes:'Auto-deducted from Order Checklist '+(ord.orderNo||''),
           linkedOrderId:ordId,
           by:D.currentUser?.name||'Service',
           at:new Date().toISOString()
@@ -5963,7 +5982,7 @@ function saveSvcStockOut(){
         stkItem.lastMovement=date;
         autoDeductCount++;
       });
-      // Mark the order as DC dispatched
+      // Mark order as dispatched so it leaves the stock-out dropdown
       ord.dc=dc;
       ord.dcDispatched=true;
       ord.dcDispatchedAt=new Date().toISOString();
@@ -5971,8 +5990,9 @@ function saveSvcStockOut(){
     }
   }
   saveData();closeModal('svcStockOutModal');renderSvcStockView();
-  const extraMsg=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
-  showSuccessToast('✓ '+qty+' '+( item.unit||'units')+' issued — '+item.name+extraMsg,'var(--red)');
+  const autoMsg=autoDeductCount>0?` + ${autoDeductCount} order item(s) auto-deducted`:'';
+  const mainMsg=item?`✓ ${qty} ${item.unit||'units'} issued — ${item.name}`:`✓ Order ${(D.orders||[]).find(o=>o.id===ordId)?.orderNo||''} dispatched`;
+  showSuccessToast(mainMsg+autoMsg,'var(--red)');
 }
 
 function quickStockOut(itemId,itemName){openSvcStockOutModal(itemId);}
@@ -6506,9 +6526,15 @@ function renderMktOutstanding(){
 
 function renderSvcOutstanding(){
   const sortBy=g('svcOutSort')?.value||'days';
+  const myName=D.currentUser?.name||'';
+  const isService=D.currentUser?.role==='service';
+  const myCustomers=isService
+    ? new Set(D.svc_calls.filter(c=>c.engineer===myName).map(c=>c.customer).filter(Boolean))
+    : null;
   const custMap={};
   D.ac_invoices.filter(i=>getSt(i.id)!=='paid').forEach(i=>{
     const out=getOut(i.id);if(!out)return;
+    if(myCustomers&&!myCustomers.has(i.custName))return;
     const od=daysOD(i);
     const cust=D.ac_customers.find(c=>c.name===i.custName);
     if(!custMap[i.custName])custMap[i.custName]={name:i.custName,phone:cust?.phone||'',total:0,maxDays:0,invoices:[]};
@@ -6691,7 +6717,10 @@ function renderSvcCalls(){
   if(D.currentUser?.role==='service') calls=calls.filter(c=>c.engineer===D.currentUser.name);
   if(filt) calls=calls.filter(c=>(c.customer||'').toLowerCase().includes(filt)||(c.no||'').toLowerCase().includes(filt)||(c.engineer||'').toLowerCase().includes(filt));
   if(statusFilt) calls=calls.filter(c=>c.status===statusFilt);
-  const total=D.svc_calls.length,pending=D.svc_calls.filter(c=>c.status==='pending').length,inprog=D.svc_calls.filter(c=>c.status==='in-progress').length,completed=D.svc_calls.filter(c=>c.status==='completed').length,escalated=D.svc_calls.filter(c=>c.status==='escalated').length;
+  const myRole=D.currentUser?.role||'';
+  const myEng=D.currentUser?.name||'';
+  const statCalls=myRole==='service'?D.svc_calls.filter(c=>c.engineer===myEng):D.svc_calls;
+  const total=statCalls.length,pending=statCalls.filter(c=>c.status==='pending').length,inprog=statCalls.filter(c=>c.status==='in-progress').length,completed=statCalls.filter(c=>c.status==='completed').length,escalated=statCalls.filter(c=>c.status==='escalated').length;
   g('svcCallStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total</div><div class="stat-value">${total}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">In Progress</div><div class="stat-value">${inprog}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Completed</div><div class="stat-value">${completed}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Escalated</div><div class="stat-value">${escalated}</div></div>`;
   g('svcCallCount').textContent=calls.length+' call(s)';
   if(!calls.length){g('svcCallsList').innerHTML='<div class="empty"><i class="fas fa-headset"></i><p>No service calls found.</p></div>';return;}
@@ -8298,6 +8327,15 @@ function autoStockInFromOrder(ord,date){
   if(!D.stock_items)D.stock_items=[];
   if(!D.stock_txns)D.stock_txns=[];
   const by=(D.currentUser?.name)||'Service';
+  // Idempotency: reverse any prior auto stock-in for this exact order
+  const existingIn=D.stock_txns.filter(t=>t.type==='in'&&t.autoFromOrderId===ord.id);
+  if(existingIn.length){
+    existingIn.forEach(t=>{
+      const si=D.stock_items.find(s=>s.id===t.itemId);
+      if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));
+    });
+    D.stock_txns=D.stock_txns.filter(t=>!(t.type==='in'&&t.autoFromOrderId===ord.id));
+  }
   ord.items.forEach(oi=>{
     const name=(oi.material||oi.name||'').trim();if(!name)return;
     const qty=parseFloat(oi.qty)||1;
@@ -8311,8 +8349,11 @@ function autoStockInFromOrder(ord,date){
     si.lastMovement=date;
     D.stock_txns.push({
       id:uid(),date,itemId:si.id,itemName:name,type:'in',qty,
+      custName:ord.customer||'',
+      purpose:'Auto stock-in from Order Checklist '+ord.orderNo,
       ref:'Order: '+ord.orderNo,
       notes:'Auto stock-in from Order Checklist '+ord.orderNo,
+      autoFromOrderId:ord.id,
       by,at:new Date().toISOString()
     });
   });
@@ -8392,18 +8433,34 @@ function addOrdConvRow(data){
 }
 function removeOrdConvRow(n){const el=g('ocr-'+n);if(el){el.remove();calcOrdConvTotal();}}
 function calcOrdConvTotal(){
-  let total=0;
+  let travel=0,food=0,other=0;
   document.querySelectorAll('#ordConvRows>div').forEach(row=>{
     const km=parseFloat(row.querySelector('.ocr-km')?.value)||0;
     const rate=parseFloat(row.querySelector('.ocr-rate')?.value)||0;
-    const food=parseFloat(row.querySelector('.ocr-food')?.value)||0;
-    const other=parseFloat(row.querySelector('.ocr-other')?.value)||0;
+    const f=parseFloat(row.querySelector('.ocr-food')?.value)||0;
+    const o=parseFloat(row.querySelector('.ocr-other')?.value)||0;
     const trav=km*rate;
     const amtEl=row.querySelector('.ocr-amt');
     if(amtEl)amtEl.value='₹'+trav.toFixed(2);
-    total+=trav+food+other;
+    travel+=trav;food+=f;other+=o;
   });
+  const total=travel+food+other;
   if(g('ordConvTotal'))g('ordConvTotal').textContent=total>0?'Total: ₹'+total.toFixed(2):'';
+  // Auto-fill Expense Type + Expense Amount on the first order item row
+  // so conveyance cost is visible in the order total
+  const firstRow=document.querySelector('#svOrdItemsBody tr');
+  if(firstRow&&total>0){
+    const etSel=firstRow.querySelector('.soet');
+    const eaInp=firstRow.querySelector('.soea');
+    if(etSel&&!etSel.value) etSel.value='Travel';
+    if(eaInp) eaInp.value=total.toFixed(2);
+    recalcSvOrd();
+  } else if(firstRow&&total===0){
+    // Clear only if we set it (value is 'Travel' and we can detect it was auto-set)
+    const eaInp=firstRow.querySelector('.soea');
+    if(eaInp&&parseFloat(eaInp.value)===0) eaInp.value=0;
+    recalcSvOrd();
+  }
 }
 function getOrdConvRows(){
   const rows=[];
@@ -8508,6 +8565,7 @@ function renderSvcOrders(){
     const statusHtml=o.status==='billed'
       ?`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: <strong>${esc(o.invoiceNo)}</strong></span>`
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
+      :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only — No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
     return `<div class="order-card" id="soc-${o.id}">
       <div class="order-card-hdr" onclick="toggleSvcOrder('${o.id}')">
@@ -8552,42 +8610,17 @@ function receiveOrderToStock(ordId){
   if(!confirm('Receive materials to Stock?\nOrder: '+ord.orderNo+'\n\n'+itemList+'\n\nNew items will be created in stock if not already there.'))return;
   var date=today(),ref=ord.orderNo,by=(D.currentUser&&D.currentUser.name)||'Service';
   if(!D.stock_txns)D.stock_txns=[];
-  // Idempotency: reverse any prior auto-stock-in for this order
-  var existingIn=D.stock_txns.filter(function(t){return t.type==='in'&&t.autoFromOrderId===ord.id;});
-  if(existingIn.length){
-    existingIn.forEach(function(t){
-      var si=D.stock_items.find(function(s){return s.id===t.itemId;});
-      if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));
-    });
-    D.stock_txns=D.stock_txns.filter(function(t){return !(t.type==='in'&&t.autoFromOrderId===ord.id);});
-  }
   var newItems=0,updItems=0;
   ord.items.forEach(function(oi){
     var name=oi.material||oi.name||oi.desc||'Item';
     var qty=parseFloat(oi.qty)||1;
     var si=D.stock_items.find(function(s){return s.name.toLowerCase()===name.toLowerCase();});
     if(!si){si={id:uid(),name:name,category:'Spare Parts',unit:'Nos',reorder:0,qty:0,stockType:ord.callType||'General',lastMovement:date,createdAt:Date.now()};D.stock_items.push(si);newItems++;}
-    si.qty=(parseFloat(si.qty)||0)+qty;si.lastMovement=date;
-    D.stock_txns.push({
-      id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,
-      custName:ord.customer||'',
-      purpose:'Received from Order Checklist '+ref,
-      ref:'Order: '+ref,
-      notes:'Received from '+ord.orderNo,
-      autoFromOrderId:ord.id,
-      by:by
-    });
+    si.qty=(si.qty||0)+qty;si.lastMovement=date;
+    D.stock_txns.push({id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,ref:'Order: '+ref,notes:'Received from '+ord.orderNo,by:by});
     updItems++;
   });
-  // Mark the order as stock-received so it leaves "Pending — Awaiting Accounts"
-  ord.stockReceived=true;
-  ord.stockReceivedAt=new Date().toISOString();
-  ord.stockReceivedBy=by;
-  if(ord.stockOnly||ord.status==='stock_only'){
-    ord.status='stock_only';
-  }
   saveData();
-  if(typeof renderSvcOrders==='function')renderSvcOrders();
   if(typeof renderSvcStockView==='function')renderSvcStockView();
   showSuccessToast(updItems+' item(s) received to stock'+(newItems?' ('+newItems+' new)':''), 'var(--green)');
 }
@@ -8615,83 +8648,6 @@ function toggleSvcOrder(id){
 // SERVICE — INCENTIVE ENTRIES
 // ════════════════════════════════════════════════════════════════
 function genIncNo(){return 'INC-'+new Date().getFullYear()+'-'+String((D.svc_incentives||[]).length+1).padStart(4,'0');}
-
-function pickIncFromOrder(){
-  // Show sent orders for this engineer to pick from
-  const myName=D.currentUser?.name||'';
-  const isService=D.currentUser?.role==='service';
-  const orders=(D.orders||[]).filter(o=>
-    o.source==='service' &&
-    o.status!=='cancelled' &&
-    (!isService||o.engineer===myName)
-  ).slice().reverse();
-  if(!orders.length){
-    showSuccessToast('No sent orders found to import from.','var(--ink3)');
-    return;
-  }
-  // Build a simple selection modal
-  const opts=orders.map(o=>`<option value="${o.id}">${esc(o.orderNo)} — ${esc(o.customer||'')} (${o.items?.length||0} items, ₹${fmt(o.total||0)})</option>`).join('');
-  const html=`<div style="padding:18px 20px;">
-    <div style="font-weight:700;font-size:.95em;color:#7c3aed;margin-bottom:12px;"><i class="fas fa-clipboard-list" style="margin-right:7px;"></i>Pick an Order Checklist entry</div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:.82em;font-weight:700;color:var(--ink3);margin-bottom:4px;display:block;">Select Order</label>
-      <select id="incOrdPick" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--line);font-size:.88em;">
-        <option value="">-- Select Order --</option>
-        ${opts}
-      </select>
-    </div>
-    <div id="incOrdPreview" style="background:#f8fafc;border-radius:8px;padding:10px 13px;font-size:.82em;color:var(--ink3);min-height:40px;margin-bottom:14px;"></div>
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
-      <button class="btn btn-outline btn-sm" onclick="closeModal('incOrdPickModal')">Cancel</button>
-      <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="applyIncFromOrder()"><i class="fas fa-check" style="margin-right:5px;"></i>Import</button>
-    </div>
-  </div>`;
-  // Reuse the generic modal system
-  let m=g('incOrdPickModal');
-  if(!m){
-    m=document.createElement('div');
-    m.id='incOrdPickModal';
-    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center;';
-    m.innerHTML=`<div style="background:#fff;border-radius:14px;min-width:460px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.22);">${html}</div>`;
-    document.body.appendChild(m);
-    m.addEventListener('click',e=>{if(e.target===m)closeModal('incOrdPickModal');});
-  } else {
-    m.querySelector('div').innerHTML=html;
-    m.style.display='flex';
-  }
-  // Wire up preview
-  setTimeout(()=>{
-    const sel=g('incOrdPick');
-    if(sel) sel.addEventListener('change',function(){
-      const ord=(D.orders||[]).find(o=>o.id===this.value);
-      const prev=g('incOrdPreview');
-      if(!ord||!prev){if(prev)prev.textContent='';return;}
-      const itemNames=ord.items.map(it=>esc(it.material||it.name||'Item')+' ×'+(it.qty||1)).join(', ');
-      prev.innerHTML=`<div style="font-weight:700;color:var(--ink2);margin-bottom:3px;">${esc(ord.customer)}</div>
-        <div style="margin-bottom:2px;">${itemNames}</div>
-        <div style="color:var(--orange);font-weight:700;">Total: ₹${fmt(ord.total||0)} | Supplier: ${esc(ord.supplier||'—')} | Purchase: ₹${fmt(ord.purchaseTotal||0)}</div>`;
-    });
-  },50);
-}
-
-function applyIncFromOrder(){
-  const sel=g('incOrdPick');
-  if(!sel||!sel.value){alert('Please select an order');return;}
-  const ord=(D.orders||[]).find(o=>o.id===sel.value);
-  if(!ord){alert('Order not found');return;}
-  // Populate incentive form fields from order
-  if(g('incCust')) g('incCust').value=ord.customer||'';
-  const itemName=ord.items?.map(it=>it.material||it.name||'Item').join(', ')||'';
-  if(g('incProduct')) g('incProduct').value=itemName;
-  if(g('incRef')) g('incRef').value=ord.orderNo||'';
-  if(g('incSaleAmt')) g('incSaleAmt').value=(ord.total||0).toFixed(2);
-  if(g('incPurchaseAmt')) g('incPurchaseAmt').value=(ord.purchaseTotal||0).toFixed(2);
-  // Set GST type from order
-  if(g('incGST')&&ord.gstType) g('incGST').value=ord.gstType==='none'?'none':ord.gstType==='exclusive'?'exclusive':'inclusive';
-  calcIncProfit();
-  closeModal('incOrdPickModal');
-  showSuccessToast('✓ Incentive form filled from '+ord.orderNo,'#7c3aed');
-}
 
 function showSvcIncForm(){
   g('svcIncForm').style.display='block';
@@ -11142,16 +11098,19 @@ function renderConvCallTable(){
   const fromDate=g('gcFromDate2')?.value||'';
   const toDate=g('gcToDate2')?.value||'';
 
-  // Filter calls that have conveyance data
+  // Filter calls that have conveyance data (support both old flat fields AND convRows)
   let calls=D.svc_calls.filter(c=>{
-    if(!c.convFrom&&!c.convAmt&&!c.convKm) return false; // no conv data
+    const hasConv=c.convFrom||c.convAmt||c.convKm||(c.convRows&&c.convRows.length>0);
+    if(!hasConv) return false;
     if(engFilter&&c.engineer!==engFilter) return false;
     if(fromDate&&c.date<fromDate) return false;
     if(toDate&&c.date>toDate) return false;
-    // exclude calls already in a submitted conveyance claim
-    const alreadyClaimed=D.svc_conveyance.some(cv=>
-      cv.status!=='draft'&&Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)
-    );
+    // Exclude calls already in ANY claim (draft or submitted)
+    const alreadyClaimed=D.svc_conveyance.some(cv=>{
+      if(Array.isArray(cv.callIds)&&cv.callIds.includes(c.id)) return true;
+      const refs=(cv.callRefs||cv.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
+      return refs.includes(c.no);
+    });
     if(alreadyClaimed) return false;
     return true;
   });
