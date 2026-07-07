@@ -3805,10 +3805,24 @@ function renderAccOrders(){
 function deleteAccOrder(id){
   const o=D.orders.find(x=>x.id===id);if(!o)return;
   if(o.status==='billed'){showSuccessToast('Cannot delete a billed order.','var(--red)');return;}
-  confirmOkAction('Delete '+o.orderNo+'?','This will permanently remove this order.',()=>{
-    D.orders=D.orders.filter(x=>x.id!==id);
-    saveData();renderAccOrders();
-    showSuccessToast('Order '+o.orderNo+' deleted.','var(--green)');
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-trash',
+    title:'Delete '+o.orderNo+'?',
+    msg:'This will permanently remove this order and reverse any stock that was auto-added from it.',
+    btnLabel:'Delete',btnColor:'var(--red)',
+    onOk:()=>{
+      // Reverse any auto stock-in created for this order, so deleting doesn't leave orphaned stock
+      const autoIn=(D.stock_txns||[]).filter(t=>t.type==='in'&&t.autoFromOrderId===id);
+      autoIn.forEach(t=>{
+        const si=(D.stock_items||[]).find(s=>s.id===t.itemId);
+        if(si)si.qty=Math.max(0,(parseFloat(si.qty)||0)-(parseFloat(t.qty)||0));
+      });
+      D.stock_txns=(D.stock_txns||[]).filter(t=>!(t.type==='in'&&t.autoFromOrderId===id));
+      D.orders=D.orders.filter(x=>x.id!==id);
+      saveData();renderAccOrders();
+      const _stockMsg=autoIn.length?` · ${autoIn.length} auto stock-in item(s) reversed`:'';
+      showSuccessToast('Order '+o.orderNo+' deleted.'+_stockMsg,'var(--green)');
+    }
   });
 }
 
@@ -4155,7 +4169,10 @@ function ordModalMinimize(){
 
 function toggleOrder(id,prefix){
   const key=prefix?id:('oc-'+id);
-  const el=g(key);if(el)el.classList.toggle('expanded');
+  const el=g(key);if(!el)return;
+  const isOpen=el.classList.toggle('expanded');
+  const body=el.querySelector('.order-body');
+  if(body)body.style.display=isOpen?'block':'none';
 }
 
 // ════════════════════════════════════════════════════════════════
