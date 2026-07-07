@@ -5877,8 +5877,7 @@ function openSvcStockOutModal(preItemId){
   // Populate order link dropdown — pending orders from service
   const orderSel=g('svcSoOrderLink');
   if(orderSel){
-    const _myStockName=D.currentUser?.name||'';
-    const pendingOrders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled'&&o.engineer===_myStockName&&!o.dcDispatched);
+    const pendingOrders=(D.orders||[]).filter(o=>o.source==='service'&&o.status!=='cancelled'&&!o.dcDispatched);
     orderSel.innerHTML='<option value="">-- None --</option>'
       +pendingOrders.map(o=>`<option value="${o.id}">${esc(o.orderNo||o.id)} — ${esc(o.customer||'')} (${o.items?.length||0} items)</option>`).join('');
   }
