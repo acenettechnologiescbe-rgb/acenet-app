@@ -8582,11 +8582,23 @@ function renderSvcOrders(){
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
           ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
+          ${o.dcDispatched?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:var(--amber);color:var(--amber);" onclick="undispatchOrder('${o.id}')"><i class="fas fa-rotate-left" style="margin-right:4px;"></i>Undo Dispatch / Re-link Stock Out</button>`:''}
           <span style="font-size:.7em;color:var(--ink3);">Add ordered materials to inventory</span>
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function undispatchOrder(ordId){
+  const ord=(D.orders||[]).find(o=>o.id===ordId);
+  if(!ord)return;
+  if(!confirm('Re-open "'+ord.orderNo+'" for Stock Out?\n\nThis clears its Delivery Challan details and makes it available again in the "Link to Order Checklist" list on the Stock Out screen.'))return;
+  ord.dcDispatched=false;
+  ord.dc={no:'',date:'',type:'',vehicle:'',driver:'',addr:'',remarks:''};
+  delete ord.dcDispatchedAt;delete ord.dcDispatchedBy;
+  saveData();renderSvcOrders();
+  showSuccessToast('✓ Order reopened — available in Stock Out again','var(--orange)');
 }
 
 function receiveOrderToStock(ordId){
