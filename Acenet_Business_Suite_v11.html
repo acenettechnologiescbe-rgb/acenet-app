@@ -1724,14 +1724,14 @@ tbody tr:last-child td{border-bottom:none;}
     <table class="itbl" id="convCallTable" style="font-size:.82em;">
       <thead><tr>
         <th style="width:36px;"><input type="checkbox" id="convSelectAll" onchange="toggleAllConvCalls(this.checked)" style="cursor:pointer;"></th>
-        <th>Call No</th><th>Date</th><th>Customer</th>
+        <th>Call / Order No</th><th>Date</th><th>Customer</th>
         <th>From</th><th>To</th><th>Mode</th><th>km</th><th>Travel ₹</th><th>Food ₹</th><th>Other ₹</th><th>Total ₹</th>
       </tr></thead>
       <tbody id="convCallTableBody"></tbody>
     </table>
   </div>
   <div id="convCallTableEmpty" style="text-align:center;padding:18px;color:var(--ink3);font-size:.84em;display:none;">
-    <i class="fas fa-car-side" style="font-size:1.8em;opacity:.3;display:block;margin-bottom:6px;"></i>No service calls with conveyance data found. Add conveyance details when logging service calls.
+    <i class="fas fa-car-side" style="font-size:1.8em;opacity:.3;display:block;margin-bottom:6px;"></i>No service calls or order-checklist trips with conveyance data found.
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;">
     <div id="convSelCount" style="font-size:.82em;color:var(--ink3);font-weight:600;">0 call(s) selected</div>
@@ -11167,12 +11167,28 @@ function renderConvCallTable(){
   });
   calls=[...calls].reverse();
 
+  // Also pull in the engineer's own Order Checklist entries that have conveyance legs attached —
+  // same idea as the Incentives "Pick an Order" auto-fill, but shown inline automatically here.
+  let convOrders=(D.orders||[]).filter(o=>{
+    if(o.source!=='service'||o.status==='cancelled') return false;
+    if(!o.convLegs||!o.convLegs.length) return false;
+    const ordEngineer=o.createdBy||'';
+    if(engFilter&&ordEngineer!==engFilter) return false;
+    if(fromDate&&o.date<fromDate) return false;
+    if(toDate&&o.date>toDate) return false;
+    // exclude orders already in a conveyance claim
+    const alreadyClaimed=D.svc_conveyance.some(cv=>Array.isArray(cv.orderIds)&&cv.orderIds.includes(o.id));
+    if(alreadyClaimed) return false;
+    return true;
+  });
+  convOrders=[...convOrders].reverse();
+
   const tbody=g('convCallTableBody');
   const empty=g('convCallTableEmpty');
   const tbl=g('convCallTable');
   if(!tbody)return;
 
-  if(!calls.length){
+  if(!calls.length&&!convOrders.length){
     tbl.style.display='none';
     empty.style.display='block';
     updateConvSelSummary();
@@ -11181,7 +11197,7 @@ function renderConvCallTable(){
   tbl.style.display='';
   empty.style.display='none';
 
-  tbody.innerHTML=calls.map(c=>{
+  const callRows=calls.map(c=>{
     const hr=c.convRows&&c.convRows.length>0;
     const convAmt=hr?c.convRows.reduce((s,r)=>s+(parseFloat(r.amt)||parseFloat(r.travel)||0),0):(parseFloat(c.convAmt)||0);
     const food=hr?c.convRows.reduce((s,r)=>s+(parseFloat(r.food)||0),0):(parseFloat(c.convFood)||0);
@@ -11192,8 +11208,8 @@ function renderConvCallTable(){
     const modeD=hr?(c.convRows[0]?.mode||'—'):(c.convMode||'—');
     const kmD=hr?c.convRows.reduce((s,r)=>s+(parseFloat(r.km)||0),0):(parseFloat(c.convKm)||0);
     return `<tr>
-      <td><input type="checkbox" class="conv-call-chk" data-id="${c.id}" onchange="updateConvSelSummary()" style="cursor:pointer;"></td>
-      <td><span style="font-weight:700;color:var(--svc);">${esc(c.no)}</span></td>
+      <td><input type="checkbox" class="conv-call-chk" data-type="call" data-id="${c.id}" onchange="updateConvSelSummary()" style="cursor:pointer;"></td>
+      <td><span style="font-weight:700;color:var(--svc);">${esc(c.no)}</span> <span style="background:#f0fdfa;color:var(--svc);border-radius:6px;padding:0 6px;font-size:.72em;font-weight:700;">CALL</span></td>
       <td style="color:var(--ink3);">${c.date||''}</td>
       <td>${esc(c.customer||'')}</td>
       <td>${esc(fromD)}</td>
@@ -11205,7 +11221,35 @@ function renderConvCallTable(){
       <td style="text-align:right;">${other>0?fmt(other):'—'}</td>
       <td style="text-align:right;font-weight:700;color:var(--svc);">${total>0?fmt(total):'—'}</td>
     </tr>`;
-  }).join('');
+  });
+
+  const orderRows=convOrders.map(o=>{
+    const legs=o.convLegs||[];
+    const convAmt=legs.reduce((s,l)=>s+(parseFloat(l.travel)||(parseFloat(l.km)||0)*(parseFloat(l.rate)||0)),0);
+    const food=legs.reduce((s,l)=>s+(parseFloat(l.food)||0),0);
+    const other=legs.reduce((s,l)=>s+(parseFloat(l.other)||0),0);
+    const total=convAmt+food+other;
+    const fromD=legs[0]?.from||'—';
+    const toD=legs[0]?.to||'—';
+    const modeD=legs[0]?.mode||'—';
+    const kmD=legs.reduce((s,l)=>s+(parseFloat(l.km)||0),0);
+    return `<tr>
+      <td><input type="checkbox" class="conv-call-chk" data-type="order" data-id="${o.id}" onchange="updateConvSelSummary()" style="cursor:pointer;"></td>
+      <td><span style="font-weight:700;color:var(--orange);">${esc(o.orderNo)}</span> <span style="background:#fff7ed;color:#c2410c;border-radius:6px;padding:0 6px;font-size:.72em;font-weight:700;">ORDER</span></td>
+      <td style="color:var(--ink3);">${o.date||''}</td>
+      <td>${esc(o.customer||'')}</td>
+      <td>${esc(fromD)}</td>
+      <td>${esc(toD)}</td>
+      <td>${esc(modeD)}</td>
+      <td style="text-align:right;">${kmD>0?kmD:'—'}</td>
+      <td style="text-align:right;color:var(--orange);">${convAmt>0?fmt(convAmt):'—'}</td>
+      <td style="text-align:right;">${food>0?fmt(food):'—'}</td>
+      <td style="text-align:right;">${other>0?fmt(other):'—'}</td>
+      <td style="text-align:right;font-weight:700;color:var(--orange);">${total>0?fmt(total):'—'}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML=callRows.concat(orderRows).join('');
   updateConvSelSummary();
 }
 
@@ -11221,43 +11265,56 @@ function updateConvSelSummary(){
   const selTotal=g('convSelTotal');
   let total=0;
   checked.forEach(cb=>{
+    if(cb.dataset.type==='order'){
+      const o=(D.orders||[]).find(x=>x.id===cb.dataset.id);
+      if(!o)return;
+      (o.convLegs||[]).forEach(l=>{total+=(parseFloat(l.travel)||(parseFloat(l.km)||0)*(parseFloat(l.rate)||0))+(parseFloat(l.food)||0)+(parseFloat(l.other)||0);});
+      return;
+    }
     const c=D.svc_calls.find(x=>x.id===cb.dataset.id);
     if(!c)return;
     if(c.convRows&&c.convRows.length)total+=c.convRows.reduce((s,r)=>s+(parseFloat(r.amt)||parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
     else total+=(parseFloat(c.convAmt)||0)+(parseFloat(c.convFood)||0)+(parseFloat(c.convOther)||0);
   });
-  if(selCount) selCount.textContent=checked.length+' call(s) selected';
+  if(selCount) selCount.textContent=checked.length+' item(s) selected';
   if(selTotal) selTotal.textContent=checked.length>0?'Total: '+fmt(total):'';
   if(btn) btn.disabled=checked.length===0;
 }
 
 function generateConvFromSelected(){
   const checked=[...document.querySelectorAll('.conv-call-chk:checked')];
-  if(!checked.length){alert('Select at least one call');return;}
+  if(!checked.length){alert('Select at least one call or order');return;}
   const eng=D.currentUser?.role==='service'?D.currentUser.name:(g('gcEngineer2')?.value||'');
   if(!eng){alert('Select an engineer');return;}
 
-  const callIds=checked.map(cb=>cb.dataset.id);
+  const callIds=checked.filter(cb=>cb.dataset.type!=='order').map(cb=>cb.dataset.id);
+  const orderIds=checked.filter(cb=>cb.dataset.type==='order').map(cb=>cb.dataset.id);
   const calls=callIds.map(id=>D.svc_calls.find(c=>c.id===id)).filter(Boolean);
+  const orders=orderIds.map(id=>(D.orders||[]).find(o=>o.id===id)).filter(Boolean);
 
   const items=calls.flatMap(c=>{
     if(c.convRows&&c.convRows.length)return c.convRows.map(r=>({callNo:c.no,customer:c.customer||'',mode:r.mode||'Two-wheeler',from:r.from||'',to:r.to||'',km:parseFloat(r.km)||0,rate:parseFloat(r.rate)||0,amount:(parseFloat(r.amt)||parseFloat(r.travel)||0)}));
     return [{callNo:c.no,customer:c.customer||'',mode:c.convMode||'Two-wheeler',from:c.convFrom||'',to:c.convTo||'',km:parseFloat(c.convKm)||0,rate:parseFloat(c.convRate)||0,amount:parseFloat(c.convAmt)||0}];
-  });
+  }).concat(orders.flatMap(o=>(o.convLegs||[]).map(l=>({callNo:o.orderNo,customer:o.customer||'',mode:l.mode||'Two-wheeler',from:l.from||'',to:l.to||'',km:parseFloat(l.km)||0,rate:parseFloat(l.rate)||0,amount:(parseFloat(l.travel)||(parseFloat(l.km)||0)*(parseFloat(l.rate)||0))}))));
+
   const travelTotal=items.reduce((a,i)=>a+i.amount,0);
-  const foodTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.food)||0),0):(parseFloat(c.convFood)||0)),0);
-  const otherTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.other)||0),0):(parseFloat(c.convOther)||0)),0);
+  const foodTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.food)||0),0):(parseFloat(c.convFood)||0)),0)
+    +orders.reduce((a,o)=>a+(o.convLegs||[]).reduce((s,l)=>s+(parseFloat(l.food)||0),0),0);
+  const otherTotal=calls.reduce((a,c)=>a+(c.convRows?.length?c.convRows.reduce((s,r)=>s+(parseFloat(r.other)||0),0):(parseFloat(c.convOther)||0)),0)
+    +orders.reduce((a,o)=>a+(o.convLegs||[]).reduce((s,l)=>s+(parseFloat(l.other)||0),0),0);
   const grandTotal=travelTotal+foodTotal+otherTotal;
-  const dates=calls.map(c=>c.date).filter(Boolean).sort();
+  const dates=[...calls.map(c=>c.date),...orders.map(o=>o.date)].filter(Boolean).sort();
   const dateLabel=dates.length?`${dates[0]}${dates.length>1?' to '+dates[dates.length-1]:''}`:today();
+  const refLabel=[...calls.map(c=>c.no),...orders.map(o=>o.orderNo)].join(', ');
 
   showConfirm({
     icon:'ci-send',iconClass:'fa-file-invoice',
     title:'Generate Conveyance Claim?',
-    msg:'A draft conveyance claim will be created from the selected service calls.',
+    msg:'A draft conveyance claim will be created from the selected service calls / orders.',
     details:[
       {k:'Engineer',v:eng},
       {k:'Calls',v:calls.length+' call(s)'},
+      {k:'Orders',v:orders.length+' order(s)'},
       {k:'Period',v:dateLabel},
       {k:'Travel Amount',v:fmt(travelTotal)},
       {k:'Food/Allow.',v:fmt(foodTotal)},
@@ -11269,11 +11326,11 @@ function generateConvFromSelected(){
       const no=genConvNo();
       const obj={
         id:uid(),no,date:today(),engineer:eng,
-        callIds,callRefs:calls.map(c=>c.no).join(', '),
-        location:calls.map(c=>c.customer).join(', '),
+        callIds,orderIds,callRefs:refLabel,
+        location:[...calls.map(c=>c.customer),...orders.map(o=>o.customer)].join(', '),
         items,travelAmt:travelTotal,foodAmt:foodTotal,
         otherAmt:otherTotal,totalAmt:grandTotal,
-        remarks:'Generated from: '+calls.map(c=>c.no).join(', '),
+        remarks:'Generated from: '+refLabel,
         status:'draft',createdAt:new Date().toISOString()
       };
       D.svc_conveyance.push(obj);
