@@ -3790,6 +3790,9 @@ function renderOrders(){
 function renderAccOrders(){
   const pEl=g('pendingOrdersList'),bEl=g('billedOrdersList'),sEl=g('stockOnlyOrdersList');
   if(!pEl||!bEl)return;
+  // Remember which cards are currently expanded, since live sync re-renders can happen mid-click
+  const expandedIds=new Set();
+  document.querySelectorAll('#pendingOrdersList .order-card.expanded, #billedOrdersList .order-card.expanded, #stockOnlyOrdersList .order-card.expanded').forEach(c=>expandedIds.add(c.id));
   const pending=D.orders.filter(o=>o.status==='pending');
   const billed=D.orders.filter(o=>o.status==='billed');
   const stockOnly=D.orders.filter(o=>o.status==='stock_only');
@@ -3800,6 +3803,12 @@ function renderAccOrders(){
   if(sEl){if(!stockOnly.length)sEl.innerHTML='<div class="empty" style="padding:14px;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><p>No stock-only orders.</p></div>';else sEl.innerHTML=stockOnly.map(o=>orderAccCard(o,false)).join('');}
   if(!billed.length)bEl.innerHTML='<div class="empty" style="padding:18px;"><i class="fas fa-inbox"></i><p>No billed orders yet.</p></div>';
   else bEl.innerHTML=billed.map(o=>orderAccCard(o,false)).join('');
+  // Restore whatever was expanded before this re-render
+  expandedIds.forEach(id=>{
+    const el=g(id);if(!el)return;
+    el.classList.add('expanded');
+    const body=el.querySelector('.order-body');if(body)body.style.display='block';
+  });
 }
 
 function deleteAccOrder(id){
@@ -8315,7 +8324,8 @@ function sendSvcOrderToAccounts(){
             modified:true,
             modifiedAt:Date.now(),
             modifiedBy:D.currentUser?.name||'Service',
-            modifiedCount:(prev.modifiedCount||0)+1
+            modifiedCount:(prev.modifiedCount||0)+1,
+            returnedForEdit:false,returnedNote:'',returnedBy:'',returnedAt:''
           };
           // Auto stock-in on resend
           autoStockInFromOrder(D.orders[idx],date);
@@ -8562,6 +8572,8 @@ function renderSvcOrders(){
   const el=g('svcOrdersList');if(!el)return;
   const myName=D.currentUser?.name||'';
   const myOrders=[...D.orders].filter(o=>o.source==='service'&&(!o.createdBy||o.createdBy===myName)).reverse();
+  const expandedIds=new Set();
+  el.querySelectorAll('.order-card.expanded').forEach(c=>expandedIds.add(c.id));
   if(!myOrders.length){el.innerHTML='<div class="empty"><i class="fas fa-clipboard-list"></i><p>No service orders yet. Click "New Order" to create one.</p></div>';return;}
   el.innerHTML=myOrders.map(o=>{
     const gstLabel=o.gstType==='exclusive'?'<span style="font-size:.7em;background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:1px 7px;margin-left:6px;">+GST</span>':o.gstType==='inclusive'?'<span style="font-size:.7em;background:#dcfce7;color:#065f46;border-radius:6px;padding:1px 7px;margin-left:6px;">incl.GST</span>':'';
@@ -8605,6 +8617,12 @@ function renderSvcOrders(){
       </div>
     </div>`;
   }).join('');
+  expandedIds.forEach(id=>{
+    const card=g(id);if(!card)return;
+    card.classList.add('expanded');
+    const body=g('soc-body-'+id.replace(/^soc-/,''));
+    if(body)body.style.display='block';
+  });
 }
 
 function undispatchOrder(ordId){
