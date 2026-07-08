@@ -3877,7 +3877,6 @@ function orderAccCard(o,showConfirm){
           <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
           <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
           ${o.addedToIncentive?`<span style="font-size:.77em;padding:3px 9px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;white-space:nowrap;"><i class="fas fa-gift"></i> ${esc(o.incentiveRef||'')}</span>`:`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();addOrderToIncentiveManually('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:#c4b5fd;color:#7c3aed;" title="Add to Incentive"><i class="fas fa-gift"></i></button>`}
-          <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openEditPurchaseModal('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--amber);color:var(--amber);" title="Edit item purchase values — works even after billing, syncs linked Incentive"><i class="fas fa-rupee-sign"></i></button>
           ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.77em;padding:3px 9px;background:var(--red);color:#fff;" title="Delete"><i class="fas fa-trash"></i></button>`:''}
         </div>
           </div>
@@ -8059,10 +8058,7 @@ function viewAccInc(id){
   const isAccounts=D.currentUser?.role==='accounts';
   const isMgmt=D.currentUser?.role==='management';
   const expAmt=parseFloat(e.expAmt)||0;
-  // Always recompute fresh from Profit/Expense rather than trusting a possibly
-  // stale/legacy stored netProfit value — this is what previously caused some
-  // entries to show a correct Net Profit but ₹0.00 Estimated Incentive.
-  const netProfit=(parseFloat(e.profit)||0)-expAmt;
+  const netProfit=(e.netProfit!=null?e.netProfit:e.profit-expAmt);
   const estIncentive=Math.max(0,netProfit)*0.20;
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const netProfColor=netProfit>=0?'var(--green)':'var(--red)';
@@ -8647,7 +8643,6 @@ function renderSvcOrders(){
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
           ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
-          <button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:var(--amber);color:var(--amber);" onclick="event.stopPropagation();openEditPurchaseModal('${o.id}')" title="Edit item purchase (cost) values — works even after billing, and updates any linked Incentive entry automatically"><i class="fas fa-rupee-sign" style="margin-right:4px;"></i>Edit Purchase Values</button>
           ${o.dcDispatched?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:var(--amber);color:var(--amber);" onclick="undispatchOrder('${o.id}')"><i class="fas fa-rotate-left" style="margin-right:4px;"></i>Undo Dispatch / Re-link Stock Out</button>`:''}
           ${o.addedToIncentive?`<span style="font-size:.77em;padding:5px 12px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;"><i class="fas fa-gift" style="margin-right:4px;"></i>Added to Incentive (${esc(o.incentiveRef||'')})</span>`:`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:#c4b5fd;color:#7c3aed;" onclick="addOrderToIncentiveManually('${o.id}')"><i class="fas fa-gift" style="margin-right:4px;"></i>Add to Incentive</button>`}
           <span style="font-size:.7em;color:var(--ink3);">Add ordered materials to inventory</span>
@@ -8683,78 +8678,6 @@ function addOrderToIncentiveManually(ordId){
       saveData();renderSvcOrders();renderAccOrders();
     }
   });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// EDIT PURCHASE VALUES (works even after billing) — auto-syncs any
-// linked Incentive entry so profit/net-profit/estimated incentive
-// stay correct after the fact.
-// ═══════════════════════════════════════════════════════════════
-function openEditPurchaseModal(ordId){
-  const o=(D.orders||[]).find(x=>x.id===ordId);if(!o)return;
-  const rows=(o.items||[]).map((it,i)=>`<tr>
-      <td style="padding:8px 10px;font-size:.9em;">${esc(it.material||'')}</td>
-      <td style="padding:8px 10px;text-align:center;">${it.qty}</td>
-      <td style="padding:8px 10px;text-align:right;">${fmt(it.rate)}</td>
-      <td style="padding:8px 10px;text-align:right;">${fmt(it.amount)}</td>
-      <td style="padding:8px 10px;"><input type="number" step="0.01" class="epv-input" data-idx="${i}" value="${it.purchaseVal||''}" placeholder="0.00" style="width:100px;padding:6px 8px;border:1.5px solid #fde68a;border-radius:7px;text-align:right;"></td>
-    </tr>`).join('');
-  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="epvModal" onclick="if(event.target.id==='epvModal')this.remove();">
-    <div style="background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-      <div style="background:linear-gradient(135deg,#d97706,#f59e0b);padding:16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:1.1em;">Edit Purchase Values</div>
-          <div style="color:rgba(255,255,255,.9);font-size:.9em;margin-top:2px;">${esc(o.orderNo)} — enter what you actually paid for each item${o.addedToIncentive?' · will update Incentive '+esc(o.incentiveRef||''):''}</div>
-        </div>
-        <button onclick="g('epvModal').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;"><i class="fas fa-times"></i></button>
-      </div>
-      <div style="padding:18px 20px;">
-        <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="background:var(--bg);"><th style="padding:8px 10px;text-align:left;font-size:.82em;">Material</th><th style="padding:8px 10px;font-size:.82em;">Qty</th><th style="padding:8px 10px;text-align:right;font-size:.82em;">Rate</th><th style="padding:8px 10px;text-align:right;font-size:.82em;">Sale Amt</th><th style="padding:8px 10px;text-align:right;font-size:.82em;">Purchase (₹)</th></tr></thead>
-        <tbody>${rows}</tbody></table></div>
-        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;">
-          <button class="btn btn-outline" onclick="g('epvModal').remove()">Cancel</button>
-          <button class="btn" style="background:var(--amber);color:#fff;" onclick="saveOrderPurchaseEdit('${o.id}')"><i class="fas fa-save" style="margin-right:6px;"></i>Save Purchase Values</button>
-        </div>
-      </div>
-    </div>
-  </div>`;
-  document.body.insertAdjacentHTML('beforeend',html);
-}
-
-function saveOrderPurchaseEdit(ordId){
-  const o=(D.orders||[]).find(x=>x.id===ordId);if(!o)return;
-  const inputs=document.querySelectorAll('#epvModal .epv-input');
-  let purchaseTotal=0;
-  inputs.forEach(inp=>{
-    const idx=parseInt(inp.dataset.idx,10);
-    const val=parseFloat(inp.value)||0;
-    if(o.items[idx]){o.items[idx].purchaseVal=val;}
-    purchaseTotal+=val;
-  });
-  o.purchaseVal=purchaseTotal;
-  const baseTotal=(o.items||[]).reduce((s,it)=>s+(it.amount||0),0);
-  const expenseTotal=(o.convLegs||[]).reduce((s,l)=>s+(parseFloat(l.travel)||0)+(parseFloat(l.food)||0)+(parseFloat(l.other)||0),0);
-  o.margin=baseTotal-purchaseTotal-expenseTotal;
-  o.modifiedCount=(o.modifiedCount||0)+1;o.modifiedBy=D.currentUser?.name||'';o.modifiedAt=new Date().toISOString();
-
-  // Keep any linked Incentive entry in sync — this is what makes edits here
-  // actually show up on the Incentive Entries page and its P/L / Net Profit.
-  let syncedMsg='';
-  if(o.addedToIncentive&&o.incentiveRef&&D.svc_incentives){
-    const inc=D.svc_incentives.find(e=>e.no===o.incentiveRef);
-    if(inc){
-      inc.purchaseAmt=purchaseTotal;
-      inc.profit=(inc.netSale!=null?inc.netSale:inc.saleAmt)-purchaseTotal;
-      inc.netProfit=inc.profit-(parseFloat(inc.expAmt)||0);
-      syncedMsg=` · Incentive ${inc.no} updated`;
-    }
-  }
-  saveData();
-  g('epvModal')?.remove();
-  renderSvcOrders();renderAccOrders();
-  if(typeof renderSvcIncentives==='function')renderSvcIncentives();
-  if(typeof renderAccIncentives==='function')renderAccIncentives();
-  showSuccessToast(`✓ Purchase values saved for ${o.orderNo}${syncedMsg}`,'var(--amber)');
 }
 
 function undispatchOrder(ordId){
@@ -8817,8 +8740,6 @@ function genIncNo(){return 'INC-'+new Date().getFullYear()+'-'+String((D.svc_inc
 
 function showSvcIncForm(){
   g('svcIncForm').style.display='block';
-  if(g('incEditId'))g('incEditId').value=''; // clear any leftover edit-id so a fresh "New Entry" never overwrites a previous draft
-  if(g('svcIncFormTitle'))g('svcIncFormTitle').textContent='New Incentive Entry';
   g('incNo').value=genIncNo();
   g('incDate').value=today();
   populateSvcIncEngDropdown();
@@ -9065,10 +8986,7 @@ function renderSvcIncentives(){
 function viewSvcInc(id){
   const e=D.svc_incentives.find(x=>x.id===id);if(!e)return;
   const expAmt=parseFloat(e.expAmt)||0;
-  // Always recompute fresh from Profit/Expense rather than trusting a possibly
-  // stale/legacy stored netProfit value — fixes entries showing correct Net
-  // Profit but ₹0.00 Estimated Incentive.
-  const netProfit=(parseFloat(e.profit)||0)-expAmt;
+  const netProfit=(e.netProfit!=null?e.netProfit:e.profit-expAmt);
   const estIncentive=Math.max(0,netProfit)*0.20;
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const netProfColor=netProfit>=0?'var(--green)':'var(--red)';
