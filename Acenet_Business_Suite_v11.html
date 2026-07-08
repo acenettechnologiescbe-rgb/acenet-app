@@ -2073,7 +2073,7 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
 
     <div style="font-size:.73em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Order Items</div>
-    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Expense Type</th><th>Expense (₹)</th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
+    <div style="overflow-x:auto;"><table class="itbl"><thead><tr><th>#</th><th>Material / Part</th><th>Qty</th><th>Est. Rate (₹)</th><th>Purchase Value (₹) <span style="font-weight:400;color:var(--ink3);">— our cost</span></th><th>Est. Amount (₹)</th><th></th></tr></thead><tbody id="svOrdItemsBody"></tbody></table></div>
     <button class="btn btn-outline btn-sm" onclick="addSvOrdItem()" style="margin-bottom:11px;"><i class="fas fa-plus" style="color:var(--orange)"></i> Add Item</button>
     <div class="tot-bar" id="svOrdTotBar" style="background:linear-gradient(135deg,var(--orange),#c2410c);">
       <div class="tb-item" id="svOrdGSTRow" style="display:none;"><div class="tbl">GST @18%</div><div class="tbv" id="svOrdGSTAmt">₹0</div></div>
@@ -3876,6 +3876,7 @@ function orderAccCard(o,showConfirm){
         <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
           <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
           <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
+          ${o.addedToIncentive?`<span style="font-size:.77em;padding:3px 9px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;white-space:nowrap;"><i class="fas fa-gift"></i> ${esc(o.incentiveRef||'')}</span>`:`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();addOrderToIncentiveManually('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:#c4b5fd;color:#7c3aed;" title="Add to Incentive"><i class="fas fa-gift"></i></button>`}
           ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.77em;padding:3px 9px;background:var(--red);color:#fff;" title="Delete"><i class="fas fa-trash"></i></button>`:''}
         </div>
           </div>
@@ -4106,7 +4107,7 @@ function viewOrderModal(id){
                 <th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">Material</th>
                 <th style="padding:10px 14px;text-align:center;color:#fff;font-weight:700;">Qty</th>
                 <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Rate</th>
-                ${o.source==='service'?`<th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">Exp.Type</th><th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Expense</th>`:''}
+                ${o.source==='service'?`<th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Purchase (₹)</th>`:''}
                 <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Amount</th>
               </tr></thead>
               <tbody>
@@ -4114,7 +4115,7 @@ function viewOrderModal(id){
                   <td style="padding:10px 14px;font-weight:600;">${esc(it.material||it.name||'')}</td>
                   <td style="padding:10px 14px;text-align:center;">${it.qty}</td>
                   <td style="padding:10px 14px;text-align:right;">${fmt(it.rate)}</td>
-                  ${o.source==='service'?`<td style="padding:10px 14px;font-size:.97em;color:var(--ink3);">${it.expType?esc(it.expType):'—'}</td><td style="padding:10px 14px;text-align:right;">${it.expAmt?fmt(it.expAmt):'—'}</td>`:''}
+                  ${o.source==='service'?`<td style="padding:10px 14px;text-align:right;color:var(--ink3);">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td>`:''}
                   <td style="padding:10px 14px;text-align:right;font-weight:700;color:var(--orange);">${fmt(it.amount)}</td>
                 </tr>`).join('')}
               </tbody>
@@ -8056,7 +8057,11 @@ function viewAccInc(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const isAccounts=D.currentUser?.role==='accounts';
   const isMgmt=D.currentUser?.role==='management';
+  const expAmt=parseFloat(e.expAmt)||0;
+  const netProfit=(e.netProfit!=null?e.netProfit:e.profit-expAmt);
+  const estIncentive=Math.max(0,netProfit)*0.20;
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
+  const netProfColor=netProfit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="accIncViewModal" onclick="if(event.target.id==='accIncViewModal')this.remove();">
     <div id="accIncViewBox" style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);transition:all .25s ease;">
@@ -8077,11 +8082,17 @@ function viewAccInc(id){
           <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
           <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px;">
           <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
           <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
           ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
+          <div style="background:#fef2f2;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Expense${e.expType?' ('+esc(e.expType)+')':''}</div><div style="font-weight:800;color:var(--red);font-size:1.25em;">${expAmt>0?fmt(expAmt):'—'}</div></div>
           <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
+          <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${fmt(netProfit)}</div></div>
+        </div>
+        <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
+          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}</div>
         </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
         ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
@@ -8254,25 +8265,17 @@ function addSvOrdItem(data){
     <td><input type="text" class="som" placeholder="Part / Material…" oninput="recalcSvOrd()" style="min-width:140px;"></td>
     <td><input type="number" class="soq" value="1" style="width:65px;" oninput="recalcSvOrd()"></td>
     <td><input type="number" class="sor" value="0" step="0.01" style="width:90px;" oninput="recalcSvOrd()"></td>
-    <td><select class="soet" onchange="recalcSvOrd()" style="min-width:110px;font-size:.82em;">
-      <option value="">— None —</option>
-      <option value="Travel">Travel</option>
-      <option value="Food">Food</option>
-      <option value="Courier">Courier</option>
-      <option value="Tools">Tools</option>
-      <option value="Other">Other</option>
-    </select></td>
-    <td><input type="number" class="soea" value="0" step="0.01" style="width:80px;" oninput="recalcSvOrd()"></td>
+    <td><input type="number" class="sopv" value="0" step="0.01" style="width:100px;" oninput="recalcSvOrd()" title="Our cost for this item — feeds the Purchase Value / Margin above, does not affect the customer's sale amount"></td>
     <td class="soa amt" style="color:var(--orange);">₹0</td>
     <td><button class="btn btn-ghost btn-icon" onclick="removeSvOrdItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
   g('svOrdItemsBody').appendChild(tr);
-  if(data){const r=g('soi-'+n);r.querySelector('.som').value=data.material||'';r.querySelector('.soq').value=data.qty||1;r.querySelector('.sor').value=data.rate||0;if(data.expType)r.querySelector('.soet').value=data.expType||'';r.querySelector('.soea').value=data.expAmt||0;r.querySelector('.soa').textContent='₹'+(data.amount||0).toFixed(2);}
+  if(data){const r=g('soi-'+n);r.querySelector('.som').value=data.material||'';r.querySelector('.soq').value=data.qty||1;r.querySelector('.sor').value=data.rate||0;r.querySelector('.sopv').value=data.purchaseVal||0;r.querySelector('.soa').textContent='₹'+(data.amount||0).toFixed(2);}
   recalcSvOrd();
 }
 function removeSvOrdItem(n){const r=g('soi-'+n);if(r){r.remove();recalcSvOrd();}}
 function recalcSvOrd(){
-  let subtotal=0,totalExp=0;
-  document.querySelectorAll("#svOrdItemsBody tr").forEach(r=>{const q=parseFloat(r.querySelector(".soq")?.value)||0,rt=parseFloat(r.querySelector(".sor")?.value)||0,ea=parseFloat(r.querySelector(".soea")?.value)||0,a=q*rt+ea;subtotal+=a;totalExp+=ea;const ac=r.querySelector(".soa");if(ac)ac.textContent="₹"+a.toFixed(2);});
+  let subtotal=0,itemsPurchaseTotal=0;
+  document.querySelectorAll("#svOrdItemsBody tr").forEach(r=>{const q=parseFloat(r.querySelector(".soq")?.value)||0,rt=parseFloat(r.querySelector(".sor")?.value)||0,pv=parseFloat(r.querySelector(".sopv")?.value)||0,a=q*rt;subtotal+=a;itemsPurchaseTotal+=pv;const ac=r.querySelector(".soa");if(ac)ac.textContent="₹"+a.toFixed(2);});
   const totalEl=g('svOrdTotal');
   if(totalEl) totalEl.textContent=fmt(subtotal);
   const gType=g("svOrdGST")?.value||"none";
@@ -8282,6 +8285,8 @@ function recalcSvOrd(){
     else if(gType==="inclusive"){gstRow.style.display="flex";gstAmtEl.textContent=fmt(subtotal-subtotal/(1+GST_R));}
     else{gstRow.style.display="none";}
   }
+  // Keep the top-level Purchase Value in sync with the sum of per-item purchase values
+  if(itemsPurchaseTotal>0&&g('svOrdPurchaseVal'))g('svOrdPurchaseVal').value=itemsPurchaseTotal.toFixed(2);
   calcOrdMargin();
 }
 
@@ -8296,8 +8301,8 @@ function sendSvcOrderToAccounts(){
   document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{
     const m=r.querySelector('.som')?.value.trim();if(!m)return;
     const qty=parseFloat(r.querySelector('.soq')?.value)||0,rate=parseFloat(r.querySelector('.sor')?.value)||0;
-    const expType=r.querySelector('.soet')?.value||'',expAmt=parseFloat(r.querySelector('.soea')?.value)||0;
-    items.push({material:m,qty,rate,amount:qty*rate+expAmt,expType,expAmt});
+    const purchaseVal=parseFloat(r.querySelector('.sopv')?.value)||0;
+    items.push({material:m,qty,rate,amount:qty*rate,purchaseVal});
   });
   if(!items.length){alert('Add at least one item');return;}
   const baseTotal=items.reduce((a,x)=>a+x.amount,0);
@@ -8626,8 +8631,8 @@ function renderSvcOrders(){
         </div>
       </div>
       <div class="order-body" id="soc-body-${o.id}" style="display:none;">
-        <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Exp.Type</th><th>Expense</th><th>Amount</th></tr></thead>
-        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td style="font-size:.8em;">${it.expType?esc(it.expType):'—'}</td><td class="amt">${it.expAmt?fmt(it.expAmt):'—'}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Purchase (₹)</th><th>Amount</th></tr></thead>
+        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
         ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
         ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:#0369a1;margin-bottom:6px;"><i class="fas fa-truck" style="margin-right:5px;"></i>Delivery Challan</div><div style="display:flex;flex-wrap:wrap;gap:12px;">${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''} ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''} ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''} ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''} ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''} ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}</div>${o.dc.remarks?`<div style="color:var(--ink3);margin-top:4px;">${esc(o.dc.remarks)}</div>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
@@ -8639,6 +8644,7 @@ function renderSvcOrders(){
           <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
           ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
           ${o.dcDispatched?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:var(--amber);color:var(--amber);" onclick="undispatchOrder('${o.id}')"><i class="fas fa-rotate-left" style="margin-right:4px;"></i>Undo Dispatch / Re-link Stock Out</button>`:''}
+          ${o.addedToIncentive?`<span style="font-size:.77em;padding:5px 12px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;"><i class="fas fa-gift" style="margin-right:4px;"></i>Added to Incentive (${esc(o.incentiveRef||'')})</span>`:`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:#c4b5fd;color:#7c3aed;" onclick="addOrderToIncentiveManually('${o.id}')"><i class="fas fa-gift" style="margin-right:4px;"></i>Add to Incentive</button>`}
           <span style="font-size:.7em;color:var(--ink3);">Add ordered materials to inventory</span>
         </div>
       </div>
@@ -8649,6 +8655,28 @@ function renderSvcOrders(){
     card.classList.add('expanded');
     const body=g('soc-body-'+id.replace(/^soc-/,''));
     if(body)body.style.display='block';
+  });
+}
+
+function addOrderToIncentiveManually(ordId){
+  const o=(D.orders||[]).find(x=>x.id===ordId);if(!o)return;
+  if(o.addedToIncentive){showSuccessToast('Already added to Incentive ('+(o.incentiveRef||'')+')','#7c3aed');return;}
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-gift',
+    title:'Add this order to Incentive?',
+    msg:'A draft incentive entry will be created from this order\'s sale, purchase and profit figures.',
+    details:[
+      {k:'Order',v:o.orderNo},
+      {k:'Customer',v:o.customer||'—'},
+      {k:'Sale Total',v:fmt((o.items||[]).reduce((s,it)=>s+(it.amount||0),0))},
+      {k:'Purchase Value',v:o.purchaseVal?fmt(o.purchaseVal):'—'}
+    ],
+    btnLabel:'Add to Incentive',btnColor:'#7c3aed',
+    onOk:()=>{
+      const incNo=autoCreateIncFromOrder({ordNo:o.orderNo,cust:o.customer,items:o.items||[],gstType:o.gstType,purchaseVal:o.purchaseVal,callType:o.callType});
+      o.addedToIncentive=true;o.incentiveRef=incNo;
+      saveData();renderSvcOrders();renderAccOrders();
+    }
   });
 }
 
@@ -8957,7 +8985,11 @@ function renderSvcIncentives(){
 
 function viewSvcInc(id){
   const e=D.svc_incentives.find(x=>x.id===id);if(!e)return;
+  const expAmt=parseFloat(e.expAmt)||0;
+  const netProfit=(e.netProfit!=null?e.netProfit:e.profit-expAmt);
+  const estIncentive=Math.max(0,netProfit)*0.20;
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
+  const netProfColor=netProfit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status==='draft'?'Draft':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="incViewModal" onclick="if(event.target.id==='incViewModal')this.remove();">
     <div id="incViewBox" style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);transition:all .25s ease;">
@@ -8978,11 +9010,17 @@ function viewSvcInc(id){
           <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">Product</div><div style="font-weight:700;font-size:.95em;">${esc(e.product||'—')}</div></div>
           <div style="flex:1;min-width:130px;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;">GST Type</div><div style="font-size:.9em;">${e.gstType||'—'}</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:10px;">
           <div style="background:#f0f9ff;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Sale Amount</div><div style="font-weight:800;color:var(--acc);font-size:1.25em;">${fmt(e.saleAmt)}</div></div>
           <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
           ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
+          <div style="background:#fef2f2;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Expense${e.expType?' ('+esc(e.expType)+')':''}</div><div style="font-weight:800;color:var(--red);font-size:1.25em;">${expAmt>0?fmt(expAmt):'—'}</div></div>
           <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
+          <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${fmt(netProfit)}</div></div>
+        </div>
+        <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
+          <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
+          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}</div>
         </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
         ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
