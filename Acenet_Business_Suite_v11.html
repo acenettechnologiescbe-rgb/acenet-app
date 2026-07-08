@@ -8573,10 +8573,10 @@ function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType})
   // Build incentive entry from order data
   const saleAmt=items.reduce((s,it)=>s+(it.amount||0),0);
   const purchase=parseFloat(purchaseVal)||0;
-  let gstAmt=0,netSale=saleAmt;
+  let gstAmt=0,netSale=saleAmt,netPurchase=purchase;
   if(gstType==='exclusive'){gstAmt=saleAmt*GST_R;netSale=saleAmt;}
-  else if(gstType==='inclusive'){gstAmt=saleAmt-saleAmt/(1+GST_R);netSale=saleAmt/(1+GST_R);}
-  const profit=netSale-purchase;
+  else if(gstType==='inclusive'){gstAmt=saleAmt-saleAmt/(1+GST_R);netSale=saleAmt/(1+GST_R);netPurchase=purchase/(1+GST_R);}
+  const profit=netSale-netPurchase;
   const no=genIncNo();
   const productNames=items.map(it=>it.material||it.name||'').filter(Boolean).join(', ');
   const obj={
@@ -8778,10 +8778,10 @@ function saveSvcIncDraft(){
   const expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
-  let gstAmt=0,netSale=sale;
+  let gstAmt=0,netSale=sale,netPurchase=purchase;
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
-  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);}
-  const profit=netSale-purchase;
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);netPurchase=purchase/(1+GST_R);}
+  const profit=netSale-netPurchase;
   const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
@@ -8801,10 +8801,10 @@ function sendSvcIncToAccounts(){
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
   const gstType2=g('incGST')?.value||'none';
-  let gstAmt2=0,netSale2=sale;
+  let gstAmt2=0,netSale2=sale,netPurchase2=purchase;
   if(gstType2==='exclusive'){gstAmt2=sale*GST_R;netSale2=sale;}
-  else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale/(1+GST_R);}
-  const profit=netSale2-purchase;
+  else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale/(1+GST_R);netPurchase2=purchase/(1+GST_R);}
+  const profit=netSale2-netPurchase2;
   const netProfit=profit-expAmt;
   showConfirm({
     icon:'ci-send',iconClass:'fa-gift',
@@ -9042,13 +9042,13 @@ function saveSvcIncDraftAndAddAnother(){
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
-  let gstAmt=0,netSale=sale;
+  let gstAmt=0,netSale=sale,netPurchase=purchase;
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
-  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);}
-  const profit=netSale-purchase;
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);netPurchase=purchase/(1+GST_R);}
+  const profit=netSale-netPurchase;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit:profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
   if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
   else D.svc_incentives.push(obj);
   saveData();renderSvcIncentives();
@@ -9137,6 +9137,7 @@ function incAccCard(e,context){
         <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" style="border-color:#c4b5fd;color:#7c3aed;" onclick="editIncPurchaseAcc('${e.id}')"><i class="fas fa-pen-to-square"></i> Edit Purchase</button>
         <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="sendIncToMgmt('${e.id}')"><i class="fas fa-user-tie"></i> Send to Mgmt</button>
       </div>
     </div>`;
@@ -9160,6 +9161,7 @@ function incAccCard(e,context){
         ${e.suggestedPct?`<span>Suggested: <strong style="color:#7c3aed;">${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
       </div>
       ${e.approvedBy?`<div style="font-size:.87em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
+      ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;margin-top:3px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
       ${e.settledBy?`<div style="font-size:.87em;color:var(--acc);margin-top:3px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.87em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
@@ -9176,6 +9178,48 @@ function calcIncAmt(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const pct=parseFloat(pctEl.value)||0;
   if(pct>0) amtEl.value=(e.profit*pct/100).toFixed(2);
+}
+
+function editIncPurchaseAcc(id){
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  const html=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;" id="editPurchModal" onclick="if(event.target.id==='editPurchModal')this.remove();">
+    <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="font-family:'Sora',sans-serif;font-weight:800;color:#7c3aed;font-size:1.02em;margin-bottom:3px;"><i class="fas fa-pen-to-square" style="margin-right:6px;"></i>Edit Purchase Amount</div>
+      <div style="font-size:.85em;color:var(--ink3);margin-bottom:14px;">${esc(e.no)} &nbsp;·&nbsp; ${esc(e.customer)}</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px;">
+        <div style="flex:1;background:var(--bg);border-radius:8px;padding:8px 10px;"><div style="font-size:.7em;font-weight:700;color:var(--ink3);text-transform:uppercase;">Sale ₹</div><div style="font-weight:700;">${fmt(e.saleAmt)}</div></div>
+        <div style="flex:1;background:var(--bg);border-radius:8px;padding:8px 10px;"><div style="font-size:.7em;font-weight:700;color:var(--ink3);text-transform:uppercase;">GST Type</div><div style="font-weight:700;font-size:.9em;">${e.gstType&&e.gstType!=='none'?e.gstType:'No GST'}</div></div>
+      </div>
+      <label style="font-size:.8em;font-weight:700;color:var(--ink3);">Purchase / Cost Amount (₹)</label>
+      <input type="number" id="editPurchInput" value="${e.purchaseAmt}" step="0.01" style="width:100%;padding:9px 11px;border:1.5px solid #c4b5fd;border-radius:8px;font-size:1em;margin-top:5px;margin-bottom:14px;box-sizing:border-box;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-outline btn-sm" onclick="g('editPurchModal').remove()"><i class="fas fa-times"></i> Cancel</button>
+        <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="saveIncPurchaseAcc('${e.id}')"><i class="fas fa-save"></i> Save &amp; Recalculate</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+  setTimeout(()=>{const inp=g('editPurchInput');if(inp){inp.focus();inp.select();}},50);
+}
+
+function saveIncPurchaseAcc(id){
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  const newPurchase=parseFloat(g('editPurchInput')?.value);
+  if(isNaN(newPurchase)||newPurchase<0){alert('Enter a valid purchase amount');return;}
+  const sale=e.saleAmt||0;
+  const gstType=e.gstType||'none';
+  let gstAmt=0,netSale=sale,netPurchase=newPurchase;
+  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);netPurchase=newPurchase/(1+GST_R);}
+  const profit=netSale-netPurchase;
+  const expAmt=parseFloat(e.expAmt)||0;
+  const netProfit=profit-expAmt;
+  e.purchaseAmt=newPurchase;e.gstAmt=gstAmt;e.netSale=netSale;e.profit=profit;e.netProfit=netProfit;
+  e.purchaseEditedBy=D.currentUser?.name||'Accounts';e.purchaseEditedAt=new Date().toISOString();
+  saveData();
+  g('editPurchModal')?.remove();
+  renderAccIncentives();
+  showSuccessToast(`✓ Purchase amount updated for ${e.no} — P/L recalculated`,'#7c3aed');
 }
 
 function sendIncToMgmt(id){
@@ -11428,16 +11472,16 @@ function calcIncProfit(){
   const p=parseFloat(g('incPurchaseAmt')?.value)||0;
   const exp=parseFloat(g('incExpAmt')?.value)||0;
   const gType=g('incGST')?.value||'none';
-  let netSale=s,gstAmt=0;
+  let netSale=s,gstAmt=0,netPurchase=p;
   if(gType==='exclusive'){gstAmt=s*GST_R;netSale=s;}
-  else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s/(1+GST_R);}
-  const grossProfit=netSale-p;
+  else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s/(1+GST_R);netPurchase=p/(1+GST_R);}
+  const grossProfit=netSale-netPurchase;
   const netProfit=grossProfit-exp;
   const gstEl=g('incGSTAmt');const netEl=g('incNetSale');const dispEl=g('incProfitDisplay');const npEl=g('incNetProfit');
   if(gstEl) gstEl.value=gstAmt>0?fmt(gstAmt):'₹0.00';
   if(netEl) netEl.value=netSale>0?fmt(netSale):'₹0.00';
-  if(dispEl){dispEl.value=(grossProfit>=0?'+':'')+fmt(grossProfit);dispEl.style.color=grossProfit>=0?'var(--green)':'var(--red)';}
-  if(npEl){npEl.value=(netProfit>=0?'+':'')+fmt(netProfit);npEl.style.color=netProfit>=0?'var(--green)':'var(--red)';}
+  if(dispEl){dispEl.value=(grossProfit>=0?'+':'-')+fmt(grossProfit);dispEl.style.color=grossProfit>=0?'var(--green)':'var(--red)';}
+  if(npEl){npEl.value=(netProfit>=0?'+':'-')+fmt(netProfit);npEl.style.color=netProfit>=0?'var(--green)':'var(--red)';}
 }
 // ════════════════════════════════════════════════════════════════
 // MOBILE ENHANCEMENTS
