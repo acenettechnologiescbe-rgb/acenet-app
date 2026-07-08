@@ -2003,7 +2003,9 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Supplier Name</label><input type="text" id="svOrdSupplier" placeholder="Supplier / Vendor name"></div>
       <div class="fg"><label>Purchase Value (₹) <span style="font-size:.76em;color:var(--ink3);">— Our cost</span></label><input type="number" id="svOrdPurchaseVal" placeholder="0.00" step="0.01" oninput="calcOrdMargin()"></div>
-      <div class="fg"><label>Margin / Profit <span style="font-size:.76em;color:var(--ink3);">— Auto calc</span></label><input type="text" id="svOrdMargin" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00"></div>
+      <div class="fg"><label>Margin / Profit <span style="font-size:.76em;color:var(--ink3);">— Auto calc</span></label><input type="text" id="svOrdMargin" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00">
+        <div id="svOrdMarginBreakdown" style="font-size:.74em;color:var(--ink3);margin-top:4px;"></div>
+      </div>
     </div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg"><label>Remarks / Service Call Ref</label><input type="text" id="svOrdNotes" placeholder="Service call reference, urgency, etc."></div>
@@ -2038,14 +2040,14 @@ tbody tr:last-child td{border-bottom:none;}
         </label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.84em;font-weight:600;background:#faf5ff;border:1.5px solid #c4b5fd;border-radius:9px;padding:8px 14px;" title="Automatically create a draft incentive entry for this order">
           <input type="checkbox" id="svOrdAddIncentive" style="width:16px;height:16px;accent-color:#7c3aed;">
-          <i class="fas fa-gift" style="color:#7c3aed;"></i> Add to Incentive
+          <i class="fas fa-gift" style="color:#7c3aed;"></i> <span id="svOrdAddIncentiveLabel">Add to Incentive</span>
         </label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.84em;font-weight:600;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;padding:8px 14px;" title="Stock purpose only — no billing required">
           <input type="checkbox" id="svOrdStockOnly" style="width:16px;height:16px;accent-color:#16a34a;" onchange="updateStockOnlyUI()">
           <i class="fas fa-boxes-stacked" style="color:#16a34a;"></i> Stock Purpose Only
         </label>
       </div>
-      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;" onclick="openStockPickerModal()" style="margin-top:10px;display:block;">
+      <button type="button" class="btn btn-outline btn-sm" style="background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-size:.84em;font-weight:700;padding:8px 16px;border-radius:9px;margin-top:10px;display:block;" onclick="openStockPickerModal()">
         <i class="fas fa-boxes-stacked" style="color:#16a34a;margin-right:5px;"></i> Material from Stock
       </button>
     </div>
@@ -8173,7 +8175,8 @@ function showSvcOrderForm(){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=false;
-  if(g('svOrdAddIncentive'))g('svOrdAddIncentive').checked=false;
+  if(g('svOrdAddIncentive')){g('svOrdAddIncentive').checked=false;g('svOrdAddIncentive').disabled=false;}
+  if(g('svOrdAddIncentiveLabel'))g('svOrdAddIncentiveLabel').textContent='Add to Incentive';
   if(g('svOrdStockOnly')){g('svOrdStockOnly').checked=false;updateStockOnlyUI();}
   setOrdCallType('AMC');
   // Reset order conveyance rows
@@ -8209,7 +8212,12 @@ function editSvcOrder(id){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=o.oralConf||false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=o.writeConf||false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=o.urgent||false;
-  if(g('svOrdAddIncentive'))g('svOrdAddIncentive').checked=false;
+  if(g('svOrdAddIncentive')){
+    const already=!!o.addedToIncentive;
+    g('svOrdAddIncentive').checked=already;
+    g('svOrdAddIncentive').disabled=already;
+    if(g('svOrdAddIncentiveLabel'))g('svOrdAddIncentiveLabel').textContent=already?`Added to Incentive (${o.incentiveRef||'—'})`:'Add to Incentive';
+  }
   setOrdCallType(o.callType||'AMC');
   if(g('svOrdGST'))g('svOrdGST').value=o.gstType||'none';
   g('svOrdItemsBody').innerHTML='';svOrdRC=0;
@@ -8221,11 +8229,21 @@ function editSvcOrder(id){
 function calcOrdMargin(){
   const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
   const saleTotal=parseFloat((g('svOrdTotal')?.textContent||'0').replace(/[^0-9.]/g,''))||0;
-  const margin=saleTotal-purchaseVal;
+  // Conveyance (engineer's travel/food/other) is a company expense — it reduces profit,
+  // it is never added to the customer-facing sale amount.
+  const convRows=typeof getOrdConvRows==='function'?getOrdConvRows():[];
+  const expenseTotal=convRows.reduce((s,r)=>s+(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
+  const margin=saleTotal-purchaseVal-expenseTotal;
   const el=g('svOrdMargin');
   if(el){
     el.value=(margin>=0?'+':'')+fmt(margin);
     el.style.color=margin>=0?'var(--green)':'var(--red)';
+  }
+  const bd=g('svOrdMarginBreakdown');
+  if(bd){
+    bd.innerHTML=`Sale: <strong>${fmt(saleTotal)}</strong> &minus; Purchase: <strong>${fmt(purchaseVal)}</strong>`+
+      (expenseTotal>0?` &minus; Expense (Conveyance): <strong>${fmt(expenseTotal)}</strong>`:'')+
+      ` = Profit: <strong style="color:${margin>=0?'var(--green)':'var(--red)'};">${fmt(margin)}</strong>`;
   }
 }
 
@@ -8331,6 +8349,11 @@ function sendSvcOrderToAccounts(){
           };
           // Auto stock-in on resend
           autoStockInFromOrder(D.orders[idx],date);
+          // Add to Incentive — only if checked AND not already added for this order (avoids duplicates on repeat resends)
+          if(g('svOrdAddIncentive')?.checked&&!D.orders[idx].addedToIncentive){
+            const incNo=autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType:g('svOrdCallType')?.value||'AMC'});
+            D.orders[idx].addedToIncentive=true;D.orders[idx].incentiveRef=incNo;
+          }
           hideSvcOrderForm();saveData('new_order');renderSvcOrders();
           showSuccessToast(`✓ Order ${ordNo} updated & resent to Accounts!`,'var(--orange)');
         }
@@ -8349,16 +8372,18 @@ function sendSvcOrderToAccounts(){
           status:stockOnly?'stock_only':'pending',
           invoiceNo:'',billedDate:'',
           createdAt:Date.now(),source:'service',
-          createdBy:D.currentUser?.name||'Service'
+          createdBy:D.currentUser?.name||'Service',
+          addedToIncentive:false,incentiveRef:''
         };
         D.orders.push(newOrd);
         // ── Auto stock-in all items on Send ──
         autoStockInFromOrder(newOrd,date);
+        if(g('svOrdAddIncentive')?.checked){
+          const incNo=autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType:g('svOrdCallType')?.value||'AMC'});
+          newOrd.addedToIncentive=true;newOrd.incentiveRef=incNo;
+        }
         hideSvcOrderForm();saveData('new_order');renderSvcOrders();
         showSuccessToast(`✓ Order ${ordNo} sent to Accounts! Items added to stock.`,'var(--orange)');
-        if(g('svOrdAddIncentive')?.checked){
-          autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType:g('svOrdCallType')?.value||'AMC'});
-        }
       }
     }
   });
@@ -8470,13 +8495,9 @@ function calcOrdConvTotal(){
   });
   const _ct=_tv+_fd+_ot;
   if(g('ordConvTotal'))g('ordConvTotal').textContent=_ct>0?'Total: ₹'+_ct.toFixed(2):'';
-  const firstRow=document.querySelector('#svOrdItemsBody tr');
-  if(firstRow&&_ct>0){
-    const etSel=firstRow.querySelector('.soet');const eaInp=firstRow.querySelector('.soea');
-    if(etSel&&!etSel.value)etSel.value='Travel';
-    if(eaInp)eaInp.value=_ct.toFixed(2);
-    if(typeof recalcSvOrd==='function')recalcSvOrd();
-  }
+  // Conveyance is an internal cost to the company (engineer's travel/food/other) — it must NOT be
+  // added into the item's billed amount / sale total. It only affects the Margin/Profit breakdown below.
+  calcOrdMargin();
 }
 function getOrdConvRows(){
   const rows=[];
@@ -8541,6 +8562,9 @@ function updateStockOnlyUI(){
 
 function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType}){
   if(!D.svc_incentives)D.svc_incentives=[];
+  // Safety net: don't create a second incentive draft referencing the same order
+  const existing=D.svc_incentives.find(e=>e.ref===ordNo);
+  if(existing){showSuccessToast(`Incentive ${existing.no} already exists for ${ordNo} — skipped duplicate.`,'#7c3aed');return existing.no;}
   // Build incentive entry from order data
   const saleAmt=items.reduce((s,it)=>s+(it.amount||0),0);
   const purchase=parseFloat(purchaseVal)||0;
@@ -8568,6 +8592,7 @@ function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType})
   D.svc_incentives.push(obj);
   saveData();
   showSuccessToast(`✓ Incentive draft ${no} created from ${ordNo}`,'#7c3aed');
+  return no;
 }
 
 function renderSvcOrders(){
