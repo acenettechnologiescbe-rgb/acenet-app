@@ -3410,7 +3410,7 @@ const NAVS = {
   service:[
     {id:'svc-calls',icon:'fa-headset',label:'Service Calls',hasBadge:true,badgeId:'svc-pending-badge'},
     {id:'svc-conveyance',icon:'fa-car-side',label:'Conveyance'},
-    {id:'svc-orders',icon:'fa-clipboard-list',label:'Order Checklist',color:'var(--orange)'},
+    {id:'svc-orders',icon:'fa-clipboard-list',label:'Order Checklist',color:'var(--orange)',hasBadge:true,badgeId:'svc-ord-badge'},
     {id:'svc-outstanding',icon:'fa-phone-volume',label:'Outstanding',color:'var(--red)'},
     {id:'svc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'svc-inc-badge'},
     {id:'svc-reports',icon:'fa-chart-bar',label:'Reports',color:'var(--svc)'},
@@ -3532,6 +3532,16 @@ function updateConvBadge(){
   if(!badge) return;
   if(cnt>0){badge.style.display='inline';badge.textContent=cnt;badge.classList.add('alert');}
   else{badge.style.display='none';}
+}
+
+function updateSvcOrderBadge(){
+  const myName=D.currentUser?.name||'';
+  const cnt=(D.orders||[]).filter(o=>o.source==='service'&&(!o.createdBy||o.createdBy===myName)&&o.returnedForEdit).length;
+  const badge=g('svc-ord-badge');
+  if(!badge) return;
+  if(cnt>0){badge.style.display='inline';badge.textContent=cnt;badge.classList.add('alert');}
+  else{badge.style.display='none';badge.classList.remove('alert');}
+  syncMobBadges();
 }
 
 function clearOrderBadge(){
@@ -3815,6 +3825,25 @@ function renderAccOrders(){
   });
 }
 
+function returnOrderToService(id){
+  const o=D.orders.find(x=>x.id===id);if(!o)return;
+  if(o.status==='billed'){showSuccessToast('Cannot return a billed order.','var(--red)');return;}
+  const note=prompt('What needs to be corrected? (shown to Service, optional)')||'';
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-reply',
+    title:'Return '+o.orderNo+' to Service?',
+    msg:'Service will see this order flagged for correction and can edit & resend it.',
+    details:note?[{k:'Note',v:note}]:[],
+    btnLabel:'Return to Service',btnColor:'var(--red)',
+    onOk:()=>{
+      o.returnedForEdit=true;o.returnedNote=note;
+      o.returnedBy=D.currentUser?.name||'Accounts';o.returnedAt=new Date().toISOString();
+      saveData();renderAccOrders();renderSvcOrders();
+      showSuccessToast('✓ '+o.orderNo+' returned to Service for correction','var(--red)');
+    }
+  });
+}
+
 function deleteAccOrder(id){
   const o=D.orders.find(x=>x.id===id);if(!o)return;
   if(o.status==='billed'){showSuccessToast('Cannot delete a billed order.','var(--red)');return;}
@@ -3872,17 +3901,19 @@ function orderAccCard(o,showConfirm){
         <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span><span>${o.items.length} item(s)</span></div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-        ${o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
+        ${o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only</span>`:o.status==='pending'?`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>${o.modified?`<span class="st-badge" style="background:#fff7ed;color:#c2410c;border:1.5px solid #fed7aa;"><i class="fas fa-rotate-right"></i> Modified${o.modifiedAt?' '+new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</span>`:''}${o.returnedForEdit?`<span class="st-badge" style="background:#fef2f2;color:#991b1b;border:1.5px solid #fecaca;"><i class="fas fa-reply"></i> Returned — awaiting Service</span>`:''}`:`<span class="st-badge st-billed"><i class="fas fa-check-circle"></i> Billed: ${esc(o.invoiceNo)}</span>`}
         <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
           <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
           <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
           ${o.addedToIncentive?`<span style="font-size:.77em;padding:3px 9px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;white-space:nowrap;"><i class="fas fa-gift"></i> ${esc(o.incentiveRef||'')}</span>`:`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();addOrderToIncentiveManually('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:#c4b5fd;color:#7c3aed;" title="Add to Incentive"><i class="fas fa-gift"></i></button>`}
+          ${o.status==='pending'&&!o.returnedForEdit?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();returnOrderToService('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--red);color:var(--red);" title="Send back to Service for correction"><i class="fas fa-reply"></i> Return</button>`:''}
           ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.77em;padding:3px 9px;background:var(--red);color:#fff;" title="Delete"><i class="fas fa-trash"></i></button>`:''}
         </div>
           </div>
       </div>
     </div>
     <div class="order-body">
+      ${o.returnedForEdit?`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.85em;color:#991b1b;"><i class="fas fa-reply" style="margin-right:5px;"></i>Returned to Service${o.returnedBy?' by '+esc(o.returnedBy):''}${o.returnedAt?' on '+new Date(o.returnedAt).toLocaleDateString('en-IN'):''}${o.returnedNote?': "'+esc(o.returnedNote)+'"':''}</div>`:''}
       <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
       <tbody>${o.items.map(it=>`<tr><td><strong>${esc(it.material)}</strong></td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody>
       <tfoot>
@@ -8090,6 +8121,7 @@ function viewAccInc(id){
           <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
           <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${fmt(netProfit)}</div></div>
         </div>
+        ${e.purchaseEditedBy?`<div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.87em;color:#6d28d9;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by <strong>${esc(e.purchaseEditedBy)}</strong>${e.purchaseEditedAt?' on '+e.purchaseEditedAt.slice(0,10):''} — figures above already reflect this.</div>`:''}
         <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
           <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}</div>
@@ -8602,6 +8634,7 @@ function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType})
 
 function renderSvcOrders(){
   const el=g('svcOrdersList');if(!el)return;
+  updateSvcOrderBadge();
   const myName=D.currentUser?.name||'';
   const myOrders=[...D.orders].filter(o=>o.source==='service'&&(!o.createdBy||o.createdBy===myName)).reverse();
   const expandedIds=new Set();
@@ -8615,6 +8648,7 @@ function renderSvcOrders(){
       :o.status==='cancelled'?`<span class="st-badge st-cancelled">Cancelled</span>`
       :o.status==='stock_only'?`<span class="st-badge st-stockonly"><i class="fas fa-boxes-stacked"></i> Stock Only—No Billing</span>`
       :`<span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending — Awaiting Accounts</span>`;
+    const returnedBadge=o.returnedForEdit?`<span class="st-badge" style="background:#fef2f2;color:#991b1b;border:1.5px solid #fecaca;"><i class="fas fa-reply"></i> Returned by Accounts — needs correction</span>`:'';
     return `<div class="order-card" id="soc-${o.id}">
       <div class="order-card-hdr" onclick="toggleSvcOrder('${o.id}')">
         <div>
@@ -8622,7 +8656,7 @@ function renderSvcOrders(){
           <div class="order-meta"><span><i class="fas fa-calendar"></i>${o.date}</span><span><i class="fas fa-user"></i>${esc(o.customer)}</span>${o.supplier?`<span><i class="fas fa-truck"></i>${esc(o.supplier)}</span>`:''}<span><i class="fas fa-layer-group"></i>${o.items.length} item(s)</span>${o.callType?`<span><span class="call-type-badge-${o.callType==='AMC'?'amc':o.callType==='ASC'?'asc':'per'}">${o.callType}</span></span>`:''}${o.orderFrom?`<span><i class="fas fa-arrow-right-to-bracket"></i>${esc(o.orderFrom)}</span>`:''}${o.oralConf?'<span style="color:var(--svc);font-size:.72em;"><i class="fas fa-phone"></i> Oral✓</span>':''}${o.writeConf?'<span style="color:#0369a1;font-size:.72em;"><i class="fas fa-file-signature"></i> Written✓</span>':''}${o.urgent?'<span style="color:var(--amber);font-size:.72em;font-weight:700;"><i class="fas fa-bolt"></i> URGENT</span>':''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          ${statusHtml}
+          ${statusHtml}${returnedBadge}
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.95em;color:var(--orange);">${fmt(o.gstType==='exclusive'&&o.baseTotal==null?Math.round(o.total*(1+GST_R)*100)/100:o.total)}</div>
             <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.82em;padding:4px 11px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
@@ -8631,6 +8665,7 @@ function renderSvcOrders(){
         </div>
       </div>
       <div class="order-body" id="soc-body-${o.id}" style="display:none;">
+        ${o.returnedForEdit?`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.85em;color:#991b1b;"><i class="fas fa-reply" style="margin-right:5px;"></i>Returned by Accounts${o.returnedBy?' ('+esc(o.returnedBy)+')':''}${o.returnedAt?' on '+new Date(o.returnedAt).toLocaleDateString('en-IN'):''}${o.returnedNote?': "'+esc(o.returnedNote)+'"':' — no note given.'} Please correct and click Edit above to resend.</div>`:''}
         <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Purchase (₹)</th><th>Amount</th></tr></thead>
         <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
         ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
@@ -8952,8 +8987,8 @@ function renderSvcIncentives(){
   const el=g('svcIncList');if(!el)return;
   if(!sent.length){el.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>No sent entries match the filter.</p></div>';return;}
   el.innerHTML=sent.map(e=>{
-    const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
-    const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status.charAt(0).toUpperCase()+e.status.slice(1);
+    const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='settled'?'inc-status-approved':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
+    const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
     const profColor=e.profit>=0?'var(--green)':'var(--red)';
     return `<div class="inc-card">
       <div class="inc-card-hdr">
@@ -8979,6 +9014,7 @@ function renderSvcIncentives(){
       </div>
       ${e.approvedBy?`<div style="font-size:.98em;color:var(--green);padding:0 16px 10px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.98em;color:var(--red);padding:0 16px 10px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+      ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;padding:0 16px 10px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -9018,6 +9054,7 @@ function viewSvcInc(id){
           <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
           <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${fmt(netProfit)}</div></div>
         </div>
+        ${e.purchaseEditedBy?`<div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.87em;color:#6d28d9;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by <strong>${esc(e.purchaseEditedBy)}</strong>${e.purchaseEditedAt?' on '+e.purchaseEditedAt.slice(0,10):''} — figures above already reflect this.</div>`:''}
         <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
           <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}</div>
@@ -9125,7 +9162,7 @@ function renderAccIncentives(){
 function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.95em;">${t}</div>`;}
 
 function incAccCard(e,context){
-  const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
+  const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='settled'?'inc-status-approved':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
   const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   let actions='';
