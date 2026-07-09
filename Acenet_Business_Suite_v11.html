@@ -76,7 +76,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 /* ── INCENTIVE ── */
 .inc-card{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:.2s;}
 .inc-card:hover{box-shadow:var(--sh);}
-.inc-card-hdr{padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;}
+.inc-card-hdr{padding:13px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;cursor:pointer;}
+.inc-card-hdr:hover{background:var(--bg);}
+.inc-card.expanded .inc-card-hdr{background:linear-gradient(135deg,#f3e8ff,#fff);}
+.inc-body{display:none;border-top:1px solid var(--line);padding:14px 16px;background:var(--bg);}
+.inc-card.expanded .inc-body{display:block;}
 .inc-no{font-weight:700;font-size:.88em;color:#7c3aed;}
 .inc-meta{font-size:.75em;color:var(--ink3);margin-top:2px;display:flex;gap:9px;flex-wrap:wrap;}
 .inc-status-pending{background:#f3e8ff;color:#6d28d9;border:1px solid #c4b5fd;padding:3px 9px;border-radius:20px;font-size:.71em;font-weight:700;}
@@ -3910,7 +3914,6 @@ function orderAccCard(o,showConfirm){
           ${o.status==='pending'&&!o.returnedForEdit?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();returnOrderToService('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--red);color:var(--red);" title="Send back to Service for correction"><i class="fas fa-reply"></i> Return</button>`:''}
           ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.77em;padding:3px 9px;background:var(--red);color:#fff;" title="Delete"><i class="fas fa-trash"></i></button>`:''}
         </div>
-          </div>
       </div>
     </div>
     <div class="order-body">
@@ -8845,6 +8848,15 @@ function toggleSvcOrder(id){
 // ════════════════════════════════════════════════════════════════
 function genIncNo(){return 'INC-'+new Date().getFullYear()+'-'+String((D.svc_incentives||[]).length+1).padStart(4,'0');}
 
+// Expand/collapse an incentive card in place — same pattern as toggleOrder/toggleSvcOrder.
+// key is the full element id (e.g. 'sinc-abc123' or 'ainc-abc123').
+function toggleIncCard(key){
+  const el=g(key);if(!el)return;
+  const isOpen=el.classList.toggle('expanded');
+  const body=el.querySelector('.inc-body');
+  if(body)body.style.display=isOpen?'block':'none';
+}
+
 function showSvcIncForm(){
   g('svcIncForm').style.display='block';
   g('incNo').value=genIncNo();
@@ -9057,13 +9069,16 @@ function renderSvcIncentives(){
   if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sent.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div>`;
 
   const el=g('svcIncList');if(!el)return;
+  // Remember which cards are currently expanded, since re-renders (filters, live sync) can happen mid-click
+  const expandedIds=new Set();
+  el.querySelectorAll('.inc-card.expanded').forEach(c=>expandedIds.add(c.id));
   if(!sent.length){el.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>No sent entries match the filter.</p></div>';return;}
   el.innerHTML=sent.map(e=>{
     const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='settled'?'inc-status-approved':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
     const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
     const profColor=e.profit>=0?'var(--green)':'var(--red)';
-    return `<div class="inc-card">
-      <div class="inc-card-hdr">
+    return `<div class="inc-card" id="sinc-${e.id}">
+      <div class="inc-card-hdr" onclick="toggleIncCard('sinc-${e.id}')">
         <div>
           <div class="inc-no"><i class="fas fa-gift" style="opacity:.6;margin-right:6px;"></i>${esc(e.no)}</div>
           <div class="inc-meta"><span><i class="fas fa-calendar"></i>${e.date}</span><span><i class="fas fa-user-tie"></i>${esc(e.engineerName)}</span><span><i class="fas fa-building"></i>${esc(e.customer)}</span>${e.product?`<span><i class="fas fa-box"></i>${esc(e.product)}</span>`:''}</div>
@@ -9073,22 +9088,30 @@ function renderSvcIncentives(){
           <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.9em;color:${profColor};">P/L: ${fmt(e.profit)}</div>
           ${e.status==='approved'&&e.approvedAmt?`<div style="font-size:.9em;color:var(--green);font-weight:700;">Incentive: ${fmt(e.approvedAmt)}</div>`:''}
           <div style="display:flex;gap:4px;margin-top:2px;">
-            <button class="btn btn-outline btn-sm" onclick="viewSvcInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
-            ${e.status==='draft'||e.status==='pending'?`<button class="btn btn-outline btn-sm" onclick="editSentInc('${e.id}')"><i class="fas fa-edit"></i></button>`:''}
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewSvcInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
+            ${e.status==='draft'||e.status==='pending'?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();editSentInc('${e.id}')"><i class="fas fa-edit"></i></button>`:''}
           </div>
         </div>
       </div>
-      <div style="padding:0 16px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
-        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Sale</div><div style="font-weight:700;font-size:.9em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
-        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Purchase</div><div style="font-weight:700;font-size:.9em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
-        <div style="background:var(--bg);border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${profColor};">${fmt(e.profit)}</div></div>
-        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:2px;">Incentive</div><div style="font-weight:700;font-size:.9em;color:var(--green);">${fmt(e.approvedAmt)}</div></div>`:''}
+      <div class="inc-body">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
+          <div style="background:#fff;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Sale</div><div style="font-weight:700;font-size:.9em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
+          <div style="background:#fff;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Purchase</div><div style="font-weight:700;font-size:.9em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
+          <div style="background:#fff;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${profColor};">${fmt(e.profit)}</div></div>
+          ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:2px;">Incentive</div><div style="font-weight:700;font-size:.9em;color:var(--green);">${fmt(e.approvedAmt)}</div></div>`:''}
+        </div>
+        ${e.approvedBy?`<div style="font-size:.98em;color:var(--green);margin-top:8px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}</div>`:''}
+        ${e.rejectedReason?`<div style="font-size:.98em;color:var(--red);margin-top:8px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
+        ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;margin-top:8px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
       </div>
-      ${e.approvedBy?`<div style="font-size:.98em;color:var(--green);padding:0 16px 10px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}</div>`:''}
-      ${e.rejectedReason?`<div style="font-size:.98em;color:var(--red);padding:0 16px 10px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
-      ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;padding:0 16px 10px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
     </div>`;
   }).join('');
+  // Restore whatever was expanded before this re-render
+  expandedIds.forEach(id=>{
+    const card=g(id);if(!card)return;
+    card.classList.add('expanded');
+    const body=card.querySelector('.inc-body');if(body)body.style.display='block';
+  });
 }
 
 function viewSvcInc(id){
@@ -9223,11 +9246,20 @@ function renderAccIncentives(){
   if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent to Mgmt</div><div class="stat-value">${mgmtReview.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>`;
 
   const pEl=g('accIncPending'),mEl=g('accIncMgmtReview'),aEl=g('accIncApproved'),rEl=g('accIncRejected'),sEl=g('accIncSettled');
+  // Remember which cards are currently expanded, since re-renders (filters, live sync) can happen mid-click
+  const expandedIds=new Set();
+  [pEl,mEl,aEl,rEl,sEl].forEach(el=>{if(el)el.querySelectorAll('.inc-card.expanded').forEach(c=>expandedIds.add(c.id));});
   if(pEl) pEl.innerHTML=!pending.length?emptyMsg('No pending incentives'):pending.map(e=>incAccCard(e,'pending')).join('');
   if(mEl) mEl.innerHTML=!mgmtReview.length?emptyMsg('None sent to management yet'):[...mgmtReview].reverse().map(e=>incAccCard(e,'mgmt-review')).join('');
   if(aEl) aEl.innerHTML=!approved.length?emptyMsg('No approved entries yet'):[...approved].reverse().map(e=>incAccCard(e,'approved')).join('');
   if(rEl) rEl.innerHTML=!rejected.length?emptyMsg('None rejected'):[...rejected].reverse().map(e=>incAccCard(e,'rejected')).join('');
   if(sEl) sEl.innerHTML=!settled.length?emptyMsg('No settled entries yet'):[...settled].reverse().map(e=>incAccCard(e,'settled')).join('');
+  // Restore whatever was expanded before this re-render
+  expandedIds.forEach(id=>{
+    const card=g(id);if(!card)return;
+    card.classList.add('expanded');
+    const body=card.querySelector('.inc-body');if(body)body.style.display='block';
+  });
   updateAccIncBadge();
 }
 
@@ -9257,27 +9289,32 @@ function incAccCard(e,context){
       <button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleIncentive('${e.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>
     </div>`;
   }
-  return `<div class="conv-card" style="${e.status==='pending'?'border-left:3px solid #7c3aed;':e.status==='mgmt-review'?'border-left:3px solid var(--amber);':e.status==='settled'?'border-left:3px solid var(--green);':''}">
-    <div style="flex:1;min-width:0;">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;flex-wrap:wrap;">
-        <strong style="color:#7c3aed;font-size:.9em;">${esc(e.no)}</strong>
-        <span class="${stClass}">${stLabel}</span>
+  return `<div class="inc-card" id="ainc-${e.id}" style="${e.status==='pending'?'border-left:3px solid #7c3aed;':e.status==='mgmt-review'?'border-left:3px solid var(--amber);':e.status==='settled'?'border-left:3px solid var(--green);':''}">
+    <div class="inc-card-hdr" onclick="toggleIncCard('ainc-${e.id}')">
+      <div>
+        <div class="inc-no"><i class="fas fa-gift" style="opacity:.6;margin-right:6px;"></i>${esc(e.no)} <span class="${stClass}" style="margin-left:5px;">${stLabel}</span></div>
+        <div class="inc-meta"><span><i class="fas fa-calendar"></i>${e.date}</span><span><i class="fas fa-user-tie"></i>${esc(e.engineerName)}</span><span><i class="fas fa-building"></i>${esc(e.customer)}</span>${e.product?`<span><i class="fas fa-box"></i>${esc(e.product)}</span>`:''}</div>
       </div>
-      <div style="font-size:.92em;color:var(--ink3);">${e.date} &nbsp;·&nbsp; <strong>${esc(e.engineerName)}</strong> &nbsp;·&nbsp; ${esc(e.customer)}${e.product?' — '+esc(e.product):''}</div>
-      <div style="font-size:.9em;margin-top:4px;display:flex;gap:11px;flex-wrap:wrap;">
-        <span>Sale: <strong style="color:var(--acc);">${fmt(e.saleAmt)}</strong></span>
-        <span>Purchase: <strong style="color:var(--amber);">${fmt(e.purchaseAmt)}</strong></span>
-        <span>P/L: <strong style="color:${profColor};">${fmt(e.profit)}</strong></span>
-        ${e.suggestedPct?`<span>Suggested: <strong style="color:#7c3aed;">${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+        <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:.9em;color:${profColor};">P/L: ${fmt(e.profit)}</div>
+        ${e.suggestedPct?`<div style="font-size:.82em;color:#7c3aed;">Suggested: <strong>${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></div>`:''}
+        <div onclick="event.stopPropagation();" style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+          <button class="btn btn-outline btn-sm" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
+          ${actions}
+        </div>
       </div>
-      ${e.approvedBy?`<div style="font-size:.87em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}${e.approvedByRole==='accounts'?' <span style="color:var(--ink3);font-weight:600;">(Accounts — Management not involved)</span>':''} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
-      ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;margin-top:3px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
-      ${e.settledBy?`<div style="font-size:.87em;color:var(--acc);margin-top:3px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
-      ${e.rejectedReason?`<div style="font-size:.87em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
-    <div style="flex-shrink:0;text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-      <button class="btn btn-outline btn-sm" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i> View</button>
-      ${actions}
+    <div class="inc-body">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;">
+        <div style="background:#fff;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Sale</div><div style="font-weight:700;font-size:.9em;color:var(--acc);">${fmt(e.saleAmt)}</div></div>
+        <div style="background:#fff;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">Purchase</div><div style="font-weight:700;font-size:.9em;color:var(--amber);">${fmt(e.purchaseAmt)}</div></div>
+        <div style="background:#fff;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:var(--ink3);text-transform:uppercase;margin-bottom:2px;">P/L</div><div style="font-weight:700;font-size:.9em;color:${profColor};">${fmt(e.profit)}</div></div>
+        ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:8px;padding:7px 10px;"><div style="font-size:.67em;font-weight:700;color:#065f46;text-transform:uppercase;margin-bottom:2px;">Incentive</div><div style="font-weight:700;font-size:.9em;color:var(--green);">${fmt(e.approvedAmt)}</div></div>`:''}
+      </div>
+      ${e.approvedBy?`<div style="font-size:.87em;color:var(--green);margin-top:8px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}${e.approvedByRole==='accounts'?' <span style="color:var(--ink3);font-weight:600;">(Accounts — Management not involved)</span>':''} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
+      ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;margin-top:8px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
+      ${e.settledBy?`<div style="font-size:.87em;color:var(--acc);margin-top:8px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
+      ${e.rejectedReason?`<div style="font-size:.87em;color:var(--red);margin-top:8px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
   </div>`;
 }
