@@ -2318,11 +2318,11 @@ tbody tr:last-child td{border-bottom:none;}
       <input type="date" id="accIncTo" onchange="renderAccIncentives()">
     </div>
   </div>
-  <div class="sdiv">⏳ Pending — Awaiting Review</div>
+  <div class="sdiv">⏳ Pending — Awaiting Review<button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="bulkApproveAllIncentives()"><i class="fas fa-check-double"></i> Approve All</button></div>
   <div id="accIncPending"></div>
   <div class="sdiv">📋 Sent to Management</div>
   <div id="accIncMgmtReview"></div>
-  <div class="sdiv">✅ Approved — Ready to Settle</div>
+  <div class="sdiv">✅ Approved — Ready to Settle<button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="bulkSettleAllIncentives()"><i class="fas fa-wallet"></i> Settle All</button></div>
   <div id="accIncApproved"></div>
   <div class="sdiv">💰 Settled / Paid</div>
   <div id="accIncSettled"></div>
@@ -2560,6 +2560,7 @@ tbody tr:last-child td{border-bottom:none;}
       <table id="convRptTable">
         <thead><tr>
           <th>Claim No</th><th>Date</th><th>Engineer</th><th>Customer / Call</th>
+          <th>Route / Mode / KM</th>
           <th class="num">Travel (₹)</th><th class="num">Food (₹)</th><th class="num">Other (₹)</th>
           <th class="num">Total (₹)</th><th>Status</th><th>Approved By</th>
         </tr></thead>
@@ -3924,7 +3925,11 @@ function orderAccCard(o,showConfirm){
         <tr style="background:var(--bg);"><td colspan="3" style="font-weight:700;padding:9px 12px;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td><td class="amt aa" style="padding:9px 12px;font-weight:800;">${fmt(o.total)}</td></tr>
       </tfoot>
       </table></div>
+      ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
+      ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:#0369a1;margin-bottom:6px;"><i class="fas fa-truck" style="margin-right:5px;"></i>Delivery Challan</div><div style="display:flex;flex-wrap:wrap;gap:12px;">${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''} ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''} ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''} ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''} ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''} ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}</div>${o.dc.remarks?`<div style="color:var(--ink3);margin-top:4px;">${esc(o.dc.remarks)}</div>`:''}</div>`:''}
+      ${o.convLegs?.length?`<div style="background:#f0fdfa;border:1px solid #5eead4;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:var(--svc);margin-bottom:6px;"><i class="fas fa-car-side" style="margin-right:5px;"></i>Conveyance Legs</div>${o.convLegs.map((l,i)=>`<div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;border-bottom:1px dashed #b2f5ea;font-size:.92em;"><span style="color:var(--ink3);">Leg ${i+1}:</span><span>${esc(l.from||'—')} → ${esc(l.to||'—')}</span><span>${esc(l.mode||'')}</span><span>${l.km} km × ₹${l.rate} = <strong>₹${(l.km*l.rate).toFixed(2)}</strong></span>${l.food?`<span>Food: ₹${l.food}</span>`:''}</div>`).join('')}</div>`:''}
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
+      ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:8px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
       ${o.status==='stock_only'?`<div style="display:flex;align-items:center;gap:8px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><span>Stock Purpose Only — No billing required.</span></div>`:showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
@@ -5436,10 +5441,20 @@ function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outs
 function exportConvReport(){
   const rows=D.svc_conveyance.map(c=>({
     'Claim ID':c.no,'Date':c.date,'Engineer':c.engineer,'Call Ref':c.callRef||'','Location':c.location||'',
+    'Route / Mode / KM':(typeof convRouteSummary==='function'?convRouteSummary(c,false):''),
     'Travel (₹)':(c.travelAmt||0).toFixed(2),'Food (₹)':(c.foodAmt||0).toFixed(2),'Other (₹)':(c.otherAmt||0).toFixed(2),
     'Total (₹)':(c.totalAmt||0).toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''
   }));
-  xlsxExport([{name:'Conveyance Claims',rows},{name:'Advance Requests',rows:D.svc_conv_advances.map(a=>({'Adv ID':a.no,'Date':a.date,'Engineer':a.engineer,'Amount (₹)':a.amount.toFixed(2),'Purpose':a.purpose||'','Call Ref':a.callRef||'','Status':a.status,'Approved By':a.approvedBy||''}))}],'acenet_conveyance_'+today());
+  const legRows=[];
+  D.svc_conveyance.forEach(c=>{
+    const legs=(typeof convClaimLegs==='function'?convClaimLegs(c):(c.items||[]));
+    legs.forEach(l=>{
+      const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
+      const amt=km>0&&rate>0?km*rate:rate;
+      legRows.push({'Claim ID':c.no,'Date':c.date,'Engineer':c.engineer,'From':l.from||'','To':l.to||'','Mode':l.mode||'','KM':km||'','Rate/KM (₹)':rate?rate.toFixed(2):'','Leg Amount (₹)':amt.toFixed(2)});
+    });
+  });
+  xlsxExport([{name:'Conveyance Claims',rows},{name:'Travel Log (Audit)',rows:legRows},{name:'Advance Requests',rows:D.svc_conv_advances.map(a=>({'Adv ID':a.no,'Date':a.date,'Engineer':a.engineer,'Amount (₹)':a.amount.toFixed(2),'Purpose':a.purpose||'','Call Ref':a.callRef||'','Status':a.status,'Approved By':a.approvedBy||''}))}],'acenet_conveyance_'+today());
 }
 
 // ── Accounts Reports → Conveyance tab ──────────────────────────
@@ -5510,6 +5525,31 @@ function getConvRptFiltered(){
   });
 }
 
+// Builds a per-leg summary of a conveyance claim's route/mode/km — used across the
+// on-screen report, print report and Excel export so auditors can see exactly which
+// mode of travel and how many kilometers (and the per-km rate) were claimed on each leg.
+function convClaimLegs(c){
+  return (c.items&&c.items.length)?c.items:[];
+}
+function convRouteSummary(c,forHtml){
+  const legs=convClaimLegs(c);
+  if(!legs.length) return forHtml?'<span style="color:var(--ink3);">—</span>':'—';
+  const parts=legs.map(l=>{
+    const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
+    const amt=km>0&&rate>0?km*rate:rate;
+    const route=`${l.from||'—'} → ${l.to||'—'}`;
+    const kmTxt=km>0?`${km}km${rate>0?' × ₹'+rate+'/km':''}`:(rate>0?`₹${rate} flat`:'—');
+    if(forHtml){
+      return `<div style="white-space:nowrap;font-size:.85em;">${esc(route)} <span style="color:var(--ink3);">· ${esc(l.mode||'—')} · ${kmTxt} = <strong>${fmt(amt)}</strong></span></div>`;
+    }
+    return `${route} (${l.mode||'—'}, ${kmTxt} = ${fmt(amt)})`;
+  });
+  return forHtml?parts.join(''):parts.join(' | ');
+}
+function convTotalKm(c){
+  return convClaimLegs(c).reduce((s,l)=>s+(parseFloat(l.km)||0),0);
+}
+
 function renderRptConveyance(){
   populateConvRptDropdowns();
   const data=getConvRptFiltered();
@@ -5563,7 +5603,7 @@ function renderRptConveyance(){
   // Detail table rows
   const tbody=g('convRptBody');
   if(!tbody)return;
-  if(!data.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--ink3);">No conveyance claims match the selected filters.</td></tr>';return;}
+  if(!data.length){tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:20px;color:var(--ink3);">No conveyance claims match the selected filters.</td></tr>';return;}
   tbody.innerHTML=data.map(c=>{
     const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
     const custs=[...new Set(calls.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';}).filter(Boolean))];
@@ -5573,6 +5613,7 @@ function renderRptConveyance(){
       <td>${c.date}</td>
       <td>${esc(c.engineer)}</td>
       <td><div style="font-size:.82em;">${custs.length?custs.map(cu=>esc(cu)).join(', '):'—'}</div><div style="font-size:.72em;color:var(--ink3);">${calls.join(', ')}</div></td>
+      <td>${convRouteSummary(c,true)}</td>
       <td class="num">${fmt(c.travelAmt||0)}</td>
       <td class="num" style="color:var(--amber);">${(c.foodAmt||0)>0?fmt(c.foodAmt):'—'}</td>
       <td class="num" style="color:var(--ink3);">${(c.otherAmt||0)>0?fmt(c.otherAmt):'—'}</td>
@@ -5583,7 +5624,7 @@ function renderRptConveyance(){
   }).join('');
   // Footer totals row
   tbody.innerHTML+=`<tr style="background:#f0fdfa;border-top:2px solid #99f6e4;">
-    <td colspan="4" style="font-weight:800;padding:10px 12px;">TOTAL (${data.length} claims)</td>
+    <td colspan="5" style="font-weight:800;padding:10px 12px;">TOTAL (${data.length} claims)</td>
     <td class="num" style="font-weight:800;">${fmt(totalTravel)}</td>
     <td class="num" style="font-weight:800;color:var(--amber);">${totalFood>0?fmt(totalFood):'—'}</td>
     <td class="num" style="font-weight:800;">${totalOther>0?fmt(totalOther):'—'}</td>
@@ -5646,18 +5687,36 @@ function printConvReport(){
   const totalTravel=data.reduce((s,c)=>s+(c.travelAmt||0),0);
   const totalFood=data.reduce((s,c)=>s+(c.foodAmt||0),0);
   const totalOther=data.reduce((s,c)=>s+(c.otherAmt||0),0);
+  const totalKm=data.reduce((s,c)=>s+convTotalKm(c),0);
   const filterDesc=`Engineer: ${eng} | Customer: ${cust}${from?' | From: '+from:''}${to?' | To: '+to:''}`;
   const rows=data.map(c=>{
     const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
     const custs=[...new Set(calls.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';}).filter(Boolean))];
     return `<tr><td>${esc(c.no)}</td><td>${c.date}</td><td>${esc(c.engineer)}</td><td>${custs.join(', ')||'—'}</td><td>${calls.join(', ')}</td><td style="text-align:right;">${fmt(c.travelAmt||0)}</td><td style="text-align:right;">${fmt(c.foodAmt||0)}</td><td style="text-align:right;">${fmt(c.otherAmt||0)}</td><td style="text-align:right;font-weight:700;">${fmt(c.totalAmt||0)}</td><td>${c.status}</td><td>${c.approvedBy||'—'}</td></tr>`;
   }).join('');
+  // Detailed per-leg travel log — mode of travel, kilometers and per-km rate for each leg of
+  // each claim, so the report is complete enough to submit for auditing.
+  const legRows=[];
+  data.forEach(c=>{
+    const legs=convClaimLegs(c);
+    if(!legs.length){legRows.push(`<tr><td>${esc(c.no)}</td><td>${c.date}</td><td>${esc(c.engineer)}</td><td colspan="6" style="color:#94a3b8;">No itemized legs recorded for this claim</td></tr>`);return;}
+    legs.forEach((l,i)=>{
+      const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
+      const amt=km>0&&rate>0?km*rate:rate;
+      legRows.push(`<tr><td>${esc(c.no)}</td><td>${c.date}</td><td>${esc(c.engineer)}</td><td>${esc(l.from||'—')}</td><td>${esc(l.to||'—')}</td><td>${esc(l.mode||'—')}</td><td style="text-align:right;">${km||'—'}</td><td style="text-align:right;">${rate?fmt(rate):'—'}</td><td style="text-align:right;font-weight:700;">${fmt(amt)}</td></tr>`);
+    });
+  });
   openPrintWindow('Conveyance Claims Report',`
     <p class="sub">${filterDesc}</p>
-    <p style="font-size:10px;margin-bottom:10px;">Total: <strong>${fmt(totalAmt)}</strong> &nbsp;|&nbsp; Travel: ${fmt(totalTravel)} &nbsp;|&nbsp; Food: ${fmt(totalFood)} &nbsp;|&nbsp; Other: ${fmt(totalOther)} &nbsp;|&nbsp; Claims: ${data.length}</p>
+    <p style="font-size:10px;margin-bottom:10px;">Total: <strong>${fmt(totalAmt)}</strong> &nbsp;|&nbsp; Travel: ${fmt(totalTravel)} &nbsp;|&nbsp; Food: ${fmt(totalFood)} &nbsp;|&nbsp; Other: ${fmt(totalOther)} &nbsp;|&nbsp; Total KM: ${totalKm} &nbsp;|&nbsp; Claims: ${data.length}</p>
     <table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Call Ref</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th><th>Approved By</th></tr></thead>
     <tbody>${rows||'<tr><td colspan="11" style="text-align:center;">No data</td></tr>'}</tbody>
     <tfoot><tr style="background:#e0f2fe;"><td colspan="5" style="font-weight:700;padding:7px 9px;">TOTAL</td><td style="text-align:right;font-weight:700;">${fmt(totalTravel)}</td><td style="text-align:right;font-weight:700;">${fmt(totalFood)}</td><td style="text-align:right;font-weight:700;">${fmt(totalOther)}</td><td style="text-align:right;font-weight:800;">${fmt(totalAmt)}</td><td colspan="2"></td></tr></tfoot>
+    </table>
+    <p style="font-size:11px;font-weight:700;margin:16px 0 6px;">Detailed Travel Log — Mode &amp; Kilometers (for Audit)</p>
+    <table><thead><tr><th>Claim No</th><th>Date</th><th>Engineer</th><th>From</th><th>To</th><th>Mode</th><th>KM</th><th>Rate/KM</th><th>Leg Amount</th></tr></thead>
+    <tbody>${legRows.join('')||'<tr><td colspan="9" style="text-align:center;">No data</td></tr>'}</tbody>
+    <tfoot><tr style="background:#e0f2fe;"><td colspan="6" style="font-weight:700;padding:7px 9px;">TOTAL KM</td><td style="text-align:right;font-weight:800;">${totalKm}</td><td colspan="2"></td></tr></tfoot>
     </table>`);
 }
 
@@ -5690,10 +5749,23 @@ function exportConvRptExcel(){
     const calls=(c.callRefs||c.callRef||'').split(',').map(r=>r.trim()).filter(Boolean);
     const custs=[...new Set(calls.map(r=>{const sc=D.svc_calls.find(x=>x.no===r);return sc?sc.customer:'';}).filter(Boolean))];
     return {'Claim No':c.no,'Date':c.date,'Engineer':c.engineer,'Customer':custs.join(', ')||'—','Call Ref':calls.join(', '),
+      'Route / Mode / KM':convRouteSummary(c,false),'Total KM':convTotalKm(c),
       'Travel (₹)':(c.travelAmt||0).toFixed(2),'Food (₹)':(c.foodAmt||0).toFixed(2),'Other (₹)':(c.otherAmt||0).toFixed(2),
       'Total (₹)':(c.totalAmt||0).toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''};
   });
-  xlsxExport([{name:'Conveyance Claims',rows}],'acenet_conv_report_'+today());
+  // Audit-friendly sheet with one row per travel leg — mode of travel, km and rate/km
+  // broken out individually so this can be submitted directly for auditing.
+  const legRows=[];
+  data.forEach(c=>{
+    const legs=convClaimLegs(c);
+    if(!legs.length){legRows.push({'Claim No':c.no,'Date':c.date,'Engineer':c.engineer,'From':'','To':'','Mode':'','KM':'','Rate/KM (₹)':'','Leg Amount (₹)':'','Note':'No itemized legs recorded'});return;}
+    legs.forEach(l=>{
+      const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
+      const amt=km>0&&rate>0?km*rate:rate;
+      legRows.push({'Claim No':c.no,'Date':c.date,'Engineer':c.engineer,'From':l.from||'','To':l.to||'','Mode':l.mode||'','KM':km||'','Rate/KM (₹)':rate?rate.toFixed(2):'','Leg Amount (₹)':amt.toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''});
+    });
+  });
+  xlsxExport([{name:'Conveyance Claims',rows},{name:'Travel Log (Audit)',rows:legRows}],'acenet_conv_report_'+today());
 }
 
 function exportAdvRptExcel(){
@@ -9173,8 +9245,9 @@ function incAccCard(e,context){
         <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:70px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" oninput="calcIncAmt('${e.id}')" title="Enter %">
         <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
       </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+      <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
         <button class="btn btn-outline btn-sm" style="border-color:#c4b5fd;color:#7c3aed;" onclick="editIncPurchaseAcc('${e.id}')"><i class="fas fa-pen-to-square"></i> Edit Purchase</button>
+        <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="acctApproveIncentive('${e.id}')" title="Approve directly from Accounts, without sending to Management"><i class="fas fa-check"></i> Approve</button>
         <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" onclick="sendIncToMgmt('${e.id}')"><i class="fas fa-user-tie"></i> Send to Mgmt</button>
       </div>
     </div>`;
@@ -9197,7 +9270,7 @@ function incAccCard(e,context){
         <span>P/L: <strong style="color:${profColor};">${fmt(e.profit)}</strong></span>
         ${e.suggestedPct?`<span>Suggested: <strong style="color:#7c3aed;">${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
       </div>
-      ${e.approvedBy?`<div style="font-size:.87em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
+      ${e.approvedBy?`<div style="font-size:.87em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}${e.approvedByRole==='accounts'?' <span style="color:var(--ink3);font-weight:600;">(Accounts — Management not involved)</span>':''} — Incentive: ${fmt(e.approvedAmt)}</div>`:''}
       ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;margin-top:3px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
       ${e.settledBy?`<div style="font-size:.87em;color:var(--acc);margin-top:3px;"><i class="fas fa-wallet"></i> Settled by ${esc(e.settledBy)} on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.87em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
@@ -9281,11 +9354,76 @@ function sendIncToMgmt(id){
 function approveIncentive(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const inp=g('inc-amt-'+id);const amt=parseFloat(inp?.value)||e.suggestedAmt||0;
-  e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedAt=new Date().toISOString();
+  e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedByRole='management';e.approvedAt=new Date().toISOString();
   saveData();
   if(D.currentUser?.role==='management') renderMgmtView();
   else renderAccIncentives();
   showSuccessToast(`✓ ${e.no} approved — Incentive: ${fmt(amt)}`,'var(--green)');
+}
+
+// Accounts can approve an incentive directly (self-approve), without routing through Management.
+// The entry still ends up with status 'approved' so it shows on Management's "Approved" list too,
+// with a clear note that it was approved by Accounts so Management can see who approved it.
+function acctApproveIncentive(id){
+  const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
+  const pct=parseFloat(g('inc-pct-'+id)?.value)||0;
+  const inp=g('inc-amt-'+id);
+  const amt=parseFloat(inp?.value)||(e.profit>0?e.profit*0.2:0);
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-check-circle',
+    title:'Approve Incentive from Accounts?',
+    msg:'This will approve the incentive directly without sending it to Management. It will still be visible to Management, marked as approved by Accounts.',
+    details:[{k:'Entry',v:e.no},{k:'Engineer',v:e.engineerName},{k:'Profit/Loss',v:fmt(e.profit)},{k:'Incentive Amount',v:fmt(amt)}],
+    btnLabel:'Approve',btnColor:'var(--green)',
+    onOk:()=>{
+      e.status='approved';e.approvedAmt=amt;e.suggestedPct=pct||e.suggestedPct;e.suggestedAmt=amt;
+      e.approvedBy=D.currentUser?.name||'Accounts';e.approvedByRole='accounts';e.approvedAt=new Date().toISOString();
+      saveData();renderAccIncentives();updateMgmtIncBadge();
+      showSuccessToast(`✓ ${e.no} approved by Accounts — Incentive: ${fmt(amt)}`,'var(--green)');
+    }
+  });
+}
+
+// Bulk-approve every pending incentive entry currently listed in Accounts, using whatever
+// %/₹ amount has been entered per row (falls back to 20% of profit if nothing entered).
+function bulkApproveAllIncentives(){
+  const pending=(D.svc_incentives||[]).filter(e=>e.status==='pending');
+  if(!pending.length){showSuccessToast('No pending incentive entries to approve.','var(--ink3)');return;}
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-check-double',
+    title:'Approve All Pending Incentives?',
+    msg:`This will approve all ${pending.length} pending incentive entr${pending.length>1?'ies':'y'} in one go, using the amounts entered (or 20% of profit if left blank).`,
+    btnLabel:'Approve All',btnColor:'var(--green)',
+    onOk:()=>{
+      let total=0;
+      pending.forEach(e=>{
+        const amt=parseFloat(g('inc-amt-'+e.id)?.value)||(e.profit>0?e.profit*0.2:0);
+        e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Accounts';e.approvedByRole='accounts';e.approvedAt=new Date().toISOString();
+        total+=amt;
+      });
+      saveData();renderAccIncentives();updateMgmtIncBadge();
+      showSuccessToast(`✓ ${pending.length} incentive entries approved — Total: ${fmt(total)}`,'var(--green)');
+    }
+  });
+}
+
+// Bulk-settle every currently-approved incentive entry.
+function bulkSettleAllIncentives(){
+  const approved=(D.svc_incentives||[]).filter(e=>e.status==='approved');
+  if(!approved.length){showSuccessToast('No approved incentive entries to settle.','var(--ink3)');return;}
+  const total=approved.reduce((a,e)=>a+(e.approvedAmt||0),0);
+  showConfirm({
+    icon:'ci-send',iconClass:'fa-wallet',
+    title:'Settle All Approved Incentives?',
+    msg:`This will mark all ${approved.length} approved incentive entr${approved.length>1?'ies':'y'} as paid to the engineers.`,
+    details:[{k:'Total Amount',v:fmt(total)}],
+    btnLabel:'Settle All',btnColor:'var(--acc)',
+    onOk:()=>{
+      approved.forEach(e=>{e.status='settled';e.settledBy=D.currentUser?.name||'Accounts';e.settledAt=new Date().toISOString();});
+      saveData();renderAccIncentives();
+      showSuccessToast(`✓ ${approved.length} incentive entries settled — Total: ${fmt(total)}`,'var(--acc)');
+    }
+  });
 }
 
 function rejectIncentive(id){
@@ -9308,7 +9446,7 @@ function mgmtApproveInc(id){
     details:[{k:'Entry',v:e.no},{k:'Engineer',v:e.engineerName},{k:'P/L',v:fmt(e.profit)},{k:'Incentive Amount',v:fmt(amt)}],
     btnLabel:'Approve',btnColor:'var(--green)',
     onOk:()=>{
-      e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedAt=new Date().toISOString();
+      e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Management';e.approvedByRole='management';e.approvedAt=new Date().toISOString();
       saveData();renderMgmtView();
       showSuccessToast(`✓ ${e.no} approved — Incentive: ${fmt(amt)}`,'var(--green)');
     }
@@ -9392,7 +9530,7 @@ function mgmtIncCard(e,showActions){
         ${e.suggestedPct?`<span style="color:#7c3aed;">Suggested: <strong>${e.suggestedPct}% = ${fmt(e.suggestedAmt)}</strong></span>`:''}
       </div>
       ${e.sentToMgmtBy?`<div style="font-size:.73em;color:var(--amber);margin-top:3px;"><i class="fas fa-paper-plane"></i> Sent by ${esc(e.sentToMgmtBy)}</div>`:''}
-      ${e.approvedBy?`<div style="font-size:.73em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)} — ${fmt(e.approvedAmt)}</div>`:''}
+      ${e.approvedBy?`<div style="font-size:.73em;color:var(--green);margin-top:3px;"><i class="fas fa-check-circle"></i> Approved by ${esc(e.approvedBy)}${e.approvedByRole==='accounts'?' <span style="color:var(--ink3);font-weight:600;">(Accounts — Mgmt not involved)</span>':''} — ${fmt(e.approvedAmt)}</div>`:''}
       ${e.rejectedReason?`<div style="font-size:.73em;color:var(--red);margin-top:3px;"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;">${actions}</div>
