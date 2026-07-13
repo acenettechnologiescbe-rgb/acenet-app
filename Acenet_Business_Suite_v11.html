@@ -9001,9 +9001,18 @@ function editDraftInc(id){
 
 function delDraftInc(id){
   if(!confirm('Delete this draft entry?'))return;
+  const entry=(D.svc_incentives||[]).find(x=>x.id===id);
+  // If this draft was auto-created from an Order Checklist entry, clear that order's
+  // "Added to Incentive" flag/reference too — otherwise the order is left permanently
+  // locked out of "Add to Incentive" (it thinks it's already linked to an entry that
+  // no longer exists), with no way to re-add it from the Order Checklist.
+  if(entry&&entry.ref){
+    const ord=(D.orders||[]).find(o=>o.orderNo===entry.ref&&o.incentiveRef===entry.no);
+    if(ord){ord.addedToIncentive=false;ord.incentiveRef='';}
+  }
   D.svc_incentives=(D.svc_incentives||[]).filter(x=>x.id!==id);
-  saveData();renderSvcIncentives();
-  showSuccessToast('Draft deleted','var(--red)');
+  saveData();renderSvcIncentives();renderSvcOrders();renderAccOrders();
+  showSuccessToast('Draft deleted'+(entry&&entry.ref?' — order unlocked for re-adding to Incentive':''),'var(--red)');
 }
 
 function sendAllDrafts(){
@@ -11202,11 +11211,34 @@ function repairIncentiveProfits(){
   }
 }
 
+// One-time repair for orders left orphaned by a deleted Incentive draft — before the
+// delDraftInc fix above, deleting an auto-created incentive entry never cleared the
+// order's addedToIncentive/incentiveRef, so the order was permanently stuck showing
+// "Added to Incentive" with no way to re-add it. This clears that flag on any order
+// whose referenced incentive entry no longer exists.
+function repairOrphanedIncentiveLinks(){
+  let changed=false;
+  (D.orders||[]).forEach(o=>{
+    if(o.addedToIncentive&&o.incentiveRef){
+      const stillExists=(D.svc_incentives||[]).some(e=>e.no===o.incentiveRef);
+      if(!stillExists){
+        o.addedToIncentive=false;o.incentiveRef='';
+        changed=true;
+      }
+    }
+  });
+  if(changed){
+    saveData('orphan_incentive_repair');
+    console.log('✅ Unlocked orders whose linked incentive entry had been deleted');
+  }
+}
+
 // Async startup: loadData may fetch from Firestore
 (async function init(){
   await loadData();
   repairOrderMargins();
   repairIncentiveProfits();
+  repairOrphanedIncentiveLinks();
   g('mDate').value=today();g('pDate').value=today();
   // Set default dates for service forms (elements may not exist yet, use safe access)
   const _caD=g('caDate');if(_caD)_caD.value=today();
