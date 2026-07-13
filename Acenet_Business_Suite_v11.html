@@ -8684,9 +8684,14 @@ function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType})
   // Build incentive entry from order data
   const saleAmt=items.reduce((s,it)=>s+(it.amount||0),0);
   const purchase=parseFloat(purchaseVal)||0;
+  // netSale must be the full sale amount the customer actually pays (GST included),
+  // compared against purchase as entered — the same formula used for the Order
+  // Checklist margin. Previously "exclusive" used the pre-GST base amount and
+  // "inclusive" stripped GST back out of the purchase value, both of which produced
+  // an incorrect profit versus the order's real margin.
   let gstAmt=0,netSale=saleAmt,netPurchase=purchase;
-  if(gstType==='exclusive'){gstAmt=saleAmt*GST_R;netSale=saleAmt;}
-  else if(gstType==='inclusive'){gstAmt=saleAmt-saleAmt/(1+GST_R);netSale=saleAmt/(1+GST_R);netPurchase=purchase/(1+GST_R);}
+  if(gstType==='exclusive'){gstAmt=saleAmt*GST_R;netSale=saleAmt+gstAmt;}
+  else if(gstType==='inclusive'){gstAmt=saleAmt-saleAmt/(1+GST_R);netSale=saleAmt;}
   const profit=netSale-netPurchase;
   const no=genIncNo();
   const productNames=items.map(it=>it.material||it.name||'').filter(Boolean).join(', ');
@@ -8902,8 +8907,8 @@ function saveSvcIncDraft(){
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
   let gstAmt=0,netSale=sale,netPurchase=purchase;
-  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
-  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);netPurchase=purchase/(1+GST_R);}
+  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
   const profit=netSale-netPurchase;
   const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
@@ -8925,8 +8930,8 @@ function sendSvcIncToAccounts(){
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
   const gstType2=g('incGST')?.value||'none';
   let gstAmt2=0,netSale2=sale,netPurchase2=purchase;
-  if(gstType2==='exclusive'){gstAmt2=sale*GST_R;netSale2=sale;}
-  else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale/(1+GST_R);netPurchase2=purchase/(1+GST_R);}
+  if(gstType2==='exclusive'){gstAmt2=sale*GST_R;netSale2=sale+gstAmt2;}
+  else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale;}
   const profit=netSale2-netPurchase2;
   const netProfit=profit-expAmt;
   showConfirm({
@@ -9179,8 +9184,8 @@ function saveSvcIncDraftAndAddAnother(){
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
   let gstAmt=0,netSale=sale,netPurchase=purchase;
-  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
-  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);netPurchase=purchase/(1+GST_R);}
+  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
   const profit=netSale-netPurchase;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
@@ -9360,8 +9365,8 @@ function saveIncPurchaseAcc(id){
   const sale=e.saleAmt||0;
   const gstType=e.gstType||'none';
   let gstAmt=0,netSale=sale,netPurchase=newPurchase;
-  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale;}
-  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale/(1+GST_R);netPurchase=newPurchase/(1+GST_R);}
+  if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
+  else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
   const profit=netSale-netPurchase;
   const expAmt=parseFloat(e.expAmt)||0;
   const netProfit=profit-expAmt;
@@ -11149,10 +11154,40 @@ function repairOrderMargins(){
   }
 }
 
+// Matching one-time repair for Incentive entries saved before the fix — the auto-created
+// entry (from an order), the manual entry form, and the Accounts "Edit Purchase" flow all
+// had the same pre-GST-base-vs-purchase mismatch. This recalculates profit/netSale/GST for
+// every existing entry using the corrected formula. Note: it does NOT touch approvedAmt or
+// status on entries that are already approved/settled, so past payouts are left untouched —
+// only the displayed P/L figures are corrected.
+function repairIncentiveProfits(){
+  let changed=false;
+  (D.svc_incentives||[]).forEach(e=>{
+    const sale=parseFloat(e.saleAmt)||0;
+    const purchase=parseFloat(e.purchaseAmt)||0;
+    const gstType=e.gstType||'none';
+    let gstAmt=0,netSale=sale;
+    if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
+    else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
+    const profit=netSale-purchase;
+    const expAmt=parseFloat(e.expAmt)||0;
+    const netProfit=profit-expAmt;
+    if(Math.abs((e.profit||0)-profit)>0.01){
+      e.gstAmt=gstAmt;e.netSale=netSale;e.profit=profit;e.netProfit=netProfit;
+      changed=true;
+    }
+  });
+  if(changed){
+    saveData('incentive_repair');
+    console.log('✅ Repaired stale incentive P/L values');
+  }
+}
+
 // Async startup: loadData may fetch from Firestore
 (async function init(){
   await loadData();
   repairOrderMargins();
+  repairIncentiveProfits();
   g('mDate').value=today();g('pDate').value=today();
   // Set default dates for service forms (elements may not exist yet, use safe access)
   const _caD=g('caDate');if(_caD)_caD.value=today();
@@ -11714,8 +11749,8 @@ function calcIncProfit(){
   const exp=parseFloat(g('incExpAmt')?.value)||0;
   const gType=g('incGST')?.value||'none';
   let netSale=s,gstAmt=0,netPurchase=p;
-  if(gType==='exclusive'){gstAmt=s*GST_R;netSale=s;}
-  else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s/(1+GST_R);netPurchase=p/(1+GST_R);}
+  if(gType==='exclusive'){gstAmt=s*GST_R;netSale=s+gstAmt;}
+  else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s;}
   const grossProfit=netSale-netPurchase;
   const netProfit=grossProfit-exp;
   const gstEl=g('incGSTAmt');const netEl=g('incNetSale');const dispEl=g('incProfitDisplay');const npEl=g('incNetProfit');
