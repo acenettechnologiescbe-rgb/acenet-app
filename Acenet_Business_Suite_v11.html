@@ -11125,9 +11125,34 @@ function openMgmtCallViewModal(callId){
   openMgmtDrawer('headset','Call Details: '+c.no, html);
 }
 
+// One-time repair for orders saved before the margin calculation fix.
+// Previously, margin was computed as (pre-GST base amount − purchase value), which
+// produced an incorrect figure whenever GST was applied. This recalculates every
+// existing order's margin as (GST-inclusive sale total − purchase value − conveyance
+// expense) — the same formula the live form uses — and persists the correction.
+function repairOrderMargins(){
+  let changed=false;
+  (D.orders||[]).forEach(o=>{
+    if(o.purchaseVal){
+      const expenseTotal=(o.convLegs||[]).reduce((s,r)=>s+(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
+      const saleTotal=parseFloat(o.total)||0;
+      const correctMargin=saleTotal-parseFloat(o.purchaseVal)-expenseTotal;
+      if(Math.abs((o.margin||0)-correctMargin)>0.01){
+        o.margin=correctMargin;
+        changed=true;
+      }
+    }
+  });
+  if(changed){
+    saveData('margin_repair');
+    console.log('✅ Repaired stale order margin values');
+  }
+}
+
 // Async startup: loadData may fetch from Firestore
 (async function init(){
   await loadData();
+  repairOrderMargins();
   g('mDate').value=today();g('pDate').value=today();
   // Set default dates for service forms (elements may not exist yet, use safe access)
   const _caD=g('caDate');if(_caD)_caD.value=today();
