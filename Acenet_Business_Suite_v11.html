@@ -8415,10 +8415,14 @@ function sendSvcOrderToAccounts(){
   const baseTotal=items.reduce((a,x)=>a+x.amount,0);
   const gstType=g('svOrdGST')?.value||'none';
   const total=gstType==='exclusive'?baseTotal*(1+GST_R):baseTotal;
-  const margin=baseTotal-purchaseVal;
-  const isEdit=!!editId;
   // Capture order conveyance legs
   const ordConvLegs=getOrdConvRows();
+  // Margin must match the live "Margin / Profit" field on the form: Sale Total (incl. GST)
+  // minus Purchase Value minus Conveyance expense — NOT the pre-GST baseTotal, which was
+  // causing an incorrect margin here vs. the form display.
+  const ordExpenseTotal=ordConvLegs.reduce((s,r)=>s+(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
+  const margin=total-purchaseVal-ordExpenseTotal;
+  const isEdit=!!editId;
   showConfirm({
     icon:'ci-send', iconClass:'fa-clipboard-list',
     title:isEdit?'Resend Modified Order to Accounts?':'Send Order to Accounts?',
