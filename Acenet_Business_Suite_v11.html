@@ -3928,7 +3928,7 @@ function orderAccCard(o,showConfirm){
         <tr style="background:var(--bg);"><td colspan="3" style="font-weight:700;padding:9px 12px;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td><td class="amt aa" style="padding:9px 12px;font-weight:800;">${fmt(o.total)}</td></tr>
       </tfoot>
       </table></div>
-      ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
+      ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${o.margin<0?'-':''}${fmt(o.margin)}</strong></span>`:''}</div>`:''}
       ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:#0369a1;margin-bottom:6px;"><i class="fas fa-truck" style="margin-right:5px;"></i>Delivery Challan</div><div style="display:flex;flex-wrap:wrap;gap:12px;">${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''} ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''} ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''} ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''} ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''} ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}</div>${o.dc.remarks?`<div style="color:var(--ink3);margin-top:4px;">${esc(o.dc.remarks)}</div>`:''}</div>`:''}
       ${o.convLegs?.length?`<div style="background:#f0fdfa;border:1px solid #5eead4;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:var(--svc);margin-bottom:6px;"><i class="fas fa-car-side" style="margin-right:5px;"></i>Conveyance Legs</div>${o.convLegs.map((l,i)=>`<div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;border-bottom:1px dashed #b2f5ea;font-size:.92em;"><span style="color:var(--ink3);">Leg ${i+1}:</span><span>${esc(l.from||'—')} → ${esc(l.to||'—')}</span><span>${esc(l.mode||'')}</span><span>${l.km} km × ₹${l.rate} = <strong>₹${(l.km*l.rate).toFixed(2)}</strong></span>${l.food?`<span>Food: ₹${l.food}</span>`:''}</div>`).join('')}</div>`:''}
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
@@ -8193,13 +8193,13 @@ function viewAccInc(id){
           <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
           ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
           <div style="background:#fef2f2;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Expense${e.expType?' ('+esc(e.expType)+')':''}</div><div style="font-weight:800;color:var(--red);font-size:1.25em;">${expAmt>0?fmt(expAmt):'—'}</div></div>
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
-          <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${fmt(netProfit)}</div></div>
+          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${e.profit<0?'-':''}${fmt(e.profit)}</div></div>
+          <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${netProfit<0?'-':''}${fmt(netProfit)}</div></div>
         </div>
         ${e.purchaseEditedBy?`<div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.87em;color:#6d28d9;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by <strong>${esc(e.purchaseEditedBy)}</strong>${e.purchaseEditedAt?' on '+e.purchaseEditedAt.slice(0,10):''} — figures above already reflect this.</div>`:''}
         <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
-          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}</div>
+          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}${netProfit<0?' <span style="font-size:.7em;color:var(--red);font-weight:600;">(no incentive — this entry is a loss)</span>':''}</div>
         </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
         ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
@@ -8346,12 +8346,21 @@ function editSvcOrder(id){
 
 function calcOrdMargin(){
   const purchaseVal=parseFloat(g('svOrdPurchaseVal')?.value)||0;
-  const saleTotal=parseFloat((g('svOrdTotal')?.textContent||'0').replace(/[^0-9.]/g,''))||0;
+  // Margin/profit must be based on the pre-GST sale amount. GST collected from the
+  // customer is a tax the company owes to the government, not revenue — including it
+  // here would overstate the margin. Recompute the base (pre-GST) sale directly from
+  // the item rows — svOrdTotal is GST-inclusive and is only for display of what the
+  // customer pays, so it must never feed the margin calculation.
+  let saleBase=0;
+  document.querySelectorAll('#svOrdItemsBody tr').forEach(r=>{
+    const q=parseFloat(r.querySelector('.soq')?.value)||0,rt=parseFloat(r.querySelector('.sor')?.value)||0;
+    saleBase+=q*rt;
+  });
   // Conveyance (engineer's travel/food/other) is a company expense — it reduces profit,
   // it is never added to the customer-facing sale amount.
   const convRows=typeof getOrdConvRows==='function'?getOrdConvRows():[];
   const expenseTotal=convRows.reduce((s,r)=>s+(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
-  const margin=saleTotal-purchaseVal-expenseTotal;
+  const margin=saleBase-purchaseVal-expenseTotal;
   const el=g('svOrdMargin');
   if(el){
     el.value=(margin>=0?'+':'')+fmt(margin);
@@ -8359,7 +8368,7 @@ function calcOrdMargin(){
   }
   const bd=g('svOrdMarginBreakdown');
   if(bd){
-    bd.innerHTML=`Sale: <strong>${fmt(saleTotal)}</strong> &minus; Purchase: <strong>${fmt(purchaseVal)}</strong>`+
+    bd.innerHTML=`Sale (excl. GST): <strong>${fmt(saleBase)}</strong> &minus; Purchase: <strong>${fmt(purchaseVal)}</strong>`+
       (expenseTotal>0?` &minus; Expense (Conveyance): <strong>${fmt(expenseTotal)}</strong>`:'')+
       ` = Profit: <strong style="color:${margin>=0?'var(--green)':'var(--red)'};">${fmt(margin)}</strong>`;
   }
@@ -8417,11 +8426,12 @@ function sendSvcOrderToAccounts(){
   const total=gstType==='exclusive'?baseTotal*(1+GST_R):baseTotal;
   // Capture order conveyance legs
   const ordConvLegs=getOrdConvRows();
-  // Margin must match the live "Margin / Profit" field on the form: Sale Total (incl. GST)
-  // minus Purchase Value minus Conveyance expense — NOT the pre-GST baseTotal, which was
-  // causing an incorrect margin here vs. the form display.
+  // Margin must be based on the pre-GST baseTotal, matching the live "Margin / Profit"
+  // field on the form. GST collected from the customer is owed to the government, not
+  // company revenue, so it must never be added into the sale figure used for margin —
+  // doing so overstates profit (and any incentive calculated as a % of it).
   const ordExpenseTotal=ordConvLegs.reduce((s,r)=>s+(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
-  const margin=total-purchaseVal-ordExpenseTotal;
+  const margin=baseTotal-purchaseVal-ordExpenseTotal;
   const isEdit=!!editId;
   showConfirm({
     icon:'ci-send', iconClass:'fa-clipboard-list',
@@ -8684,15 +8694,15 @@ function autoCreateIncFromOrder({ordNo,cust,items,gstType,purchaseVal,callType})
   // Build incentive entry from order data
   const saleAmt=items.reduce((s,it)=>s+(it.amount||0),0);
   const purchase=parseFloat(purchaseVal)||0;
-  // netSale must be the full sale amount the customer actually pays (GST included),
-  // compared against purchase as entered — the same formula used for the Order
-  // Checklist margin. Previously "exclusive" used the pre-GST base amount and
-  // "inclusive" stripped GST back out of the purchase value, both of which produced
-  // an incorrect profit versus the order's real margin.
+  // netSale/gstAmt are informational only — the total the customer actually pays
+  // including tax. GST is money owed to the government, not company revenue, so
+  // profit must be computed from the pre-GST sale amount minus purchase, matching
+  // the Order Checklist margin. (Adding GST into the profit figure was the bug that
+  // inflated Net Profit and the 20%-of-Net-Profit incentive estimate.)
   let gstAmt=0,netSale=saleAmt,netPurchase=purchase;
   if(gstType==='exclusive'){gstAmt=saleAmt*GST_R;netSale=saleAmt+gstAmt;}
   else if(gstType==='inclusive'){gstAmt=saleAmt-saleAmt/(1+GST_R);netSale=saleAmt;}
-  const profit=netSale-netPurchase;
+  const profit=saleAmt-netPurchase;
   const no=genIncNo();
   const productNames=items.map(it=>it.material||it.name||'').filter(Boolean).join(', ');
   const obj={
@@ -8752,7 +8762,7 @@ function renderSvcOrders(){
         ${o.returnedForEdit?`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.85em;color:#991b1b;"><i class="fas fa-reply" style="margin-right:5px;"></i>Returned by Accounts${o.returnedBy?' ('+esc(o.returnedBy)+')':''}${o.returnedAt?' on '+new Date(o.returnedAt).toLocaleDateString('en-IN'):''}${o.returnedNote?': "'+esc(o.returnedNote)+'"':' — no note given.'} Please correct and click Edit above to resend.</div>`:''}
         <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Purchase (₹)</th><th>Amount</th></tr></thead>
         <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
-        ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${fmt(o.margin)}</strong></span>`:''}</div>`:''}
+        ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${o.margin<0?'-':''}${fmt(o.margin)}</strong></span>`:''}</div>`:''}
         ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:#0369a1;margin-bottom:6px;"><i class="fas fa-truck" style="margin-right:5px;"></i>Delivery Challan</div><div style="display:flex;flex-wrap:wrap;gap:12px;">${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''} ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''} ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''} ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''} ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''} ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}</div>${o.dc.remarks?`<div style="color:var(--ink3);margin-top:4px;">${esc(o.dc.remarks)}</div>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
@@ -8906,10 +8916,12 @@ function saveSvcIncDraft(){
   const expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
+  // gstAmt/netSale are informational (what the customer pays incl. tax) — profit is
+  // computed from the pre-GST sale amount so GST collected isn't counted as margin.
   let gstAmt=0,netSale=sale,netPurchase=purchase;
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
   else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
-  const profit=netSale-netPurchase;
+  const profit=sale-netPurchase;
   const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
@@ -8929,10 +8941,12 @@ function sendSvcIncToAccounts(){
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
   const gstType2=g('incGST')?.value||'none';
+  // gstAmt2/netSale2 are informational only (customer-facing amount incl. tax) —
+  // profit is computed off the pre-GST sale amount.
   let gstAmt2=0,netSale2=sale,netPurchase2=purchase;
   if(gstType2==='exclusive'){gstAmt2=sale*GST_R;netSale2=sale+gstAmt2;}
   else if(gstType2==='inclusive'){gstAmt2=sale-sale/(1+GST_R);netSale2=sale;}
-  const profit=netSale2-netPurchase2;
+  const profit=sale-netPurchase2;
   const netProfit=profit-expAmt;
   showConfirm({
     icon:'ci-send',iconClass:'fa-gift',
@@ -9155,13 +9169,13 @@ function viewSvcInc(id){
           <div style="background:#fffbeb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Purchase Amount</div><div style="font-weight:800;color:var(--amber);font-size:1.25em;">${fmt(e.purchaseAmt)}</div></div>
           ${e.gstAmt?`<div style="background:#f0fdfa;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">GST @18%</div><div style="font-weight:800;color:#0e7490;font-size:1.25em;">${fmt(e.gstAmt)}</div></div>`:''}
           <div style="background:#fef2f2;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Expense${e.expType?' ('+esc(e.expType)+')':''}</div><div style="font-weight:800;color:var(--red);font-size:1.25em;">${expAmt>0?fmt(expAmt):'—'}</div></div>
-          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${fmt(e.profit)}</div></div>
-          <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${fmt(netProfit)}</div></div>
+          <div style="background:${e.profit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Profit / Loss</div><div style="font-weight:800;color:${profColor};font-size:1.25em;">${e.profit<0?'-':''}${fmt(e.profit)}</div></div>
+          <div style="background:${netProfit>=0?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:14px;text-align:center;"><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:5px;">Net Profit</div><div style="font-weight:800;color:${netProfColor};font-size:1.25em;">${netProfit<0?'-':''}${fmt(netProfit)}</div></div>
         </div>
         ${e.purchaseEditedBy?`<div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:.87em;color:#6d28d9;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by <strong>${esc(e.purchaseEditedBy)}</strong>${e.purchaseEditedAt?' on '+e.purchaseEditedAt.slice(0,10):''} — figures above already reflect this.</div>`:''}
         <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
           <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
-          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}</div>
+          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}${netProfit<0?' <span style="font-size:.7em;color:var(--red);font-weight:600;">(no incentive — this entry is a loss)</span>':''}</div>
         </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
         ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
@@ -9183,10 +9197,11 @@ function saveSvcIncDraftAndAddAnother(){
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
+  // gstAmt/netSale are informational only — profit is computed off the pre-GST sale amount.
   let gstAmt=0,netSale=sale,netPurchase=purchase;
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
   else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
-  const profit=netSale-netPurchase;
+  const profit=sale-netPurchase;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
   const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit:profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
@@ -9364,10 +9379,11 @@ function saveIncPurchaseAcc(id){
   if(isNaN(newPurchase)||newPurchase<0){alert('Enter a valid purchase amount');return;}
   const sale=e.saleAmt||0;
   const gstType=e.gstType||'none';
+  // gstAmt/netSale are informational only — profit is computed off the pre-GST sale amount.
   let gstAmt=0,netSale=sale,netPurchase=newPurchase;
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
   else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
-  const profit=netSale-netPurchase;
+  const profit=sale-netPurchase;
   const expAmt=parseFloat(e.expAmt)||0;
   const netProfit=profit-expAmt;
   e.purchaseAmt=newPurchase;e.gstAmt=gstAmt;e.netSale=netSale;e.profit=profit;e.netProfit=netProfit;
@@ -11130,18 +11146,18 @@ function openMgmtCallViewModal(callId){
   openMgmtDrawer('headset','Call Details: '+c.no, html);
 }
 
-// One-time repair for orders saved before the margin calculation fix.
-// Previously, margin was computed as (pre-GST base amount − purchase value), which
-// produced an incorrect figure whenever GST was applied. This recalculates every
-// existing order's margin as (GST-inclusive sale total − purchase value − conveyance
-// expense) — the same formula the live form uses — and persists the correction.
+// One-time repair for orders saved with the GST-inflated margin bug.
+// GST collected from the customer is owed to the government, not company revenue,
+// so it must never be counted as profit. This recalculates every existing order's
+// margin as (pre-GST base total − purchase value − conveyance expense) — matching
+// the corrected live form — and persists the correction.
 function repairOrderMargins(){
   let changed=false;
   (D.orders||[]).forEach(o=>{
     if(o.purchaseVal){
       const expenseTotal=(o.convLegs||[]).reduce((s,r)=>s+(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0),0);
-      const saleTotal=parseFloat(o.total)||0;
-      const correctMargin=saleTotal-parseFloat(o.purchaseVal)-expenseTotal;
+      const saleBase=parseFloat(o.baseTotal!=null?o.baseTotal:o.total)||0;
+      const correctMargin=saleBase-parseFloat(o.purchaseVal)-expenseTotal;
       if(Math.abs((o.margin||0)-correctMargin)>0.01){
         o.margin=correctMargin;
         changed=true;
@@ -11154,12 +11170,15 @@ function repairOrderMargins(){
   }
 }
 
-// Matching one-time repair for Incentive entries saved before the fix — the auto-created
-// entry (from an order), the manual entry form, and the Accounts "Edit Purchase" flow all
-// had the same pre-GST-base-vs-purchase mismatch. This recalculates profit/netSale/GST for
-// every existing entry using the corrected formula. Note: it does NOT touch approvedAmt or
-// status on entries that are already approved/settled, so past payouts are left untouched —
-// only the displayed P/L figures are corrected.
+// Matching one-time repair for Incentive entries saved with the GST-inflated profit bug —
+// the auto-created entry (from an order), the manual entry form, and the Accounts "Edit
+// Purchase" flow all mistakenly added GST into the sale amount before subtracting purchase,
+// counting tax collected on behalf of the government as if it were company profit. This
+// recalculates profit/netProfit for every existing entry as (pre-GST sale − purchase −
+// expense); gstAmt/netSale are kept only as informational fields (what the customer pays
+// incl. tax). Note: it does NOT touch approvedAmt or status on entries that are already
+// approved/settled, so past payouts are left untouched — only the displayed P/L figures
+// (and any still-draft/pending incentive estimates) are corrected.
 function repairIncentiveProfits(){
   let changed=false;
   (D.svc_incentives||[]).forEach(e=>{
@@ -11169,7 +11188,7 @@ function repairIncentiveProfits(){
     let gstAmt=0,netSale=sale;
     if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
     else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
-    const profit=netSale-purchase;
+    const profit=sale-purchase;
     const expAmt=parseFloat(e.expAmt)||0;
     const netProfit=profit-expAmt;
     if(Math.abs((e.profit||0)-profit)>0.01){
@@ -11748,10 +11767,13 @@ function calcIncProfit(){
   const p=parseFloat(g('incPurchaseAmt')?.value)||0;
   const exp=parseFloat(g('incExpAmt')?.value)||0;
   const gType=g('incGST')?.value||'none';
+  // netSale/gstAmt are informational only (what the customer pays incl. tax) —
+  // gross profit is computed off the pre-GST sale amount so collected GST (owed
+  // to the government, not company revenue) never inflates the profit figure.
   let netSale=s,gstAmt=0,netPurchase=p;
   if(gType==='exclusive'){gstAmt=s*GST_R;netSale=s+gstAmt;}
   else if(gType==='inclusive'){gstAmt=s-s/(1+GST_R);netSale=s;}
-  const grossProfit=netSale-netPurchase;
+  const grossProfit=s-netPurchase;
   const netProfit=grossProfit-exp;
   const gstEl=g('incGSTAmt');const netEl=g('incNetSale');const dispEl=g('incProfitDisplay');const npEl=g('incNetProfit');
   if(gstEl) gstEl.value=gstAmt>0?fmt(gstAmt):'₹0.00';
