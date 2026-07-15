@@ -2923,6 +2923,42 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<!-- ════ QUOTATION / PURCHASE ORDER GENERATOR MODAL ════ -->
+<div class="modal-overlay" id="docGenModal" onclick="if(event.target===this)closeModal('docGenModal')">
+  <div class="modal" style="width:min(640px,96vw);max-height:90vh;overflow-y:auto;">
+    <div class="modal-title" style="background:linear-gradient(135deg,#0c4a6e,#0e7490);color:#fff;border-radius:12px 12px 0 0;padding:14px 18px;">
+      <span><i class="fas fa-file-invoice" style="margin-right:7px;"></i><span id="docGenTitleTxt">Generate Quotation</span></span>
+      <button class="modal-close" style="color:#fff;opacity:.8;" onclick="closeModal('docGenModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="padding:16px 18px;">
+      <input type="hidden" id="docGenOrderId"><input type="hidden" id="docGenType">
+      <div class="g2" style="margin-bottom:10px;">
+        <div class="fg"><label id="docGenRefLbl">Ref No.</label><input type="text" id="docGenRef"></div>
+        <div class="fg"><label>Date</label><input type="date" id="docGenDate"></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px;"><label id="docGenPartyLbl">To (Customer)</label><input type="text" id="docGenPartyName"></div>
+      <div class="fg" style="margin-bottom:10px;"><label>Address</label><textarea id="docGenAddress" rows="2" placeholder="Street, Area, City, Pincode…" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea></div>
+      <div class="g2" style="margin-bottom:10px;">
+        <div class="fg"><label id="docGenTermsLbl1">Payment Terms</label><input type="text" id="docGenTerms1"></div>
+        <div class="fg"><label id="docGenTermsLbl2">Delivery / Validity</label><input type="text" id="docGenTerms2"></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px;"><label>Price Terms</label>
+        <select id="docGenGstNote" style="width:100%;"><option value="Inclusive of GST 18%">Inclusive of GST 18%</option><option value="Exclusive of GST — 18% extra">Exclusive of GST — 18% extra</option><option value="No GST applicable">No GST applicable</option></select>
+      </div>
+      <div class="g2" style="margin-bottom:12px;">
+        <div class="fg"><label>Signed By</label><input type="text" id="docGenSignName" value="B. Krishnan"></div>
+        <div class="fg"><label>Contact No.</label><input type="text" id="docGenSignPhone" value="9655386896"></div>
+      </div>
+      <div style="font-size:.7em;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3);margin-bottom:6px;">Items (from order — edit the order itself to change these)</div>
+      <div id="docGenItemsPreview" style="font-size:.82em;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:14px;max-height:160px;overflow-y:auto;"></div>
+      <div class="btn-row">
+        <button class="btn" style="background:#0e7490;color:#fff;" onclick="generateDocPrint()"><i class="fas fa-print"></i> Generate &amp; Print / Save PDF</button>
+        <button class="btn btn-outline" onclick="closeModal('docGenModal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <datalist id="dl-mkt-cust2"></datalist>
 <datalist id="dl-ord-cust2"></datalist>
 
@@ -3330,6 +3366,7 @@ async function loadData(){
   D.stock_items       = J(localStorage.getItem('ac_stock_items'))  || [];
   D.stock_txns        = J(localStorage.getItem('ac_stock_txns'))   || [];
   D.hsn_learned_map   = J(localStorage.getItem('ac_hsn_map'))      || {};
+  D.doc_seq           = J(localStorage.getItem('ac_doc_seq'))      || {quotation:0,po:0};
 
   // Then try to pull the latest snapshot from Firestore
   if(_fbReady && _db){
@@ -3340,7 +3377,7 @@ async function loadData(){
         const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                       'ac_invoices','ac_payments','ac_advances','ac_customers',
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map'];
+                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','doc_seq'];
         keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
         console.log('✅ Data loaded from Firestore');
       } else {
@@ -3378,6 +3415,7 @@ async function saveData(notifyType){
   localStorage.setItem('ac_stock_items',JSON.stringify(D.stock_items||[]));
   localStorage.setItem('ac_stock_txns', JSON.stringify(D.stock_txns||[]));
   localStorage.setItem('ac_hsn_map',    JSON.stringify(D.hsn_learned_map||{}));
+  localStorage.setItem('ac_doc_seq',    JSON.stringify(D.doc_seq||{quotation:0,po:0}));
 
   // Then write the full state to Firestore so all users get the update
   if(_fbReady && _db){
@@ -3404,6 +3442,7 @@ async function saveData(notifyType){
         hsn_learned_map:    D.hsn_learned_map || {},
         salary_advances:    D.salary_advances || [],
         fy_archives:        D.fy_archives || [],
+        doc_seq:            D.doc_seq || {quotation:0,po:0},
         _lastNotify:        notifyType || 'sync',
         _savedAt:           new Date().toISOString(),
         _savedBy:           D.currentUser?.name || 'system'
@@ -5644,7 +5683,7 @@ function getFY(){
   const d=new Date(),m=d.getMonth()+1,y=d.getFullYear();
   return m>=4?`${y}-${String(y+1).slice(2)}`:`${y-1}-${String(y).slice(2)}`;
 }
-function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports','hsn_learned_map'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
+function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports','hsn_learned_map','doc_seq'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
 function exportPLCSV(){let csv='Date,BillNo,Customer,Material,Purchase,Sales,Expense,Profit\n';D.pl_ledger.forEach(e=>{csv+=`${e.d},${e.billNo||''},${e.c},${e.m},${e.pb.toFixed(2)},${e.sb.toFixed(2)},${(e.expense||0).toFixed(2)},${e.profit.toFixed(2)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_pl_${today()}.csv`;a.click();}
 function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outstanding,Status\n';D.ac_invoices.forEach(i=>{csv+=`${i.no},${i.custName},${i.date},${i.dueDate||''},${i.total.toFixed(2)},${getPaid(i.id).toFixed(2)},${getOut(i.id).toFixed(2)},${getSt(i.id)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_acc_${today()}.csv`;a.click();}
 
@@ -9001,6 +9040,8 @@ function renderSvcOrders(){
         ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:4px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
           <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
+          <button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:#0e7490;color:#0e7490;" onclick="openDocGenModal('${o.id}','quotation')"><i class="fas fa-file-invoice" style="margin-right:4px;"></i>Quotation</button>
+          ${o.supplier?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:#c2410c;color:#c2410c;" onclick="openDocGenModal('${o.id}','po')"><i class="fas fa-truck-ramp-box" style="margin-right:4px;"></i>Purchase Order</button>`:''}
           ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
           ${o.dcDispatched?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:var(--amber);color:var(--amber);" onclick="undispatchOrder('${o.id}')"><i class="fas fa-rotate-left" style="margin-right:4px;"></i>Undo Dispatch / Re-link Stock Out</button>`:''}
           ${o.addedToIncentive?`<span style="font-size:.77em;padding:5px 12px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;"><i class="fas fa-gift" style="margin-right:4px;"></i>Added to Incentive (${esc(o.incentiveRef||'')})</span>`:`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:#c4b5fd;color:#7c3aed;" onclick="addOrderToIncentiveManually('${o.id}')"><i class="fas fa-gift" style="margin-right:4px;"></i>Add to Incentive</button>`}
@@ -9015,6 +9056,210 @@ function renderSvcOrders(){
     const body=g('soc-body-'+id.replace(/^soc-/,''));
     if(body)body.style.display='block';
   });
+}
+
+// ════════════════════════════════════════════════════════════════
+// QUOTATION / PURCHASE ORDER GENERATOR
+// ════════════════════════════════════════════════════════════════
+const ACENET_CO={name:'ACENET TECHNOLOGIES INDIA PVT. LTD.',addr:'1084/4, Trichy Road, Sungam, COIMBATORE – 641 018.',tel:'2303646 (6line)',email:'acenetservice@gmail.com',gstin:'33AACCA4604K1Z0'};
+
+function genDocRefNo(type){
+  if(!D.doc_seq) D.doc_seq={quotation:0,po:0};
+  D.doc_seq[type]=(D.doc_seq[type]||0)+1;
+  const yy=new Date().getFullYear();
+  const prefix=type==='quotation'?'QTN':'PO';
+  return `ACN/${prefix}/${yy}/`+String(D.doc_seq[type]).padStart(4,'0');
+}
+
+function openDocGenModal(orderId,type){
+  const o=(D.orders||[]).find(x=>x.id===orderId);
+  if(!o){alert('Order not found');return;}
+  if(!o.items||!o.items.length){alert('This order has no items to generate a document from.');return;}
+  if(type==='po'&&!(o.supplier||'').trim()){alert('Add a Supplier Name to this order first (Edit & Resend) to generate a Purchase Order.');return;}
+  g('docGenOrderId').value=orderId;
+  g('docGenType').value=type;
+  g('docGenDate').value=today();
+  g('docGenRef').value=genDocRefNo(type);
+  if(type==='quotation'){
+    g('docGenTitleTxt').textContent='Generate Quotation';
+    g('docGenRefLbl').textContent='Quotation Ref No.';
+    g('docGenPartyLbl').textContent='To (Customer)';
+    g('docGenPartyName').value=o.customer||'';
+    const cust=(D.ac_customers||[]).find(c=>c.name===o.customer);
+    g('docGenAddress').value=cust?.address||'';
+    g('docGenTermsLbl1').textContent='Payment Terms';
+    g('docGenTerms1').value='100% in advance';
+    g('docGenTermsLbl2').textContent='Quote Validity';
+    g('docGenTerms2').value='Valid 2 Days';
+    g('docGenGstNote').value=o.gstType==='inclusive'?'Inclusive of GST 18%':o.gstType==='none'?'No GST applicable':'Exclusive of GST — 18% extra';
+  } else {
+    g('docGenTitleTxt').textContent='Generate Purchase Order';
+    g('docGenRefLbl').textContent='PO Ref No.';
+    g('docGenPartyLbl').textContent='To (Supplier)';
+    g('docGenPartyName').value=o.supplier||'';
+    g('docGenAddress').value='';
+    g('docGenTermsLbl1').textContent='Payment Terms';
+    g('docGenTerms1').value='Advance payment 100%';
+    g('docGenTermsLbl2').textContent='Delivery';
+    g('docGenTerms2').value='Immediate';
+    g('docGenGstNote').value='Inclusive of GST 18%';
+  }
+  g('docGenSignName').value=D.currentUser?.name||'B. Krishnan';
+  g('docGenSignPhone').value='9655386896';
+  const previewCalc=type==='quotation'
+    ?o.items.map((it,i)=>{const c=_docItemCalc(it,o.gstType);return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #e2e8f0;"><span>${i+1}. ${esc(it.material)} × ${c.qty}</span><span>₹${c.amount.toFixed(2)}</span></div>`;}).join('')
+    :o.items.map((it,i)=>{const c=_poItemCalc(it);return `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed #e2e8f0;"><span>${i+1}. ${esc(it.material)} × ${c.qty}</span><span>₹${c.amt.toFixed(2)}</span></div>`;}).join('');
+  const grandCalc=type==='quotation'?o.items.reduce((s,it)=>s+_docItemCalc(it,o.gstType).amount,0):o.items.reduce((s,it)=>s+_poItemCalc(it).amt,0);
+  g('docGenItemsPreview').innerHTML=previewCalc+`<div style="display:flex;justify-content:space-between;padding:6px 0 0;font-weight:700;">Total<span>₹${grandCalc.toFixed(2)}</span></div>`;
+  openModal('docGenModal');
+}
+
+function _docItemCalc(it,gstType){
+  const qty=parseFloat(it.qty)||0,rate=parseFloat(it.rate)||0;
+  let value,gstAmt,amount;
+  if(gstType==='inclusive'){amount=qty*rate;value=amount/(1+GST_R);gstAmt=amount-value;}
+  else if(gstType==='exclusive'){value=qty*rate;gstAmt=value*GST_R;amount=value+gstAmt;}
+  else{value=qty*rate;gstAmt=0;amount=value;}
+  return {qty,rate,value,gstAmt,amount};
+}
+function _poItemCalc(it){
+  const qty=parseFloat(it.qty)||1;
+  const pv=parseFloat(it.purchaseVal)||0;
+  const rate=pv>0?pv/qty:(parseFloat(it.rate)||0);
+  const amt=pv>0?pv:rate*qty;
+  return {qty,rate,amt};
+}
+function _docDateFmt(iso){if(!iso)return'';const d=new Date(iso);return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();}
+
+function buildQuotationHtml(o,meta){
+  const rows=o.items.map((it,i)=>{
+    const c=_docItemCalc(it,o.gstType);
+    return `<tr><td style="text-align:center;">${i+1}</td><td>${esc(it.material)}${it.hsn?`<br><span style="font-size:.85em;color:#64748b;">HSN: ${esc(it.hsn)}</span>`:''}</td><td style="text-align:center;">${c.qty}</td><td style="text-align:right;">${c.rate.toFixed(2)}</td><td style="text-align:right;">${c.value.toFixed(2)}</td><td style="text-align:right;">${c.gstAmt.toFixed(2)}</td><td style="text-align:right;font-weight:700;">${c.amount.toFixed(2)}</td></tr>`;
+  }).join('');
+  const grand=o.items.reduce((s,it)=>s+_docItemCalc(it,o.gstType).amount,0);
+  const now=_docDateFmt(meta.date);
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Quotation — ${esc(meta.ref)}</title>
+  <style>
+    @page{size:A4;margin:14mm 16mm;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;margin:0;padding:0;font-size:12.5px;}
+    .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0e7490;padding-bottom:8px;margin-bottom:14px;}
+    .co-name{font-size:19px;font-weight:800;color:#0c4a6e;font-family:Georgia,serif;}
+    .co-sub{font-size:10.5px;color:#334155;margin-top:3px;line-height:1.5;}
+    .doc-badge{background:#0e7490;color:#fff;padding:6px 16px;border-radius:6px;font-weight:700;font-size:13px;letter-spacing:1px;white-space:nowrap;}
+    .meta-row{display:flex;justify-content:space-between;margin-bottom:14px;font-size:12px;gap:14px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:14px;}
+    th{background:#0e7490;color:#fff;font-size:11px;padding:7px 8px;text-align:left;}
+    td{border:1px solid #e2e8f0;padding:6px 8px;font-size:11.5px;}
+    .tot-row td{font-weight:800;background:#f0f9ff;}
+    .terms{font-size:11.5px;line-height:1.9;margin-top:10px;}
+    .terms b{color:#0c4a6e;}
+    .sign{margin-top:34px;font-size:12px;}
+    @media print{body{padding:0;}}
+  </style></head><body>
+  <div class="hdr">
+    <div>
+      <div class="co-name">${esc(ACENET_CO.name)}</div>
+      <div class="co-sub">${esc(ACENET_CO.addr)}<br>Tel/Fax: ${esc(ACENET_CO.tel)} &nbsp;E-mail: ${esc(ACENET_CO.email)}<br>GSTIN: ${esc(ACENET_CO.gstin)}</div>
+    </div>
+    <div class="doc-badge">QUOTATION</div>
+  </div>
+  <div class="meta-row">
+    <div><b>To,</b><br><strong>${esc(meta.party)}</strong><br>${esc(meta.address).replace(/\n/g,'<br>')}</div>
+    <div style="text-align:right;white-space:nowrap;">Date: <strong>${now}</strong><br>Ref: <strong>${esc(meta.ref)}</strong></div>
+  </div>
+  <p style="font-size:12px;">Dear Sir,<br>We are pleased to submit our competitive offer as detailed below.</p>
+  <table><thead><tr><th style="width:32px;">S.No</th><th>Description</th><th style="width:45px;">Qty</th><th style="width:80px;">Unit Price</th><th style="width:80px;">Value</th><th style="width:70px;">GST(18%)</th><th style="width:85px;">Amount</th></tr></thead>
+  <tbody>${rows}<tr class="tot-row"><td colspan="6" style="text-align:right;">Grand Total</td><td style="text-align:right;">₹${grand.toFixed(2)}</td></tr></tbody></table>
+  <div class="terms">
+    <b>Terms and Conditions:</b><br>
+    Price: ${esc(meta.gstNote)}<br>
+    Payment: ${esc(meta.terms1)}<br>
+    Quote Validity: ${esc(meta.terms2)}<br>
+    Delivery: As mutually agreed upon confirmation of order.
+  </div>
+  <p style="font-size:12px;margin-top:16px;">Thanking you and looking forward to receiving your valuable order.</p>
+  <div class="sign">Sincerely,<br>For <strong>${esc(ACENET_CO.name)}</strong>,<br><br><br><strong>${esc(meta.signName)}</strong><br>${esc(meta.signPhone)}</div>
+  <script>window.onload=function(){window.focus();window.print();}<\/script>
+  </body></html>`;
+}
+
+function buildPurchaseOrderHtml(o,meta){
+  const lines=o.items.map(it=>_poItemCalc(it));
+  const grand=lines.reduce((s,l)=>s+l.amt,0);
+  const supplyBlock=o.items.map((it,i)=>{
+    const c=lines[i];
+    return `${esc(it.material)}${it.hsn?` (HSN: ${esc(it.hsn)})`:''} — ${c.qty} No's @ ₹${c.rate.toFixed(2)} = ₹${c.amt.toFixed(2)}`;
+  }).join('<br>');
+  const now=_docDateFmt(meta.date);
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Purchase Order — ${esc(meta.ref)}</title>
+  <style>
+    @page{size:A4;margin:14mm 16mm;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;margin:0;padding:0;font-size:12.5px;}
+    .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c2410c;padding-bottom:8px;margin-bottom:14px;}
+    .co-name{font-size:19px;font-weight:800;color:#7c2d12;font-family:Georgia,serif;}
+    .co-sub{font-size:10.5px;color:#334155;margin-top:3px;line-height:1.5;}
+    .doc-badge{background:#c2410c;color:#fff;padding:6px 16px;border-radius:6px;font-weight:700;font-size:13px;letter-spacing:1px;white-space:nowrap;}
+    .meta-row{display:flex;justify-content:space-between;margin-bottom:14px;font-size:12px;gap:14px;}
+    .supply-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:12px;line-height:1.9;}
+    .terms{font-size:11.5px;line-height:2;margin-top:10px;}
+    .terms b{color:#7c2d12;}
+    .grand{margin-top:6px;font-weight:800;font-size:13px;color:#7c2d12;}
+    .sign{margin-top:34px;font-size:12px;}
+    @media print{body{padding:0;}}
+  </style></head><body>
+  <div class="hdr">
+    <div>
+      <div class="co-name">${esc(ACENET_CO.name)}</div>
+      <div class="co-sub">${esc(ACENET_CO.addr)}<br>Tel/Fax: ${esc(ACENET_CO.tel)} &nbsp;E-mail: ${esc(ACENET_CO.email)}<br>GSTIN: ${esc(ACENET_CO.gstin)}</div>
+    </div>
+    <div class="doc-badge">PURCHASE ORDER</div>
+  </div>
+  <div class="meta-row">
+    <div><b>M/s.</b> <strong>${esc(meta.party)}</strong><br>${esc(meta.address).replace(/\n/g,'<br>')}</div>
+    <div style="text-align:right;white-space:nowrap;">Date: <strong>${now}</strong><br>PO No: <strong>${esc(meta.ref)}</strong></div>
+  </div>
+  <p style="font-size:12px;">Dear Sir,<br>This has reference to the discussions had with you. In line with the same we have pleasure in placing our order for the following:</p>
+  <div class="supply-box"><b>Supply of:</b><br><br>${supplyBlock}</div>
+  <div class="grand">Order Value: ₹${grand.toFixed(2)}</div>
+  <div class="terms">
+    <b>Terms and Conditions:</b><br>
+    01. Price &nbsp; : ${esc(meta.gstNote)}<br>
+    02. Delivery &nbsp; : ${esc(meta.terms2)}<br>
+    03. Delivery at &nbsp; : ${esc(ACENET_CO.name)}, ${esc(ACENET_CO.addr)}<br>
+    04. Payment &nbsp; : ${esc(meta.terms1)}
+  </div>
+  <div class="sign">Sincerely,<br>For <strong>${esc(ACENET_CO.name)}</strong>,<br><br><br><strong>${esc(meta.signName)}</strong><br>${esc(meta.signPhone)}</div>
+  <script>window.onload=function(){window.focus();window.print();}<\/script>
+  </body></html>`;
+}
+
+function generateDocPrint(){
+  const orderId=g('docGenOrderId').value,type=g('docGenType').value;
+  const o=(D.orders||[]).find(x=>x.id===orderId);
+  if(!o){alert('Order not found');return;}
+  const meta={
+    ref:g('docGenRef').value.trim(),
+    date:g('docGenDate').value,
+    party:g('docGenPartyName').value.trim(),
+    address:g('docGenAddress').value.trim(),
+    terms1:g('docGenTerms1').value.trim(),
+    terms2:g('docGenTerms2').value.trim(),
+    gstNote:g('docGenGstNote').value,
+    signName:g('docGenSignName').value.trim()||'B. Krishnan',
+    signPhone:g('docGenSignPhone').value.trim()
+  };
+  if(!meta.party){alert('Please enter the party name.');return;}
+  const html=type==='quotation'?buildQuotationHtml(o,meta):buildPurchaseOrderHtml(o,meta);
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(!w)alert('Pop-up blocked. Please allow pop-ups.');
+  else setTimeout(()=>URL.revokeObjectURL(url),30000);
+  closeModal('docGenModal');
+  saveData();
+  showSuccessToast('✓ '+(type==='quotation'?'Quotation':'Purchase Order')+' '+meta.ref+' generated!','#0e7490');
 }
 
 function addOrderToIncentiveManually(ordId){
