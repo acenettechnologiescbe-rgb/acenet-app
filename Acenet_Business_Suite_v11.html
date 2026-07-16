@@ -9078,7 +9078,7 @@ function genDocRefNo(type){
   D.doc_seq[type]=(D.doc_seq[type]||0)+1;
   const yy=new Date().getFullYear();
   const prefix=type==='quotation'?'QTN':'PO';
-  return `ACN/${prefix}/${yy}/`+String(D.doc_seq[type]).padStart(4,'0');
+  return `ACNT/${prefix}/${yy}/`+String(D.doc_seq[type]).padStart(4,'0');
 }
 
 function openDocGenModal(type){
@@ -9138,15 +9138,35 @@ function addDocGenItem(data){
   docGenRC++;const n=docGenRC;
   const tr=document.createElement('tr');tr.id='dgi-'+n;
   tr.innerHTML=`<td style="color:var(--ink4);font-weight:700;font-size:.77em;">${n}</td>
-    <td><input type="text" class="dgm" placeholder="Item / description…" oninput="recalcDocGenItems()" style="min-width:160px;"></td>
-    <td><input type="text" class="dghsn" placeholder="Optional" style="width:90px;"></td>
+    <td><input type="text" class="dgm" placeholder="Item / description…" oninput="recalcDocGenItems();suggestDocGenHsn(${n})" style="min-width:160px;"></td>
+    <td><div class="combo" style="min-width:110px;"><input type="text" class="dghsn" list="dl-dghsn-${n}" placeholder="Auto…" style="width:100px;" onchange="learnDocGenHsn(${n})" autocomplete="off"><i class="fas fa-chevron-down carr"></i></div><datalist id="dl-dghsn-${n}"></datalist></td>
     <td><input type="number" class="dgq" value="1" style="width:65px;" oninput="recalcDocGenItems()"></td>
     <td><input type="number" class="dgr" value="0" step="0.01" style="width:100px;" oninput="recalcDocGenItems()"></td>
     <td class="dga amt" style="color:#0e7490;">₹0</td>
     <td><button class="btn btn-ghost btn-icon" onclick="removeDocGenItem(${n})"><i class="fas fa-times" style="color:var(--red)"></i></button></td>`;
   g('docGenItemsBody').appendChild(tr);
-  if(data){const r=g('dgi-'+n);r.querySelector('.dgm').value=data.material||'';r.querySelector('.dgq').value=data.qty||1;r.querySelector('.dgr').value=data.rate||0;r.querySelector('.dghsn').value=data.hsn||'';}
+  if(data){const r=g('dgi-'+n);r.querySelector('.dgm').value=data.material||'';r.querySelector('.dgq').value=data.qty||1;r.querySelector('.dgr').value=data.rate||0;r.querySelector('.dghsn').value=data.hsn||'';if(data.hsn)r.querySelector('.dghsn').dataset.userEdited='1';}
   recalcDocGenItems();
+}
+// Auto-suggest HSN code as the item description is typed — same lookup/learn pattern used on the
+// Order Checklist and Service order item rows, fed by the shared HSN master database.
+function suggestDocGenHsn(n){
+  const r=g('dgi-'+n);if(!r)return;
+  const mat=r.querySelector('.dgm')?.value||'';
+  const dl=g('dl-dghsn-'+n);
+  const hsnInput=r.querySelector('.dghsn');
+  const list=suggestHsnList(mat,6);
+  if(dl) dl.innerHTML=list.map(h=>`<option value="${esc(h.c)}">[${h.type}] ${esc(h.c)} — ${esc((h.d||'').slice(0,55))}</option>`).join('');
+  if(hsnInput&&!hsnInput.dataset.userEdited){
+    const top=suggestHsn(mat);
+    hsnInput.value=top.code||'';
+  }
+}
+function learnDocGenHsn(n){
+  const r=g('dgi-'+n);if(!r)return;
+  const mat=r.querySelector('.dgm')?.value||'',code=r.querySelector('.dghsn')?.value.trim()||'';
+  r.querySelector('.dghsn').dataset.userEdited='1';
+  if(mat&&code){learnHsn(mat,code);saveData();}
 }
 function removeDocGenItem(n){const r=g('dgi-'+n);if(r){r.remove();recalcDocGenItems();}}
 function recalcDocGenItems(){
@@ -9179,6 +9199,7 @@ function collectDocGenItems(){
     const m=r.querySelector('.dgm')?.value.trim();if(!m)return;
     const qty=parseFloat(r.querySelector('.dgq')?.value)||0,rate=parseFloat(r.querySelector('.dgr')?.value)||0;
     const hsn=r.querySelector('.dghsn')?.value.trim()||'';
+    if(hsn) learnHsn(m,hsn);
     items.push({material:m,qty,rate,hsn});
   });
   return items;
@@ -9217,7 +9238,7 @@ function buildQuotationHtml(items,meta){
     *{box-sizing:border-box;}
     body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;margin:0;padding:0;font-size:12.5px;}
     .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0e7490;padding-bottom:8px;margin-bottom:14px;}
-    .co-name{font-size:19px;font-weight:800;color:#0c4a6e;font-family:Georgia,serif;}
+    .co-name{font-size:18px;font-weight:800;color:#000;font-family:Cambria,Georgia,serif;}
     .co-sub{font-size:10.5px;color:#334155;margin-top:3px;line-height:1.5;}
     .doc-badge{background:#0e7490;color:#fff;padding:6px 16px;border-radius:6px;font-weight:700;font-size:13px;letter-spacing:1px;white-space:nowrap;}
     .meta-row{display:flex;justify-content:space-between;margin-bottom:14px;font-size:12px;gap:14px;}
@@ -9275,7 +9296,7 @@ function buildPurchaseOrderHtml(items,meta){
     *{box-sizing:border-box;}
     body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;margin:0;padding:0;font-size:12.5px;}
     .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c2410c;padding-bottom:8px;margin-bottom:14px;}
-    .co-name{font-size:19px;font-weight:800;color:#7c2d12;font-family:Georgia,serif;}
+    .co-name{font-size:18px;font-weight:800;color:#000;font-family:Cambria,Georgia,serif;}
     .co-sub{font-size:10.5px;color:#334155;margin-top:3px;line-height:1.5;}
     .doc-badge{background:#c2410c;color:#fff;padding:6px 16px;border-radius:6px;font-weight:700;font-size:13px;letter-spacing:1px;white-space:nowrap;}
     .meta-row{display:flex;justify-content:space-between;margin-bottom:14px;font-size:12px;gap:14px;}
