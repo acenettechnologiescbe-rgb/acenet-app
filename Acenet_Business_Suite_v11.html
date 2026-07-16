@@ -2948,6 +2948,7 @@ tbody tr:last-child td{border-bottom:none;}
         <div class="fg"><label id="docGenTermsLbl1">Payment Terms</label><input type="text" id="docGenTerms1"></div>
         <div class="fg"><label id="docGenTermsLbl2">Delivery / Validity</label><input type="text" id="docGenTerms2"></div>
       </div>
+      <div class="fg" style="margin-bottom:10px;"><label id="docGenDeliveryLbl">Delivery Terms</label><input type="text" id="docGenDelivery" placeholder="e.g. As mutually agreed upon confirmation of order."></div>
       <div class="fg" style="margin-bottom:12px;"><label>Price Terms</label>
         <select id="docGenGstNote" style="width:100%;" onchange="recalcDocGenItems()"><option value="Inclusive of GST 18%">Inclusive of GST 18%</option><option value="Exclusive of GST — 18% extra">Exclusive of GST — 18% extra</option><option value="No GST applicable">No GST applicable</option></select>
       </div>
@@ -9103,6 +9104,8 @@ function openDocGenModal(type){
     g('docGenTermsLbl2').textContent='Quote Validity';
     g('docGenTerms2').value='Valid 2 Days';
     g('docGenGstNote').value='Inclusive of GST 18%';
+    g('docGenDelivery').closest('.fg').style.display='block';
+    g('docGenDelivery').value='As mutually agreed upon confirmation of order.';
     populateDocGenPartyList('customer');
   } else {
     g('docGenTitleTxt').textContent='New Purchase Order';
@@ -9114,6 +9117,8 @@ function openDocGenModal(type){
     g('docGenTermsLbl2').textContent='Delivery';
     g('docGenTerms2').value='Immediate';
     g('docGenGstNote').value='Inclusive of GST 18%';
+    g('docGenDelivery').closest('.fg').style.display='none';
+    g('docGenDelivery').value='';
     populateDocGenPartyList('supplier');
   }
   g('docGenSignName').value=D.currentUser?.name||'B. Krishnan';
@@ -9278,7 +9283,7 @@ function buildQuotationHtml(items,meta){
     Price: ${esc(_quotationPriceTerm(meta.gstNote))}<br>
     Payment: ${esc(meta.terms1)}<br>
     Quote Validity: ${esc(meta.terms2)}<br>
-    Delivery: As mutually agreed upon confirmation of order.<br>
+    Delivery: ${esc(meta.delivery)}<br>
     Warranty: As per manufacturer as above said period.
   </div>
   <p style="font-size:12px;margin-top:16px;">Thanking you and looking forward to receiving your valuable order.</p>
@@ -9353,6 +9358,7 @@ function generateDocPrint(){
     address:g('docGenAddress').value.trim(),
     terms1:g('docGenTerms1').value.trim(),
     terms2:g('docGenTerms2').value.trim(),
+    delivery:g('docGenDelivery').value.trim()||'As mutually agreed upon confirmation of order.',
     gstNote:g('docGenGstNote').value,
     signName:g('docGenSignName').value.trim()||'B. Krishnan',
     signPhone:g('docGenSignPhone').value.trim()
