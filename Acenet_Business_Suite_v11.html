@@ -1469,6 +1469,63 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="accCustDetail" style="display:none;margin-top:13px;"><div class="card" id="accCustDetailCard"></div></div>
 </div>
 
+<!-- ════ ACCOUNTS: AMC CONTRACTS ════ -->
+<div class="page" id="page-acc-amc">
+  <div class="ph">
+    <div><h2><span class="phi" style="background:var(--acc)"><i class="fas fa-file-contract"></i></span><span class="sora">AMC Contracts</span></h2><p>Create, track &amp; print Annual Maintenance Contracts — expiry alerts included</p></div>
+    <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="exportAmcExcel()"><i class="fas fa-file-excel"></i> Excel</button></div>
+  </div>
+
+  <div class="stats" id="amcStats" style="margin-bottom:14px;"></div>
+
+  <div class="card">
+    <div class="card-title"><i class="fas fa-file-circle-plus" style="color:var(--acc)"></i><span id="amcFormTitle">New AMC Contract</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:10px;">
+      <div class="fg"><label>Customer Name *</label><input type="text" id="amcCustName" placeholder="M/S. Customer Pvt Ltd" list="amcCustDL"><datalist id="amcCustDL"></datalist></div>
+      <div class="fg"><label>Customer GSTIN</label><input type="text" id="amcCustGstin" placeholder="33AAAAA0000A1Z0"></div>
+      <div class="fg"><label>System Location</label><input type="text" id="amcSysLoc" placeholder="COIMBATORE"></div>
+      <div class="fg"><label>Agreement Type</label>
+        <select id="amcAgreeType">
+          <option value="Comprehensive">Comprehensive (Parts + Labour)</option>
+          <option value="Non Comprehensive">Non Comprehensive (Labour Only)</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg" style="margin-bottom:10px;"><label>Customer Address</label><textarea id="amcCustAddr" rows="2" placeholder="Address for the agreement" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
+      <div class="fg"><label>Period From *</label><input type="date" id="amcFrom" onchange="amcAutoToDate()"></div>
+      <div class="fg"><label>Period To *</label><input type="date" id="amcTo"></div>
+      <div class="fg"><label>CGST %</label><input type="number" id="amcCgst" value="9" step="0.1"></div>
+      <div class="fg"><label>SGST %</label><input type="number" id="amcSgst" value="9" step="0.1"></div>
+    </div>
+
+    <div class="sdiv" style="margin-top:0;">Systems / Items Covered</div>
+    <div class="tw"><table>
+      <thead><tr><th style="width:140px;">Model</th><th style="width:70px;">Qty</th><th>Description</th><th style="width:130px;">Charges (₹)</th><th style="width:40px;"></th></tr></thead>
+      <tbody id="amcItemsBody"></tbody>
+    </table></div>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addAmcItemRow()"><i class="fas fa-plus"></i> Add Row</button>
+
+    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+      <div style="min-width:230px;font-size:.86em;">
+        <div style="display:flex;justify-content:space-between;padding:3px 0;"><span>Subtotal</span><strong id="amcSubtotal">₹0.00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;"><span id="amcCgstLbl">CGST @9%</span><strong id="amcCgstAmt">₹0.00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;"><span id="amcSgstLbl">SGST @9%</span><strong id="amcSgstAmt">₹0.00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1.5px solid var(--line);margin-top:3px;font-size:1.05em;"><span><strong>Total</strong></span><strong style="color:var(--acc)" id="amcGrandTotal">₹0.00</strong></div>
+      </div>
+    </div>
+
+    <div class="fg" style="margin:10px 0;"><label>Notes (optional)</label><input type="text" id="amcNotes" placeholder="Any special terms for this contract"></div>
+
+    <input type="hidden" id="amcEditId">
+    <div class="btn-row"><button class="btn btn-acc" onclick="saveAmcContract()"><i class="fas fa-save"></i> <span id="amcSaveTxt">Save Contract</span></button><button class="btn btn-outline" id="amcCancelBtn" style="display:none;" onclick="cancelAmcContract()"><i class="fas fa-times"></i> Cancel</button></div>
+  </div>
+
+  <div class="sdiv">All AMC Contracts</div>
+  <div style="margin-bottom:9px;"><div class="combo" style="max-width:260px;"><i class="fas fa-search carr" style="left:10px;right:auto;"></i><input type="text" id="amcSearch" placeholder="Search customer…" oninput="renderAmcContracts()" style="padding-left:30px;"></div></div>
+  <div id="amcList"></div>
+</div>
+
 <!-- ════ ACCOUNTS: REPORTS ════ -->
 <div class="page" id="page-acc-reports">
   <div class="ph"><div><h2><span class="phi" style="background:var(--red)"><i class="fas fa-chart-bar"></i></span><span class="sora">Outstanding Reports</span></h2></div>
@@ -3212,6 +3269,7 @@ let D = {
   salary_advances:[], // {id,empName,empRole,date,amount,purpose,recovery,status,recoveries:[],approvedBy,createdAt}
   fy_archives:[],    // archived financial year data snapshots
   hsn_learned_map:{}, // {materialNameLower: hsnCode} — remembers HSN codes once confirmed for a material
+  amc_contracts:[],  // {id,contractNo,custName,custAddress,custGstin,systemLocation,agreementType,periodLabel,fromDate,toDate,items:[{model,qty,description,charges}],cgstPct,sgstPct,notes,createdAt,createdBy,notifiedStage}
   users:[]
 };
 let selMat=null,editBillId=null,editInvId=null,invRC=0,billRC=0,ordRC=0,editOrdId=null,convRC=0;
@@ -3255,7 +3313,7 @@ function _initFirestore(){
       const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                     'ac_invoices','ac_payments','ac_advances','ac_customers',
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                    'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map'];
+                    'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','amc_contracts'];
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
       // Hide the sync indicator — data is ready
       const syncEl=g('loginSyncStatus');if(syncEl)syncEl.style.display='none';
@@ -3270,6 +3328,7 @@ function _initFirestore(){
       if(D.currentUser?.role === 'accounts'){
         try{renderAccIncentives();}catch(e){}
         try{renderAccConveyance();}catch(e){}
+        try{updateAmcExpiryBadge();}catch(e){}
         updateAccIncBadge();
         updateConvBadge();
         if(remote._lastNotify==='new_conv') showSuccessToast('📋 New conveyance claim received!','var(--svc)');
@@ -3379,6 +3438,7 @@ async function loadData(){
   D.stock_txns        = J(localStorage.getItem('ac_stock_txns'))   || [];
   D.hsn_learned_map   = J(localStorage.getItem('ac_hsn_map'))      || {};
   D.doc_seq           = J(localStorage.getItem('ac_doc_seq'))      || {quotation:0,po:0};
+  D.amc_contracts     = J(localStorage.getItem('ac_amc_contracts'))|| [];
 
   // Then try to pull the latest snapshot from Firestore
   if(_fbReady && _db){
@@ -3389,7 +3449,7 @@ async function loadData(){
         const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                       'ac_invoices','ac_payments','ac_advances','ac_customers',
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','doc_seq'];
+                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','doc_seq','amc_contracts'];
         keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
         console.log('✅ Data loaded from Firestore');
       } else {
@@ -3428,6 +3488,7 @@ async function saveData(notifyType){
   localStorage.setItem('ac_stock_txns', JSON.stringify(D.stock_txns||[]));
   localStorage.setItem('ac_hsn_map',    JSON.stringify(D.hsn_learned_map||{}));
   localStorage.setItem('ac_doc_seq',    JSON.stringify(D.doc_seq||{quotation:0,po:0}));
+  localStorage.setItem('ac_amc_contracts', JSON.stringify(D.amc_contracts||[]));
 
   // Then write the full state to Firestore so all users get the update
   if(_fbReady && _db){
@@ -3455,6 +3516,7 @@ async function saveData(notifyType){
         salary_advances:    D.salary_advances || [],
         fy_archives:        D.fy_archives || [],
         doc_seq:            D.doc_seq || {quotation:0,po:0},
+        amc_contracts:      D.amc_contracts || [],
         _lastNotify:        notifyType || 'sync',
         _savedAt:           new Date().toISOString(),
         _savedBy:           D.currentUser?.name || 'system'
@@ -3606,6 +3668,7 @@ function bootApp(){
   refreshUI();
   const def={management:'overview',accounts:'acc-dashboard',service:'svc-calls'};
   goPage(def[u.role]||'overview');
+  if(u.role==='accounts'){ try{updateAmcExpiryBadge();setTimeout(showAmcExpiryToast,900);}catch(e){} }
 }
 
 function checkSession(){
@@ -3635,6 +3698,7 @@ const NAVS = {
     {id:'acc-conveyance',icon:'fa-car-side',label:'Conveyance',color:'var(--svc)',hasBadge:true,badgeId:'conv-badge'},
     {id:'acc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'acc-inc-badge'},
     {id:'acc-cust',icon:'fa-users',label:'Customers'},
+    {id:'acc-amc',icon:'fa-file-contract',label:'AMC Contracts',color:'var(--acc)',hasBadge:true,badgeId:'amc-exp-badge'},
     {id:'acc-stock',icon:'fa-boxes-stacked',label:'Stock',color:'var(--green)'},
     {id:'acc-rpt-hub',icon:'fa-chart-pie',label:'Reports'}
   ],
@@ -3722,6 +3786,7 @@ function goPage(p){
   if(p==='mgmt-view') renderMgmtView();
   if(p==='mgmt-reports') renderMgmtReports();
   if(p==='acc-stock') renderStock();
+  if(p==='acc-amc'){renderAmcContracts();updateAmcExpiryBadge();}
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();renderRptConveyance();renderRptAdvances();populateConvRptDropdowns();renderSentMktHistory();renderRptGstHsn();}
   if(p==='setup') renderSetupPage();
 }
@@ -4941,6 +5006,344 @@ function viewAccCust(cid){
     <div class="tw"><table><thead><tr><th>Invoice</th><th>Date</th><th>Due</th><th>Amount</th><th>Paid</th><th>Outstanding</th><th>Status</th><th></th></tr></thead>
     <tbody>${!invs.length?'<tr><td colspan="8" style="text-align:center;padding:18px;color:var(--ink3);">No invoices</td></tr>':invs.map(inv=>`<tr><td><strong style="color:var(--acc)">${esc(inv.no)}</strong></td><td>${inv.date}</td><td>${inv.dueDate||'-'}</td><td>${fmt(inv.total)}</td><td class="ag">${fmt(getPaid(inv.id))}</td><td class="${getOut(inv.id)>0?'ar':'ag'}">${fmt(getOut(inv.id))}</td><td>${stBadge(getSt(inv.id))}</td><td>${getSt(inv.id)!=='paid'?`<button class="btn btn-success btn-sm" onclick="openPayModal('${inv.id}')"><i class="fas fa-money-bill"></i></button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
   g('accCustDetail').style.display='block';g('accCustDetail').scrollIntoView({behavior:'smooth'});
+}
+
+// ════════════════════════════════════════════════════════════════
+// AMC CONTRACTS  (Accounts) — replaces the AMC FORMAT.xlsx workflow
+// ════════════════════════════════════════════════════════════════
+let amcItemRC=0;
+
+function amcNumToWords(num){
+  num=Math.round(num||0);
+  if(num===0) return 'ZERO';
+  const ones=['','ONE','TWO','THREE','FOUR','FIVE','SIX','SEVEN','EIGHT','NINE','TEN','ELEVEN','TWELVE','THIRTEEN','FOURTEEN','FIFTEEN','SIXTEEN','SEVENTEEN','EIGHTEEN','NINETEEN'];
+  const tens=['','','TWENTY','THIRTY','FORTY','FIFTY','SIXTY','SEVENTY','EIGHTY','NINETY'];
+  function two(n){ if(n<20) return ones[n]; return tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:''); }
+  function three(n){ if(n>99) return ones[Math.floor(n/100)]+' HUNDRED'+(n%100?' '+two(n%100):''); return two(n); }
+  const crore=Math.floor(num/10000000); num%=10000000;
+  const lakh=Math.floor(num/100000); num%=100000;
+  const thousand=Math.floor(num/1000); num%=1000;
+  const hundred=num;
+  let out='';
+  if(crore) out+=three(crore)+' CRORE ';
+  if(lakh) out+=three(lakh)+' LAKH ';
+  if(thousand) out+=three(thousand)+' THOUSAND ';
+  if(hundred) out+=three(hundred);
+  return out.trim();
+}
+
+function amcItemRowHtml(it){
+  const n=++amcItemRC;
+  it=it||{};
+  return `<tr id="amci-${n}">
+    <td><input type="text" class="amcm" value="${esc(it.model||'')}" placeholder="Model" style="width:100%;"></td>
+    <td><input type="number" class="amcq" value="${it.qty!=null?it.qty:1}" min="0" style="width:100%;" oninput="recalcAmcTotals()"></td>
+    <td><input type="text" class="amcd" value="${esc(it.description||'')}" placeholder="e.g. SERVER, CLIENT" style="width:100%;"></td>
+    <td><input type="number" class="amcc" value="${it.charges!=null?it.charges:''}" min="0" step="0.01" placeholder="0.00" style="width:100%;" oninput="recalcAmcTotals()"></td>
+    <td><button class="btn btn-ghost btn-sm" onclick="removeAmcItemRow(${n})"><i class="fas fa-trash" style="color:var(--red)"></i></button></td>
+  </tr>`;
+}
+function addAmcItemRow(it){ const tb=g('amcItemsBody'); if(!tb) return; tb.insertAdjacentHTML('beforeend', amcItemRowHtml(it)); recalcAmcTotals(); }
+function removeAmcItemRow(n){ const r=g('amci-'+n); if(r){r.remove(); recalcAmcTotals();} }
+
+function recalcAmcTotals(){
+  let subtotal=0;
+  document.querySelectorAll('#amcItemsBody tr').forEach(r=>{
+    const q=parseFloat(r.querySelector('.amcq')?.value)||0, c=parseFloat(r.querySelector('.amcc')?.value)||0;
+    subtotal+=c; // charges column already represents the line total, matching the original AMC FORMAT sheet
+  });
+  const cgstP=parseFloat(g('amcCgst')?.value)||0, sgstP=parseFloat(g('amcSgst')?.value)||0;
+  const cgstAmt=subtotal*cgstP/100, sgstAmt=subtotal*sgstP/100;
+  if(g('amcSubtotal')) g('amcSubtotal').textContent=fmt(subtotal);
+  if(g('amcCgstLbl')) g('amcCgstLbl').textContent=`CGST @${cgstP}%`;
+  if(g('amcSgstLbl')) g('amcSgstLbl').textContent=`SGST @${sgstP}%`;
+  if(g('amcCgstAmt')) g('amcCgstAmt').textContent=fmt(cgstAmt);
+  if(g('amcSgstAmt')) g('amcSgstAmt').textContent=fmt(sgstAmt);
+  if(g('amcGrandTotal')) g('amcGrandTotal').textContent=fmt(subtotal+cgstAmt+sgstAmt);
+}
+function amcAutoToDate(){
+  const f=g('amcFrom')?.value; if(!f||g('amcTo').value) return;
+  const d=new Date(f); d.setFullYear(d.getFullYear()+1); d.setDate(d.getDate()-1);
+  g('amcTo').value=d.toISOString().split('T')[0];
+}
+function collectAmcItems(){
+  const items=[];
+  document.querySelectorAll('#amcItemsBody tr').forEach(r=>{
+    const model=r.querySelector('.amcm')?.value.trim()||'';
+    const description=r.querySelector('.amcd')?.value.trim()||'';
+    const qty=parseFloat(r.querySelector('.amcq')?.value)||0;
+    const charges=parseFloat(r.querySelector('.amcc')?.value)||0;
+    if(!model && !description && !charges) return;
+    items.push({model,description,qty,charges});
+  });
+  return items;
+}
+function populateAmcCustDatalist(){
+  const dl=g('amcCustDL'); if(!dl) return;
+  dl.innerHTML=(D.ac_customers||[]).map(c=>`<option value="${esc(c.name)}">`).join('');
+}
+function amcDaysLeft(c){
+  if(!c.toDate) return null;
+  const to=new Date(c.toDate+'T00:00:00'), now=new Date(today()+'T00:00:00');
+  return Math.round((to-now)/86400000);
+}
+function amcStatusBadge(c){
+  const d=amcDaysLeft(c);
+  if(d==null) return '';
+  if(d<0) return `<span class="badge" style="background:#fef2f2;color:var(--red);border:1px solid #fca5a5;"><i class="fas fa-circle-exclamation"></i> Expired ${Math.abs(d)}d ago</span>`;
+  if(d<=30) return `<span class="badge" style="background:#fef2f2;color:var(--red);border:1px solid #fca5a5;"><i class="fas fa-triangle-exclamation"></i> Expires in ${d}d</span>`;
+  if(d<=60) return `<span class="badge" style="background:#fef9c3;color:var(--amber);border:1px solid #fde68a;"><i class="fas fa-clock"></i> Expires in ${d}d</span>`;
+  return `<span class="badge" style="background:#d1fae5;color:var(--green);border:1px solid #a7f3d0;"><i class="fas fa-circle-check"></i> Active — ${d}d left</span>`;
+}
+function updateAmcExpiryBadge(){
+  const cnt=(D.amc_contracts||[]).filter(c=>{const d=amcDaysLeft(c);return d!=null&&d<=30;}).length;
+  const badge=g('amc-exp-badge'); if(!badge) return;
+  if(cnt>0){badge.style.display='inline';badge.textContent=cnt;badge.classList.add('alert');}
+  else{badge.style.display='none';}
+  syncMobBadges();
+}
+function showAmcExpiryToast(){
+  const list=(D.amc_contracts||[]).filter(c=>{const d=amcDaysLeft(c);return d!=null&&d<=30&&d>=0;});
+  if(!list.length) return;
+  const t=document.createElement('div');
+  t.className='notif-toast';
+  t.innerHTML=`<i class="fas fa-bell" style="color:var(--red);font-size:1.2em;flex-shrink:0;"></i>
+    <div style="flex:1;"><div style="font-weight:700;font-size:.88em;">AMC Contract${list.length>1?'s':''} Expiring Soon!</div>
+    <div style="font-size:.77em;color:var(--ink3);margin-top:2px;">${list.length} contract(s) expiring within 30 days</div></div>
+    <button class="toast-close" onclick="this.closest('.notif-toast').remove();goPage('acc-amc');"><i class="fas fa-arrow-right" style="color:var(--acc)"></i></button>`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),8000);
+}
+function saveAmcContract(){
+  const custName=g('amcCustName').value.trim();
+  const fromDate=g('amcFrom').value, toDate=g('amcTo').value;
+  if(!custName){alert('Enter customer name');return;}
+  if(!fromDate||!toDate){alert('Enter agreement period (From / To)');return;}
+  const items=collectAmcItems();
+  if(!items.length){alert('Add at least one item/system covered');return;}
+  const editId=g('amcEditId').value;
+  const obj={
+    id: editId||uid(),
+    contractNo: editId ? (D.amc_contracts.find(c=>c.id===editId)?.contractNo || ('AMC-'+Date.now().toString().slice(-6))) : ('AMC-'+Date.now().toString().slice(-6)),
+    custName, custGstin:g('amcCustGstin').value.trim(), custAddress:g('amcCustAddr').value.trim(),
+    systemLocation:g('amcSysLoc').value.trim(), agreementType:g('amcAgreeType').value,
+    fromDate, toDate, items,
+    cgstPct: parseFloat(g('amcCgst').value)||0, sgstPct: parseFloat(g('amcSgst').value)||0,
+    notes: g('amcNotes').value.trim(),
+    createdAt: editId ? (D.amc_contracts.find(c=>c.id===editId)?.createdAt||new Date().toISOString()) : new Date().toISOString(),
+    createdBy: D.currentUser?.name||''
+  };
+  if(editId){
+    const idx=D.amc_contracts.findIndex(c=>c.id===editId);
+    if(idx>=0) D.amc_contracts[idx]=obj; else D.amc_contracts.push(obj);
+  } else {
+    D.amc_contracts.push(obj);
+  }
+  if(!D.pl_customers.includes(custName)) D.pl_customers.push(custName);
+  cancelAmcContract();
+  saveData();
+  renderAmcContracts();
+  updateAmcExpiryBadge();
+  showSuccessToast('AMC contract saved','var(--acc)');
+}
+function cancelAmcContract(){
+  ['amcCustName','amcCustGstin','amcCustAddr','amcSysLoc','amcNotes'].forEach(id=>{if(g(id))g(id).value='';});
+  g('amcAgreeType').value='Comprehensive';
+  g('amcFrom').value=''; g('amcTo').value='';
+  g('amcCgst').value=9; g('amcSgst').value=9;
+  g('amcItemsBody').innerHTML=''; addAmcItemRow();
+  g('amcEditId').value='';
+  g('amcSaveTxt').textContent='Save Contract';
+  g('amcFormTitle').textContent='New AMC Contract';
+  g('amcCancelBtn').style.display='none';
+  recalcAmcTotals();
+}
+function editAmcContract(id){
+  const c=D.amc_contracts.find(x=>x.id===id); if(!c) return;
+  g('amcCustName').value=c.custName; g('amcCustGstin').value=c.custGstin||''; g('amcCustAddr').value=c.custAddress||'';
+  g('amcSysLoc').value=c.systemLocation||''; g('amcAgreeType').value=c.agreementType||'Comprehensive';
+  g('amcFrom').value=c.fromDate||''; g('amcTo').value=c.toDate||'';
+  g('amcCgst').value=c.cgstPct!=null?c.cgstPct:9; g('amcSgst').value=c.sgstPct!=null?c.sgstPct:9;
+  g('amcNotes').value=c.notes||'';
+  g('amcItemsBody').innerHTML='';
+  (c.items||[]).forEach(it=>addAmcItemRow(it));
+  if(!(c.items||[]).length) addAmcItemRow();
+  g('amcEditId').value=c.id;
+  g('amcSaveTxt').textContent='Update Contract';
+  g('amcFormTitle').textContent='Edit AMC Contract — '+c.contractNo;
+  g('amcCancelBtn').style.display='inline-flex';
+  recalcAmcTotals();
+  g('amcFormTitle').scrollIntoView({behavior:'smooth'});
+}
+function deleteAmcContract(id){
+  if(!confirm('Delete this AMC contract?')) return;
+  D.amc_contracts=D.amc_contracts.filter(c=>c.id!==id);
+  saveData(); renderAmcContracts(); updateAmcExpiryBadge();
+}
+function renderAmcContracts(){
+  populateAmcCustDatalist();
+  if(!g('amcItemsBody').children.length) addAmcItemRow();
+  recalcAmcTotals();
+  const s=(g('amcSearch')?.value||'').toLowerCase();
+  const list=(D.amc_contracts||[]).filter(c=>c.custName.toLowerCase().includes(s))
+    .sort((a,b)=>(a.toDate||'').localeCompare(b.toDate||''));
+  const total=D.amc_contracts.length;
+  const expiring30=D.amc_contracts.filter(c=>{const d=amcDaysLeft(c);return d!=null&&d>=0&&d<=30;}).length;
+  const expired=D.amc_contracts.filter(c=>{const d=amcDaysLeft(c);return d!=null&&d<0;}).length;
+  const value=D.amc_contracts.reduce((s,c)=>{const sub=(c.items||[]).reduce((a,i)=>a+(parseFloat(i.charges)||0),0);return s+sub*(1+((c.cgstPct||0)+(c.sgstPct||0))/100);},0);
+  if(g('amcStats')) g('amcStats').innerHTML=`
+    <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Contracts</div><div class="stat-value">${total}</div></div>
+    <div class="stat ${expiring30>0?'s-red':'s-green'}"><div class="stat-bar"></div><div class="stat-label">Expiring ≤30 days</div><div class="stat-value">${expiring30}</div></div>
+    <div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Expired</div><div class="stat-value">${expired}</div></div>
+    <div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Total Contract Value</div><div class="stat-value" style="font-size:1.05em;">${fmt(value)}</div></div>`;
+  const el=g('amcList'); if(!el) return;
+  if(!list.length){el.innerHTML='<div class="empty"><i class="fas fa-file-contract"></i><p>No AMC contracts yet.</p></div>';return;}
+  el.innerHTML=list.map(c=>{
+    const sub=(c.items||[]).reduce((a,i)=>a+(parseFloat(i.charges)||0),0);
+    const gt=sub*(1+((c.cgstPct||0)+(c.sgstPct||0))/100);
+    return `<div class="cust-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;">
+        <div>
+          <div style="font-weight:700;font-size:.89em;">${esc(c.custName)} <span style="font-weight:400;color:var(--ink3);font-size:.85em;">(${esc(c.contractNo)})</span></div>
+          <div style="font-size:.74em;color:var(--ink3);">${esc(c.agreementType||'')}${c.systemLocation?' · '+esc(c.systemLocation):''} · ${c.fromDate||'?'} to ${c.toDate||'?'}</div>
+          <div style="margin-top:5px;">${amcStatusBadge(c)}</div>
+        </div>
+        <div style="text-align:right;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--acc);">${fmt(gt)}</div></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-acc btn-sm" onclick="printAmcContract('${c.id}')"><i class="fas fa-print"></i> Print</button>
+        <button class="btn btn-outline btn-sm" onclick="editAmcContract('${c.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAmcContract('${c.id}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function exportAmcExcel(){
+  const rows=(D.amc_contracts||[]).map(c=>{
+    const sub=(c.items||[]).reduce((a,i)=>a+(parseFloat(i.charges)||0),0);
+    const gt=sub*(1+((c.cgstPct||0)+(c.sgstPct||0))/100);
+    return {'Contract No':c.contractNo,'Customer':c.custName,'GSTIN':c.custGstin||'','Location':c.systemLocation||'','Type':c.agreementType||'','From':c.fromDate||'','To':c.toDate||'','Items':(c.items||[]).map(i=>`${i.qty||''} ${i.model||i.description||''}`).join('; '),'Subtotal':sub.toFixed(2),'Total incl. GST':gt.toFixed(2),'Status':amcDaysLeft(c)!=null&&amcDaysLeft(c)<0?'Expired':'Active'};
+  });
+  xlsxExport([{name:'AMC Contracts',rows}],'acenet_amc_contracts_'+today());
+}
+
+const AMC_BACK_MATTER_HTML = `
+<div class="bm-title">TERMS &amp; CONDITIONS OF THE MAINTENANCE AGREEMENT</div>
+<p>To provide the maintenance services detailed below to keep the system in good working order.</p>
+<p class="bm-h">1. ON SITE MAINTENANCE – SCOPE OF SERVICES</p>
+<p><b>a. ANNUAL MAINTENANCE CONTRACT (COMPREHENSIVE)</b><br>
+On call Corrective Maintenance, provided at site, which will cover replacement of unserviceable parts with either new parts or with parts which are equivalent in performance to new parts. Whether a defective part or component is to be repaired or replaced shall be at the sole discretion of ACENET. The defective parts removed from the system will become Acenet's property.</p>
+<p><b>b. ANNUAL SERVICE CONTRACT (NON-COMPREHENSIVE)</b><br>
+On call Corrective Maintenance, provided at site, which does not cover replacement / repair of parts.</p>
+<p class="bm-h">2. TERMS</p>
+<p><b>a.</b> This AGREEMENT is for the period as mentioned commencing from the date as mutually agreed upon and shall be renewed automatically at expiry, for a further period of one year at each time and so on, unless specifically terminated by either party serving on other, one month written notice, prior to the expiry of the AGREEMENT.</p>
+<p><b>b.</b> The CUSTOMER shall be responsible for providing power conditioning equipment as prescribed by Acenet, and also the other environment conditions including electrical requirements and site facilities prescribed by Acenet, Acenet in no event is responsible for any damage to the Computer System or other work due to deviation from prescribed Acenet specifications by the CUSTOMER. The maintenance does not cover maintenance of power conditioning equipment unless &amp; otherwise supplied by Acenet and explicitly mentioned in this agreement.</p>
+<p><b>c.</b> CUSTOMER will make the system available to Acenet for maintenance purpose at all reasonable times without any charges.</p>
+<p><b>d.</b> The CUSTOMER shall not, directly open, alter, try to tamper with or indulge in any act which will result in intruding with the operation of the system &amp; peripheral units (except routine input/output &amp; data processing). Further, the CUSTOMER shall ensure that the Computer System is in its original configuration and form, and shall carry out any modifications / alteration to the configuration only in the presence of and in a manner approved by Acenet Engineer.</p>
+<p><b>e.</b> System Maintenance charges shall not include the cost of consumables and supply items such as Printer Head but not limit to the following: 1. Ribbons&nbsp; 2. Magnetic Tapes&nbsp; 3. Floppy Diskettes&nbsp; 4. Computer Stationery&nbsp; 5. Compact Discs&nbsp; 6. Any other items termed as consumables by Acenet e.g. Plastic parts of Printers / Plotters etc.</p>
+<p><b>f.</b> This warranty extends only to problems arising out of normal functioning of the system and the AGREEMENT does not cover breakdown or services, arising out of, whether partly or wholly misuse of the system, or the use under environmental conditions either not prescribed by Acenet or unsuitable for electronic equipments or external factors such as lighting, fire, earthquakes, floods or any other acts of God, riots, war or any such unforeseen eventuality.</p>
+<p><b>g.</b> Under normal circumstances the scope of this contract extends to Hardware only. Software support (Operating System only) can be provided if mentioned explicitly in the contract. In any event, no application software support would constitute part of this contract. Calls arising out of virus attacks also are not covered under the scope of this contract.</p>
+<p class="bm-h">3. PERIOD OF MAINTENANCE SERVICE AVAILABILITY</p>
+<p>Maintenance Service shall be rendered only on Acenet working days during normal working hours of Acenet, which are between 09.00 and 18.00 Hrs (Monday through Saturday). Acenet reserves the right to vary the service charges if a change in the location take place.</p>
+<p class="bm-h">4. REVISION OF MAINTENANCE CHARGES</p>
+<p><b>a.</b> There may not be any revision of the rate of the Maintenance charges during the current period of this AGREEMENT. However, Acenet reserves the right to vary the charges at the end of the AGREEMENT period.</p>
+<p><b>b.</b> Changes and enhancements in system features may result in an adjustment of the specified minimum maintenance charges and shall be covered by separate invoice / agreements.</p>
+<p class="bm-h">5. LIMITATIONS OF LIABILITY</p>
+<p><b>i. CUSTOMER shall indemnify and keep indemnified Acenet against:</b><br>
+a. Any upgradation to the machine, without Acenet consent.<br>
+b. Any Work external to the system, like power supply, cable from main source, etc.<br>
+c. Repair or malfunction or damage due to accident, transportation, neglect; failure of or use of non-standard electrical power, air-conditioning or non adherence to site specifications.<br>
+d. It is essential for ACENET to have received atleast 25% of the total contract value as initial payment towards support and services to be rendered.<br>
+e. In case of failures wherein large costs are involved towards replacement of spares and support and it is found that necessary payments have not been effected by the CUSTOMER, ACENET is under no obligation to provide customer with replacements for such kind of failures.<br>
+f. Any maintenance service under circumstances posing a safety or health hazard.<br>
+g. Any change of system location without the prior written consent of Acenet.<br>
+h. Any modification / alteration to the configuration as specified in clause (d) of AGREEMENT without Acenet's consent.</p>
+<p><b>ii.</b> Acenet shall not be liable in any manner whatsoever to indemnify the CUSTOMER for any loss, injury or damage of any kind whatsoever howsoever caused.</p>
+<p><b>iii.</b> Acenet shall not be liable in any manner whatsoever to the CUSTOMER in the event of Acenet being prevented or delayed in the performance of any of its obligations under this AGREEMENT due to conditions constituting Force Majeure which shall include but not be limited to strike, lockout, concerted action of workmen, breakdown of communication, etc.</p>
+<p>On termination of the AGREEMENT, GET IT INFOTECH INDIA (P) LTD's obligation under this AGREEMENT CEASES in its entirety. The CUSTOMER can enter into a fresh MAINTENANCE AGREEMENT with Acenet afterwards. Timely payment of all charges by the CUSTOMER to Acenet shall be the essence of this AGREEMENT.</p>
+<p class="bm-h">6. ARBITRATION</p>
+<p>In case of any dispute arising at any time during the tenure of this AGREEMENT between the parties to this AGREEMENT, the same shall be referred to arbitration. Arbitration will be conducted by a two member panel, one nominee each of Acenet, CUSTOMER and an umpire to be appointed by the arbitrators before entering upon the reference. Venue of such arbitration shall be the Regd. Office of Acenet Technologies India Pvt. Ltd., 1084/4, Trichy Road, Sungam, Coimbatore - 641 018. Further this AGREEMENT is subject to the laws of INDIA alone.</p>
+<p><b>7.</b> This is the entire AGREEMENT between the parties and no alteration or amendment is valid unless signed by a person duly authorised by the Board of Acenet. Further headings are for the sake of convenience only and shall not affect the interpretation of the clauses hereof.</p>
+<p style="margin-top:8px;">Acenet Technologies India Pvt. Ltd., (hereinafter referred to as "ACENET") will maintain the equipments on terms &amp; conditions herein mentioned above.</p>
+`;
+
+function printAmcContract(id){
+  const c=D.amc_contracts.find(x=>x.id===id); if(!c){alert('Contract not found');return;}
+  const items=c.items||[];
+  const sub=items.reduce((a,i)=>a+(parseFloat(i.charges)||0),0);
+  const cgstAmt=sub*(c.cgstPct||0)/100, sgstAmt=sub*(c.sgstPct||0)/100;
+  const grand=sub+cgstAmt+sgstAmt;
+  const df=(iso)=>{ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
+  const rows=items.map(it=>`<tr><td style="text-align:center;">${it.qty||''}</td><td>${esc(it.model||'')}</td><td>${esc(it.description||'')}</td><td style="text-align:right;">${(parseFloat(it.charges)||0).toFixed(2)}</td></tr>`).join('');
+  const sectionLabel = c.agreementType==='Non Comprehensive' ? 'ANNUAL SERVICE CONTRACT (NON-COMPREHENSIVE)' : 'ANNUAL MAINTENANCE CONTRACT (COMPREHENSIVE)';
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>AMC Contract — ${esc(c.contractNo)}</title>
+  <style>
+    @page{size:A4;margin:14mm 16mm;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;margin:0;padding:0;font-size:12px;}
+    .hdr{text-align:center;border-bottom:2px solid #0e7490;padding-bottom:8px;margin-bottom:12px;}
+    .co-name{font-size:16px;font-weight:800;color:#000;font-family:Cambria,Georgia,serif;}
+    .co-sub{font-size:10px;color:#334155;margin-top:2px;}
+    .doc-title{font-size:14px;font-weight:800;text-align:center;margin:10px 0;letter-spacing:1px;color:#0e7490;}
+    .meta-row{font-size:11.5px;margin-bottom:8px;line-height:1.7;}
+    table{width:100%;border-collapse:collapse;margin:10px 0;}
+    th{background:#0e7490;color:#fff;font-size:10.5px;padding:6px 8px;text-align:left;}
+    td{border:1px solid #e2e8f0;padding:5px 8px;font-size:11px;}
+    .sec-hdr td{background:#f0f9ff;font-weight:700;text-align:center;}
+    .tot-row td{font-weight:800;background:#f8fafc;}
+    .words{font-size:11px;margin:6px 0;}
+    .note{font-size:10.5px;color:#334155;line-height:1.8;margin-top:6px;}
+    .sign{display:flex;justify-content:space-between;margin-top:34px;font-size:11.5px;}
+    .bm-page{page-break-before:always;font-size:11px;line-height:1.65;color:#0f172a;}
+    .bm-title{font-size:13px;font-weight:800;text-align:center;margin-bottom:10px;color:#0e7490;}
+    .bm-h{font-weight:800;margin-top:10px;margin-bottom:2px;}
+    @media print{body{padding:0;}}
+  </style></head><body>
+  <div class="hdr">
+    <div class="co-name">${esc(ACENET_CO.name)}</div>
+    <div class="co-sub">${esc(ACENET_CO.addr)}<br>Tel: ${esc(ACENET_CO.tel)} &nbsp;E-mail: ${esc(ACENET_CO.email)} &nbsp;GSTIN: ${esc(ACENET_CO.gstin)}</div>
+  </div>
+  <div class="doc-title">MAINTENANCE AGREEMENT — ${esc(c.contractNo)}</div>
+  <div class="meta-row">
+    This Maintenance Agreement (hereinafter referred to as 'AGREEMENT') is made between Acenet Technologies India Pvt. Ltd. (hereinafter referred to as 'ACENET') and <strong>M/S. ${esc(c.custName)}</strong>${c.custGstin?` (GSTIN: ${esc(c.custGstin)})`:''}, hereinafter referred to as 'CUSTOMER'.<br>
+    Acenet at the request of the CUSTOMER hereby agrees to maintain the following mentioned Computer Systems along with specified Peripherals, subject to the terms of the AGREEMENT.<br><br>
+    <strong>System Location:</strong> ${esc(c.systemLocation||'—')} &nbsp;&nbsp; <strong>Agreement Type:</strong> ${esc(c.agreementType||'Comprehensive')}<br>
+    <strong>Agreement Period:</strong> From ${df(c.fromDate)} &nbsp;To&nbsp; ${df(c.toDate)}
+  </div>
+  <table>
+    <thead><tr><th style="width:60px;">Qty</th><th style="width:140px;">Model</th><th>Description</th><th style="width:110px;">Charges (₹)</th></tr></thead>
+    <tbody>
+      <tr class="sec-hdr"><td colspan="4">${sectionLabel}</td></tr>
+      ${rows}
+      <tr class="tot-row"><td colspan="3" style="text-align:right;">Subtotal</td><td style="text-align:right;">${sub.toFixed(2)}</td></tr>
+      <tr><td colspan="3" style="text-align:right;">ADD : CGST @${c.cgstPct||0}%</td><td style="text-align:right;">${cgstAmt.toFixed(2)}</td></tr>
+      <tr><td colspan="3" style="text-align:right;">ADD : SGST @${c.sgstPct||0}%</td><td style="text-align:right;">${sgstAmt.toFixed(2)}</td></tr>
+      <tr class="tot-row"><td colspan="3" style="text-align:right;">TOTAL</td><td style="text-align:right;">${grand.toFixed(2)}</td></tr>
+    </tbody>
+  </table>
+  <div class="words">Rupees in Words: <strong>${amcNumToWords(grand)} ONLY</strong></div>
+  <div class="note">
+    The above amount excludes any taxes &amp; Government levies as applicable later due to or under any law from time to time.<br>
+    Maintenance charges are payable in advance. No claims for refund will be entertained at any time.<br>
+    Services will be rendered according to the terms and conditions given overleaf.
+    ${c.notes?`<br><strong>Notes:</strong> ${esc(c.notes)}`:''}
+  </div>
+  <div class="meta-row" style="margin-top:10px;">
+    <strong>Customer Name:</strong> M/S. ${esc(c.custName)}<br>
+    <strong>Address:</strong> ${esc(c.custAddress||'—')}
+  </div>
+  <div class="sign">
+    <div>Authorised Signatory Name: _______________________<br>Designation: _______________________<br>Signature</div>
+    <div style="text-align:right;">For ${esc(ACENET_CO.name)}<br><br>Authorised Signatory<br>Designation: INCHARGE SERVICE<br>Signature</div>
+  </div>
+  <div class="bm-page">${AMC_BACK_MATTER_HTML}</div>
+  <script>window.onload=function(){window.focus();window.print();}<\\/script>
+  </body></html>`;
+  const _b=new Blob([html],{type:'text/html'});
+  const _u=URL.createObjectURL(_b);
+  const w=window.open(_u,'_blank');
+  if(!w) alert('Pop-up blocked. Please allow pop-ups for this page.');
+  else setTimeout(()=>URL.revokeObjectURL(_u),30000);
 }
 
 // ════════════════════════════════════════════════════════════════
