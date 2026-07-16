@@ -1481,8 +1481,8 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="card">
     <div class="card-title"><i class="fas fa-file-circle-plus" style="color:var(--acc)"></i><span id="amcFormTitle">New AMC Contract</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:10px;">
-      <div class="fg"><label>Customer Name *</label><input type="text" id="amcCustName" placeholder="M/S. Customer Pvt Ltd" list="amcCustDL"><datalist id="amcCustDL"></datalist></div>
-      <div class="fg"><label>Customer GSTIN</label><input type="text" id="amcCustGstin" placeholder="33AAAAA0000A1Z0"></div>
+      <div class="fg"><label>Customer Name *</label><input type="text" id="amcCustName" placeholder="M/S. Customer Pvt Ltd" list="amcCustDL" oninput="amcAutoFillCust()" onchange="amcAutoFillCust()"><datalist id="amcCustDL"></datalist></div>
+      <div class="fg"><label>Customer GSTIN <span id="amcGstinAuto" style="display:none;color:var(--green);font-weight:600;">(auto-filled)</span></label><input type="text" id="amcCustGstin" placeholder="33AAAAA0000A1Z0"></div>
       <div class="fg"><label>System Location</label><input type="text" id="amcSysLoc" placeholder="COIMBATORE"></div>
       <div class="fg"><label>Agreement Type</label>
         <select id="amcAgreeType">
@@ -1491,7 +1491,7 @@ tbody tr:last-child td{border-bottom:none;}
         </select>
       </div>
     </div>
-    <div class="fg" style="margin-bottom:10px;"><label>Customer Address</label><textarea id="amcCustAddr" rows="2" placeholder="Address for the agreement" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea></div>
+    <div class="fg" style="margin-bottom:10px;"><label>Customer Address <span id="amcAddrAuto" style="display:none;color:var(--green);font-weight:600;">(auto-filled)</span></label><textarea id="amcCustAddr" rows="2" placeholder="Address for the agreement" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:14px;">
       <div class="fg"><label>Period From *</label><input type="date" id="amcFrom" onchange="amcAutoToDate()"></div>
       <div class="fg"><label>Period To *</label><input type="date" id="amcTo"></div>
@@ -5082,6 +5082,18 @@ function populateAmcCustDatalist(){
   const dl=g('amcCustDL'); if(!dl) return;
   dl.innerHTML=(D.ac_customers||[]).map(c=>`<option value="${esc(c.name)}">`).join('');
 }
+function amcAutoFillCust(){
+  const name=(g('amcCustName')?.value||'').trim().toLowerCase();
+  const gstinAuto=g('amcGstinAuto'), addrAuto=g('amcAddrAuto');
+  if(!name){ if(gstinAuto)gstinAuto.style.display='none'; if(addrAuto)addrAuto.style.display='none'; return; }
+  const c=(D.ac_customers||[]).find(x=>x.name.trim().toLowerCase()===name);
+  if(!c){ if(gstinAuto)gstinAuto.style.display='none'; if(addrAuto)addrAuto.style.display='none'; return; }
+  // Fill in the saved GSTIN / address — but never overwrite something the user already typed themselves
+  if(c.gstin && !g('amcCustGstin').value.trim()){ g('amcCustGstin').value=c.gstin; if(gstinAuto)gstinAuto.style.display='inline'; }
+  const fullAddr=[c.address,c.city].filter(Boolean).join(', ');
+  if(fullAddr && !g('amcCustAddr').value.trim()){ g('amcCustAddr').value=fullAddr; if(addrAuto)addrAuto.style.display='inline'; }
+  if(c.city && !g('amcSysLoc').value.trim()){ g('amcSysLoc').value=c.city; }
+}
 function amcDaysLeft(c){
   if(!c.toDate) return null;
   const to=new Date(c.toDate+'T00:00:00'), now=new Date(today()+'T00:00:00');
@@ -5156,6 +5168,8 @@ function cancelAmcContract(){
   g('amcSaveTxt').textContent='Save Contract';
   g('amcFormTitle').textContent='New AMC Contract';
   g('amcCancelBtn').style.display='none';
+  if(g('amcGstinAuto')) g('amcGstinAuto').style.display='none';
+  if(g('amcAddrAuto')) g('amcAddrAuto').style.display='none';
   recalcAmcTotals();
 }
 function editAmcContract(id){
@@ -5172,6 +5186,8 @@ function editAmcContract(id){
   g('amcSaveTxt').textContent='Update Contract';
   g('amcFormTitle').textContent='Edit AMC Contract — '+c.contractNo;
   g('amcCancelBtn').style.display='inline-flex';
+  if(g('amcGstinAuto')) g('amcGstinAuto').style.display='none';
+  if(g('amcAddrAuto')) g('amcAddrAuto').style.display='none';
   recalcAmcTotals();
   g('amcFormTitle').scrollIntoView({behavior:'smooth'});
 }
