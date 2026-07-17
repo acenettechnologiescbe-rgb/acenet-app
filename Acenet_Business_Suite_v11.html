@@ -113,7 +113,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 /* ═══ REDESIGNED MANAGEMENT OVERVIEW ═══ */
 .mgmt-ov-acc{background:linear-gradient(135deg,#0c4a6e,#0e7490);border-radius:16px;padding:22px;margin-bottom:18px;color:#fff;}
 .mgmt-ov-acc-title{font-family:'Sora',sans-serif;font-size:.76em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;opacity:.75;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
-.mgmt-ov-acc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.mgmt-ov-acc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+@media(max-width:900px){.mgmt-ov-acc-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:700px){.mgmt-ov-acc-grid{grid-template-columns:repeat(2,1fr);}}
 .moag-cell{background:rgba(255,255,255,.12);border-radius:10px;padding:14px 12px;cursor:pointer;transition:.18s;}
 .moag-cell:hover{background:rgba(255,255,255,.22);transform:translateY(-2px);}
@@ -1598,7 +1599,7 @@ tbody tr:last-child td{border-bottom:none;}
       <div style="background:#fff5f5;border:1.5px solid #fca5a5;border-radius:10px;padding:11px 14px;margin-bottom:12px;font-size:.82em;color:#7f1d1d;">
         <i class="fas fa-triangle-exclamation" style="margin-right:5px;color:var(--red);"></i>
         <strong>This will archive current year's transactional data and start fresh.</strong><br>
-        <span style="font-size:.9em;">Masters (Customers, Users, Materials, Stock Items) are kept. A backup is auto-saved before reset.</span>
+        <span style="font-size:.9em;">Masters (Customers, Users, Materials, Stock Items) are kept. Step-by-step, this button: (1) downloads a full backup JSON file of everything to your computer, (2) saves an in-app archive copy (viewable below under "Financial Year Archives"), then (3) permanently clears Bills, Invoices, Payments, Orders, Service Calls, Conveyance and Incentives — this clearing happens in Firestore (cloud), so every device/user will see the reset data, not just this computer. This step cannot be undone from within the app; only the downloaded backup file or the in-app archive can bring the old data back.</span>
       </div>
       <div id="fyResetInfo" style="font-size:.83em;margin-bottom:11px;"></div>
       <div class="fg" style="margin-bottom:11px;">
@@ -1991,6 +1992,7 @@ tbody tr:last-child td{border-bottom:none;}
   <button class="mv-tab-btn" data-t="inc" onclick="mgmtViewTab('inc')"><i class="fas fa-gift"></i> Incentives</button>
   <button class="mv-tab-btn" data-t="svc" onclick="mgmtViewTab('svc')"><i class="fas fa-headset"></i> Service Calls</button>
   <button class="mv-tab-btn" data-t="sales" onclick="mgmtViewTab('sales')"><i class="fas fa-chart-line"></i> Sales</button>
+  <button class="mv-tab-btn" data-t="amc" onclick="mgmtViewTab('amc')"><i class="fas fa-file-contract"></i> AMC</button>
 </div>
 
 <!-- Filters -->
@@ -5475,12 +5477,16 @@ function copyReminder(){const t=g('remText');t.select();try{document.execCommand
 // ════════════════════════════════════════════════════════════════
 function renderMgmt(){
   // ── Accounts financial numbers ──────────────────────────
+  const tBilled=D.ac_invoices.reduce((a,i)=>a+(i.total||0),0);
   const tOut=D.ac_invoices.reduce((a,i)=>a+getOut(i.id),0);
   const tPaid=D.ac_payments.filter(p=>p.mode!=='Advance Applied').reduce((a,p)=>a+p.amount,0);
   const odCnt=D.ac_invoices.filter(i=>getSt(i.id)==='overdue').length;
   const tAdv=D.ac_advances.reduce((a,x)=>a+x.amount,0);
   const tUsed=D.ac_payments.filter(p=>p.mode==='Advance Applied').reduce((a,p)=>a+p.amount,0);
   g('mgmt-acc-row').innerHTML=`
+    <div class="moag-cell" onclick="showMgmtDetail('acc-billed')">
+      <div class="moag-lbl">Total Billed</div><div class="moag-val">${fmt(tBilled)}</div>
+    </div>
     <div class="moag-cell" onclick="showMgmtDetail('acc-outstanding')">
       <div class="moag-lbl">Outstanding</div><div class="moag-val">${fmt(tOut)}</div>
     </div>
@@ -10985,7 +10991,7 @@ function doFYReset(){
   const confirm1=(g('fyResetConfirm')?.value||'').trim();
   if(!newFY){alert('Please enter the new financial year label (e.g. 2026-27)');return;}
   if(confirm1!=='RESET'){alert('Please type RESET in the confirmation field to proceed');return;}
-  if(!confirm(`⚠ FINANCIAL YEAR RESET\n\nThis will:\n✓ Archive all current year data (FY ${getFY()})\n✓ Clear Bills, Invoices, Payments, Orders, Service Calls, Conveyance, Incentives, Messages\n✓ Keep: Customers, Users, Materials, Stock Items, Salary Advances\n\nA backup will be auto-downloaded before reset.\n\nProceed with FY Reset to ${newFY}?`))return;
+  if(!confirm(`⚠ FINANCIAL YEAR RESET\n\nThis will:\n✓ Download a full backup JSON file to this computer\n✓ Save an in-app archive copy (Financial Year Archives)\n✓ Archive all current year data (FY ${getFY()})\n✓ Permanently clear Bills, Invoices, Payments, Orders, Service Calls, Conveyance, Incentives, Messages — from Firestore (cloud), so ALL users/devices will see the reset\n✓ Keep: Customers, Users, Materials, Stock Items, Salary Advances\n\nThis cannot be undone except by restoring the downloaded backup or the in-app archive.\n\nProceed with FY Reset to ${newFY}?`))return;
 
   // 1. Auto-backup first
   exportFullBackup();
@@ -11021,7 +11027,7 @@ function doFYReset(){
   saveData('fy_reset');
   g('fyResetConfirm').value='';
   refreshUI();renderSetupPage();
-  alert(`✓ Financial Year Reset complete!\nNew FY: ${newFY}\nAll transactional data archived.\nMasters retained.\n\nBackup was auto-downloaded.`);
+  alert(`✓ Financial Year Reset complete!\nNew FY: ${newFY}\nAll transactional data archived and cleared from Firestore (cloud) — every user/device will now see the reset data after their next refresh.\nMasters retained.\n\nA full backup file was auto-downloaded to this computer, and an archive copy is saved below under Financial Year Archives.`);
 }
 
 function downloadFYArchive(fy){
@@ -11036,14 +11042,32 @@ function downloadFYArchive(fy){
 // MANAGEMENT — VIEW ALL (Conveyance, Incentives, Advances, Salary Adv)
 // ════════════════════════════════════════════════════════════════
 let _mvTab='conv';
+// Clicking a Detail Info KPI card jumps to that tab, pre-filtered to the items it counts
+// (pending for Conveyance/Advances/Service Calls, mgmt-review for Incentives).
+// Clicking an engineer's card in the Service Calls summary filters the detail table below to just that engineer.
+function mgmtViewFilterByEngineer(name){
+  const engSel=g('mvEng');
+  if(engSel){ engSel.value = [...engSel.options].some(o=>o.value===name) ? name : engSel.value; }
+  renderMgmtView();
+  g('mgmtViewBody')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function mgmtViewJumpToPending(tab){
+  mgmtViewTab(tab);
+  const statSel=g('mvStat');
+  if(statSel && tab!=='svc'){ statSel.value = tab==='inc' ? 'mgmt-review' : 'pending'; }
+  renderMgmtView();
+}
 function mgmtViewTab(tab){
   _mvTab=tab;
   document.querySelectorAll('.mv-tab-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.t===tab);
   });
-  // Show/hide status filter (not relevant for service calls or sales)
+  // Show/hide status filter (not relevant for service calls, sales or AMC)
   const statSel=g('mvStat');
-  if(statSel) statSel.style.display=(tab==='svc'||tab==='sales')?'none':'';
+  if(statSel) statSel.style.display=(tab==='svc'||tab==='sales'||tab==='amc')?'none':'';
+  // Engineer filter is not relevant for AMC contracts (they belong to Accounts, not a specific engineer)
+  const engSel=g('mvEng');
+  if(engSel) engSel.style.display=(tab==='amc')?'none':'';
   renderMgmtView();
 }
 
@@ -11341,12 +11365,14 @@ function renderMgmtView(){
   const pendAdv=D.svc_conv_advances.filter(a=>a.status==='pending').length;
   const pendInc=(D.svc_incentives||[]).filter(e=>e.status==='mgmt-review').length;
   const totalCalls=D.svc_calls.length;
-  const mkpiS=(icon,bg,color,lbl,val)=>`<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;"><div style="width:36px;height:36px;background:${bg};border-radius:9px;display:flex;align-items:center;justify-content:center;color:${color};font-size:.9em;">${icon}</div><div><div style="font-family:'Sora',sans-serif;font-size:1.45em;font-weight:800;color:${color};line-height:1;">${val}</div><div style="font-size:.7em;color:var(--ink3);font-weight:600;text-transform:uppercase;">${lbl}</div></div></div>`;
+  const mkpiS=(icon,bg,color,lbl,val,onclick)=>`<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;${onclick?'cursor:pointer;':''}"${onclick?` onclick="${onclick}" title="Click to view"`:''}><div style="width:36px;height:36px;background:${bg};border-radius:9px;display:flex;align-items:center;justify-content:center;color:${color};font-size:.9em;">${icon}</div><div><div style="font-family:'Sora',sans-serif;font-size:1.45em;font-weight:800;color:${color};line-height:1;">${val}</div><div style="font-size:.7em;color:var(--ink3);font-weight:600;text-transform:uppercase;">${lbl}</div></div></div>`;
+  // These 4 cards are quick shortcuts: they show items awaiting management action, and clicking one
+  // jumps straight to that filtered list so nothing needs to be hunted for manually.
   g('mgmtViewStats').innerHTML=
-    mkpiS('<i class="fas fa-car-side"></i>','#e0f2fe','var(--svc)','Conv. Pending',pendConv)+
-    mkpiS('<i class="fas fa-hand-holding-dollar"></i>','#fef9c3','#92400e','Adv. Pending',pendAdv)+
-    mkpiS('<i class="fas fa-gift"></i>','#f3e8ff','#7c3aed','Inc. For Review',pendInc)+
-    mkpiS('<i class="fas fa-headset"></i>','#f0fdf4','var(--green)','Total Svc Calls',totalCalls);
+    mkpiS('<i class="fas fa-car-side"></i>','#e0f2fe','var(--svc)','Conv. Pending',pendConv,"mgmtViewJumpToPending('conv')")+
+    mkpiS('<i class="fas fa-hand-holding-dollar"></i>','#fef9c3','#92400e','Adv. Pending',pendAdv,"mgmtViewJumpToPending('adv')")+
+    mkpiS('<i class="fas fa-gift"></i>','#f3e8ff','#7c3aed','Inc. For Review',pendInc,"mgmtViewJumpToPending('inc')")+
+    mkpiS('<i class="fas fa-headset"></i>','#f0fdf4','var(--green)','Total Svc Calls',totalCalls,"mgmtViewJumpToPending('svc')");
 
   const body=g('mgmtViewBody');if(!body)return;
   const sbg=(s)=>{const m={draft:'#e2e8f0|#475569|Draft',pending:'#fef9c3|#92400e|Pending',approved:'#dcfce7|#166534|Approved',rejected:'#fee2e2|#991b1b|Rejected',settled:'#e0f2fe|#0369a1|Settled',completed:'#f0fdf4|#15803d|Completed','in-progress':'#fff7ed|#c2410c|In Progress',escalated:'#fee2e2|#991b1b|Escalated'};const[bg,col,lbl]=(m[s]||'#e2e8f0|#475569|'+s).split('|');return '<span style="background:'+bg+';color:'+col+';border-radius:7px;padding:2px 9px;font-size:.97em;font-weight:700;">'+lbl+'</span>';};
@@ -11388,7 +11414,7 @@ function renderMgmtView(){
     if(to) calls=calls.filter(x=>(x.date||x.datetime?.slice(0,10)||'')<=to);
     calls=calls.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
     const byEng={};calls.forEach(c=>{const e=c.engineer||'Unassigned';if(!byEng[e])byEng[e]={name:e,total:0,completed:0,pending:0,escalated:0,inProg:0,conv:0};byEng[e].total++;if(c.status==='completed')byEng[e].completed++;else if(c.status==='escalated')byEng[e].escalated++;else if(c.status==='in-progress')byEng[e].inProg++;else byEng[e].pending++;if(c.convRows?.length||c.convKm)byEng[e].conv++;});
-    const sumHtml=Object.values(byEng).sort((a,b)=>b.total-a.total).map(e=>`<div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;"><div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0;"><i class="fas fa-user-gear"></i></div><div style="flex:1;min-width:120px;"><div style="font-weight:700;font-size:.98em;">${esc(e.name)}</div><div style="font-size:.87em;color:var(--ink3);">${e.total} calls · ${e.conv} with conveyance</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span style="font-size:.9em;background:#f0fdf4;color:var(--green);border-radius:6px;padding:3px 8px;font-weight:700;">${e.completed} done</span>${e.pending?`<span style="font-size:.9em;background:#fffbeb;color:#92400e;border-radius:6px;padding:3px 8px;font-weight:700;">${e.pending} pending</span>`:''} ${e.inProg?`<span style="font-size:.9em;background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 8px;font-weight:700;">${e.inProg} in-prog</span>`:''} ${e.escalated?`<span style="font-size:.9em;background:#fef2f2;color:var(--red);border-radius:6px;padding:3px 8px;font-weight:700;">${e.escalated} esc</span>`:''}</div></div>`).join('');
+    const sumHtml=Object.values(byEng).sort((a,b)=>b.total-a.total).map(e=>`<div onclick="mgmtViewFilterByEngineer(${JSON.stringify(e.name)})" title="Click to view ${esc(e.name)}'s calls in full detail" style="cursor:pointer;background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;transition:.15s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--line)'"><div style="width:34px;height:34px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);flex-shrink:0;"><i class="fas fa-user-gear"></i></div><div style="flex:1;min-width:120px;"><div style="font-weight:700;font-size:.98em;">${esc(e.name)}</div><div style="font-size:.87em;color:var(--ink3);">${e.total} calls · ${e.conv} with conveyance</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><span style="font-size:.9em;background:#f0fdf4;color:var(--green);border-radius:6px;padding:3px 8px;font-weight:700;">${e.completed} done</span>${e.pending?`<span style="font-size:.9em;background:#fffbeb;color:#92400e;border-radius:6px;padding:3px 8px;font-weight:700;">${e.pending} pending</span>`:''} ${e.inProg?`<span style="font-size:.9em;background:#fff7ed;color:#c2410c;border-radius:6px;padding:3px 8px;font-weight:700;">${e.inProg} in-prog</span>`:''} ${e.escalated?`<span style="font-size:.9em;background:#fef2f2;color:var(--red);border-radius:6px;padding:3px 8px;font-weight:700;">${e.escalated} esc</span>`:''}</div><i class="fas fa-chevron-right" style="color:var(--ink4);"></i></div>`).join('');
     body.innerHTML=`${Object.keys(byEng).length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-bottom:16px;">${sumHtml}</div>`:''}`+
       (!calls.length?'<div class="empty"><i class="fas fa-headset"></i><p>No service calls found</p></div>':
       `<div class="tw"><table><thead><tr><th>Call No</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Issue</th><th>Product</th><th>Priority</th><th>Status</th><th>Conv.</th><th>Resolution</th></tr></thead><tbody>
@@ -11415,38 +11441,66 @@ function renderMgmtView(){
       if(!isServiceOrd) return; // not a service-engineer sale — skip from this Service Activity view
       const tagged=!!ord.createdBy;
       if(!tagged) legacyCount++;
-      rows.push({engineer:ord.createdBy||'Unassigned',tagged,customer:inv.custName||'(no customer)',amount:inv.total||0,invNo:inv.no,date:inv.date});
+      rows.push({engineer:ord.createdBy||'Unassigned',tagged,customer:inv.custName||'(no customer)',amount:inv.total||0,paid:getPaid(inv.id),out:getOut(inv.id),invNo:inv.no,date:inv.date});
     });
     let filteredRows=eng?rows.filter(r=>r.engineer===eng||!r.tagged):rows;
     const totSales=filteredRows.reduce((s,r)=>s+r.amount,0);
+    const totCollected=filteredRows.reduce((s,r)=>s+r.paid,0);
+    const totOutstanding=filteredRows.reduce((s,r)=>s+r.out,0);
     const engSet=new Set(filteredRows.map(r=>r.engineer)),custSet=new Set(filteredRows.map(r=>r.customer));
     const legacyNote=legacyCount>0?`<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:9px 14px;margin-bottom:14px;font-size:.85em;color:#92400e;"><i class="fas fa-circle-info" style="margin-right:6px;"></i>${legacyCount} invoice(s) come from older orders created before engineer-tagging existed, so they have no recorded engineer. ${eng?`They're included in <strong>${esc(eng)}</strong>'s totals below (same as how they already appear in every engineer's Order Checklist), and also listed under "Unassigned" so you can see them separately.`:'They show up under "Unassigned" below rather than being dropped.'}</div>`:'';
-    const kpiHtml=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">`+
-      mkpiS('<i class="fas fa-sack-dollar"></i>','#f0fdf4','var(--green)','Total Sales',fmt(totSales))+
+    const kpiHtml=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">`+
+      mkpiS('<i class="fas fa-sack-dollar"></i>','#f0fdf4','var(--green)','Total Billed',fmt(totSales))+
+      mkpiS('<i class="fas fa-hand-holding-dollar"></i>','#f0fdf4','var(--green)','Collected',fmt(totCollected))+
+      mkpiS('<i class="fas fa-triangle-exclamation"></i>','#fef2f2','var(--red)','Outstanding',fmt(totOutstanding))+
       mkpiS('<i class="fas fa-file-invoice"></i>','#e0f2fe','var(--svc)','Invoices',filteredRows.length)+
       mkpiS('<i class="fas fa-user-gear"></i>','#f3e8ff','#7c3aed','Engineers',engSet.size)+
       mkpiS('<i class="fas fa-building"></i>','#fff7ed','#c2410c','Customers',custSet.size)+`</div>`;
     // Sales by Engineer
     const byEng={};
-    filteredRows.forEach(r=>{if(!byEng[r.engineer])byEng[r.engineer]={engineer:r.engineer,amount:0,invCount:0,custSet:new Set()};byEng[r.engineer].amount+=r.amount;byEng[r.engineer].invCount++;byEng[r.engineer].custSet.add(r.customer);});
+    filteredRows.forEach(r=>{if(!byEng[r.engineer])byEng[r.engineer]={engineer:r.engineer,amount:0,paid:0,out:0,invCount:0,custSet:new Set()};byEng[r.engineer].amount+=r.amount;byEng[r.engineer].paid+=r.paid;byEng[r.engineer].out+=r.out;byEng[r.engineer].invCount++;byEng[r.engineer].custSet.add(r.customer);});
     const engRows=Object.values(byEng).sort((a,b)=>b.amount-a.amount);
     const engTableHtml=!engRows.length?'<div class="empty"><i class="fas fa-chart-line"></i><p>No sales found for this range</p></div>':
-      `<div class="tw"><table><thead><tr><th>Engineer</th><th>Invoices</th><th>Customers</th><th>Total Sales (₹)</th></tr></thead><tbody>
-      ${engRows.map(r=>`<tr><td><strong>${esc(r.engineer)}</strong>${r.engineer===eng&&legacyCount>0?` <span style="font-size:.78em;color:#92400e;font-weight:600;">(incl. ${legacyCount} legacy)</span>`:''}</td><td>${r.invCount}</td><td>${r.custSet.size}</td><td class="amt" style="font-weight:700;color:var(--green);">${fmt(r.amount)}</td></tr>`).join('')}
-      <tr style="background:var(--bg);font-weight:700;"><td colspan="3" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(engRows.reduce((s,r)=>s+r.amount,0))}</td></tr>
+      `<div class="tw"><table><thead><tr><th>Engineer</th><th>Invoices</th><th>Customers</th><th>Total Billed (₹)</th><th>Collected (₹)</th><th>Outstanding (₹)</th></tr></thead><tbody>
+      ${engRows.map(r=>`<tr><td><strong>${esc(r.engineer)}</strong>${r.engineer===eng&&legacyCount>0?` <span style="font-size:.78em;color:#92400e;font-weight:600;">(incl. ${legacyCount} legacy)</span>`:''}</td><td>${r.invCount}</td><td>${r.custSet.size}</td><td class="amt" style="font-weight:700;color:var(--green);">${fmt(r.amount)}</td><td class="amt ag">${fmt(r.paid)}</td><td class="amt ${r.out>0?'ar':'ag'}">${fmt(r.out)}</td></tr>`).join('')}
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="3" style="text-align:right;padding:9px 12px;">Total</td><td class="amt" style="padding:9px 12px;">${fmt(engRows.reduce((s,r)=>s+r.amount,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(engRows.reduce((s,r)=>s+r.paid,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(engRows.reduce((s,r)=>s+r.out,0))}</td></tr>
       </tbody></table></div>`;
     // Sales by Customer (within the selected engineer, or across all if none selected)
     const byCust={};
-    filteredRows.forEach(r=>{const key=r.customer;if(!byCust[key])byCust[key]={customer:r.customer,amount:0,invCount:0,engSet:new Set()};byCust[key].amount+=r.amount;byCust[key].invCount++;byCust[key].engSet.add(r.engineer);});
+    filteredRows.forEach(r=>{const key=r.customer;if(!byCust[key])byCust[key]={customer:r.customer,amount:0,paid:0,out:0,invCount:0,engSet:new Set()};byCust[key].amount+=r.amount;byCust[key].paid+=r.paid;byCust[key].out+=r.out;byCust[key].invCount++;byCust[key].engSet.add(r.engineer);});
     const custRows=Object.values(byCust).sort((a,b)=>b.amount-a.amount);
     const custTableHtml=!custRows.length?'<div class="empty"><i class="fas fa-building"></i><p>No customer sales found for this range</p></div>':
-      `<div class="tw"><table><thead><tr><th>Customer</th>${eng?'':'<th>Engineer(s)</th>'}<th>Invoices</th><th>Total Sales (₹)</th></tr></thead><tbody>
-      ${custRows.map(r=>`<tr><td><strong>${esc(r.customer)}</strong></td>${eng?'':`<td style="font-size:.85em;">${esc([...r.engSet].join(', '))}</td>`}<td>${r.invCount}</td><td class="amt" style="font-weight:700;color:var(--green);">${fmt(r.amount)}</td></tr>`).join('')}
-      <tr style="background:var(--bg);font-weight:700;"><td colspan="${eng?1:2}" style="text-align:right;padding:9px 12px;">Total</td><td style="padding:9px 12px;"></td><td class="amt" style="padding:9px 12px;">${fmt(custRows.reduce((s,r)=>s+r.amount,0))}</td></tr>
+      `<div class="tw"><table><thead><tr><th>Customer</th>${eng?'':'<th>Engineer(s)</th>'}<th>Invoices</th><th>Total Billed (₹)</th><th>Collected (₹)</th><th>Outstanding (₹)</th></tr></thead><tbody>
+      ${custRows.map(r=>`<tr><td><strong>${esc(r.customer)}</strong></td>${eng?'':`<td style="font-size:.85em;">${esc([...r.engSet].join(', '))}</td>`}<td>${r.invCount}</td><td class="amt" style="font-weight:700;color:var(--green);">${fmt(r.amount)}</td><td class="amt ag">${fmt(r.paid)}</td><td class="amt ${r.out>0?'ar':'ag'}">${fmt(r.out)}</td></tr>`).join('')}
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="${eng?1:2}" style="text-align:right;padding:9px 12px;">Total</td><td style="padding:9px 12px;"></td><td class="amt" style="padding:9px 12px;">${fmt(custRows.reduce((s,r)=>s+r.amount,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(custRows.reduce((s,r)=>s+r.paid,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(custRows.reduce((s,r)=>s+r.out,0))}</td></tr>
       </tbody></table></div>`;
     body.innerHTML=legacyNote+kpiHtml+
       `<div class="sdiv" style="margin-top:4px;">📊 Sales by Engineer</div>${engTableHtml}`+
       `<div class="sdiv" style="margin-top:20px;">🏢 Sales by Customer${eng?' — '+esc(eng):''}</div>${custTableHtml}`;
+  } else if(_mvTab==='amc'){
+    // AMC contracts live in the Accounts department; this tab mirrors them read-only here so
+    // Management can see AMC status alongside Conveyance/Incentives/Service Calls/Sales without
+    // switching departments.
+    let contracts=[...(D.amc_contracts||[])];
+    if(from) contracts=contracts.filter(c=>(c.toDate||'')>=from);
+    if(to) contracts=contracts.filter(c=>(c.fromDate||'')<=to);
+    contracts=contracts.sort((a,b)=>(a.toDate||'').localeCompare(b.toDate||''));
+    const valOf=c=>{const sub=(c.items||[]).reduce((a,i)=>a+(parseFloat(i.charges)||0),0);return sub*(1+((c.cgstPct||0)+(c.sgstPct||0))/100);};
+    const totVal=contracts.reduce((s,c)=>s+valOf(c),0);
+    const expiring30=contracts.filter(c=>{const d=amcDaysLeft(c);return d!=null&&d>=0&&d<=30;}).length;
+    const expired=contracts.filter(c=>{const d=amcDaysLeft(c);return d!=null&&d<0;}).length;
+    const notBilled=contracts.filter(c=>!c.billed).length;
+    const kpiHtmlAmc=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;">`+
+      mkpiS('<i class="fas fa-file-contract"></i>','#e0f2fe','var(--svc)','Contracts',contracts.length)+
+      mkpiS('<i class="fas fa-triangle-exclamation"></i>','#fef2f2','var(--red)','Expiring ≤30d',expiring30)+
+      mkpiS('<i class="fas fa-circle-exclamation"></i>','#fef2f2','var(--red)','Expired',expired)+
+      mkpiS('<i class="fas fa-hourglass-half"></i>','#fef9c3','#92400e','Not Billed',notBilled)+
+      mkpiS('<i class="fas fa-sack-dollar"></i>','#f0fdf4','var(--green)','Contract Value',fmt(totVal))+`</div>`;
+    body.innerHTML=!contracts.length?kpiHtmlAmc+'<div class="empty"><i class="fas fa-file-contract"></i><p>No AMC contracts found</p></div>':
+      kpiHtmlAmc+`<div class="tw"><table><thead><tr><th>Contract No</th><th>Customer</th><th>Type</th><th>Period</th><th>Value (₹)</th><th>Billed</th><th>Status</th></tr></thead><tbody>
+      ${contracts.map(c=>`<tr><td><strong style="color:var(--svc);">${esc(amcDisplayNo(c))}</strong></td><td style="font-size:.95em;">${esc(c.custName)}</td><td><span style="font-size:.9em;background:#e0f2fe;color:#0369a1;border-radius:5px;padding:2px 7px;font-weight:700;">${esc(c.agreementType||'—')}</span></td><td style="font-size:.85em;">${c.fromDate||'?'} → ${c.toDate||'?'}</td><td class="amt" style="font-weight:700;">${fmt(valOf(c))}</td><td>${c.billed?'<span class="badge b-paid">✓ Billed</span>':'<span class="badge b-partial">Pending</span>'}</td><td>${amcStatusBadge(c)}</td></tr>`).join('')}
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="4" style="text-align:right;padding:9px 12px;">Total Contract Value</td><td class="amt" style="padding:9px 12px;">${fmt(contracts.reduce((s,c)=>s+valOf(c),0))}</td><td colspan="2"></td></tr>
+      </tbody></table></div>`;
   }
 }
 
@@ -11462,18 +11516,25 @@ function exportMgmtView(){
       if(!ord) return;
       const isServiceOrd=ord.source==='service'||String(ord.orderNo||'').startsWith('SORD-');
       if(!isServiceOrd) return;
-      rows.push({engineer:ord.createdBy||'Unassigned',tagged:!!ord.createdBy,customer:inv.custName||'(no customer)',amount:inv.total||0});
+      rows.push({engineer:ord.createdBy||'Unassigned',tagged:!!ord.createdBy,customer:inv.custName||'(no customer)',amount:inv.total||0,paid:getPaid(inv.id),out:getOut(inv.id)});
     });
     const filteredRows=eng?rows.filter(r=>r.engineer===eng||!r.tagged):rows;
     if(!filteredRows.length){alert('No data to export');return;}
-    const byEng={};filteredRows.forEach(r=>{if(!byEng[r.engineer])byEng[r.engineer]={engineer:r.engineer,amount:0,invCount:0,custSet:new Set()};byEng[r.engineer].amount+=r.amount;byEng[r.engineer].invCount++;byEng[r.engineer].custSet.add(r.customer);});
-    const byCust={};filteredRows.forEach(r=>{if(!byCust[r.customer])byCust[r.customer]={customer:r.customer,amount:0,invCount:0,engSet:new Set()};byCust[r.customer].amount+=r.amount;byCust[r.customer].invCount++;byCust[r.customer].engSet.add(r.engineer);});
-    const engSheet=Object.values(byEng).sort((a,b)=>b.amount-a.amount).map(r=>({'Engineer':r.engineer,'Invoices':r.invCount,'Customers':r.custSet.size,'Total Sales':Number(r.amount.toFixed(2))}));
-    const custSheet=Object.values(byCust).sort((a,b)=>b.amount-a.amount).map(r=>({'Customer':r.customer,'Engineer(s)':[...r.engSet].join(', '),'Invoices':r.invCount,'Total Sales':Number(r.amount.toFixed(2))}));
+    const byEng={};filteredRows.forEach(r=>{if(!byEng[r.engineer])byEng[r.engineer]={engineer:r.engineer,amount:0,paid:0,out:0,invCount:0,custSet:new Set()};byEng[r.engineer].amount+=r.amount;byEng[r.engineer].paid+=r.paid;byEng[r.engineer].out+=r.out;byEng[r.engineer].invCount++;byEng[r.engineer].custSet.add(r.customer);});
+    const byCust={};filteredRows.forEach(r=>{if(!byCust[r.customer])byCust[r.customer]={customer:r.customer,amount:0,paid:0,out:0,invCount:0,engSet:new Set()};byCust[r.customer].amount+=r.amount;byCust[r.customer].paid+=r.paid;byCust[r.customer].out+=r.out;byCust[r.customer].invCount++;byCust[r.customer].engSet.add(r.engineer);});
+    const engSheet=Object.values(byEng).sort((a,b)=>b.amount-a.amount).map(r=>({'Engineer':r.engineer,'Invoices':r.invCount,'Customers':r.custSet.size,'Total Billed':Number(r.amount.toFixed(2)),'Collected':Number(r.paid.toFixed(2)),'Outstanding':Number(r.out.toFixed(2))}));
+    const custSheet=Object.values(byCust).sort((a,b)=>b.amount-a.amount).map(r=>({'Customer':r.customer,'Engineer(s)':[...r.engSet].join(', '),'Invoices':r.invCount,'Total Billed':Number(r.amount.toFixed(2)),'Collected':Number(r.paid.toFixed(2)),'Outstanding':Number(r.out.toFixed(2))}));
     xlsxExport([{name:'Sales by Engineer',rows:engSheet},{name:'Sales by Customer',rows:custSheet}],`acenet_mgmt_sales_${from||'all'}_${to||today()}`);
     return;
   }
   const rows=[];
+  if(_mvTab==='amc'){
+    const valOf=c=>{const sub=(c.items||[]).reduce((a,i)=>a+(parseFloat(i.charges)||0),0);return sub*(1+((c.cgstPct||0)+(c.sgstPct||0))/100);};
+    (D.amc_contracts||[]).forEach(c=>rows.push({'Contract No':amcDisplayNo(c),'Customer':c.custName,'Type':c.agreementType||'','From':c.fromDate||'','To':c.toDate||'','Value':Number(valOf(c).toFixed(2)),'Billed':c.billed?'Yes':'No'}));
+    if(!rows.length){alert('No data to export');return;}
+    xlsxExport([{name:'AMC Contracts',rows}],`acenet_mgmt_amc_${today()}`);
+    return;
+  }
   if(_mvTab==='conv'){D.svc_conveyance.forEach(c=>rows.push({'No':c.no,'Date':c.date,'Engineer':c.engineer,'Call Ref':c.callRef||'','Location':c.location||'','Travel':c.travelAmt,'Food':c.foodAmt,'Other':c.otherAmt,'Total':c.totalAmt,'Status':c.status}));}
   else if(_mvTab==='adv'){D.svc_conv_advances.forEach(a=>rows.push({'No':a.no,'Date':a.date,'Engineer':a.engineer,'Purpose':a.purpose||'','Call Ref':a.callRef||'','Amount':a.amount,'Mode':a.mode||'','Status':a.status}));}
   else if(_mvTab==='inc'){(D.svc_incentives||[]).forEach(e=>rows.push({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt,'Purchase':e.purchaseAmt,'Expense Type':e.expType||'','Expense':e.expAmt||0,'P/L':e.profit,'Net P/L':e.netProfit||e.profit,'Incentive':e.approvedAmt||0,'Status':e.status}));}
@@ -12157,6 +12218,21 @@ function showMgmtDetail(type){
       }).join('');
       openMgmtDrawer('fa-exclamation-circle','Outstanding by Customer — Full Detail',html||'<div class="empty"><i class="fas fa-circle-check"></i><p>No outstanding invoices! 🎉</p></div>');
       break;}
+
+    // ── ACCOUNTS: TOTAL BILLED ──────────────────────────────────
+    case 'acc-billed':{
+      const invs=[...D.ac_invoices].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+      const totBilled=invs.reduce((a,i)=>a+(i.total||0),0);
+      let html=`<div class="stats" style="margin-bottom:14px;">
+        <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Billed</div><div class="stat-value">${fmt(totBilled)}</div></div>
+        <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Invoices</div><div class="stat-value">${invs.length}</div></div>
+      </div>`;
+      html += mgmtTbl(
+        ['Invoice','Customer','Date','Due Date','Amount','Paid','Outstanding','Status'],
+        invs.map(i=>{const out=getOut(i.id);return `<tr><td><span class="tag tag-acc">${esc(i.no)}</span></td><td><strong>${esc(i.custName)}</strong></td><td>${i.date}</td><td>${i.dueDate||'—'}</td><td class="amt">${fmt(i.total)}</td><td class="amt ag">${fmt(getPaid(i.id))}</td><td class="amt ${out>0?'ar':'ag'}">${fmt(out)}</td><td>${stBadge(getSt(i.id))}</td></tr>`;}),
+        'No invoices yet'
+      );
+      openMgmtDrawer('fa-file-invoice-dollar','Total Billed — All Invoices',html); break;}
 
     // ── ACCOUNTS: COLLECTED ────────────────────────────────────
     case 'acc-collected':{
