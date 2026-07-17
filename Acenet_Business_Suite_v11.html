@@ -5285,7 +5285,8 @@ function exportAmcExcel(){
 }
 
 const AMC_BACK_MATTER_HTML = `
-<div class="bm-title">TERMS &amp; CONDITIONS OF THE MAINTENANCE AGREEMENT</div>
+<div class="bm-intro">Acenet Technologies India Pvt. Ltd., (hereinafter referred to as "ACENET") will maintain the equipments on terms &amp; conditions herein mentioned below :</div>
+<div class="bm-cols">
 <p>To provide the maintenance services detailed below to keep the system in good working order.</p>
 <p class="bm-h">1. ON SITE MAINTENANCE – SCOPE OF SERVICES</p>
 <p><b>a. ANNUAL MAINTENANCE CONTRACT (COMPREHENSIVE)</b><br>
@@ -5321,8 +5322,9 @@ h. Any modification / alteration to the configuration as specified in clause (d)
 <p class="bm-h">6. ARBITRATION</p>
 <p>In case of any dispute arising at any time during the tenure of this AGREEMENT between the parties to this AGREEMENT, the same shall be referred to arbitration. Arbitration will be conducted by a two member panel, one nominee each of Acenet, CUSTOMER and an umpire to be appointed by the arbitrators before entering upon the reference. Venue of such arbitration shall be the Regd. Office of Acenet Technologies India Pvt. Ltd., 1084/4, Trichy Road, Sungam, Coimbatore - 641 018. Further this AGREEMENT is subject to the laws of INDIA alone.</p>
 <p><b>7.</b> This is the entire AGREEMENT between the parties and no alteration or amendment is valid unless signed by a person duly authorised by the Board of Acenet. Further headings are for the sake of convenience only and shall not affect the interpretation of the clauses hereof.</p>
-<p style="margin-top:8px;">Acenet Technologies India Pvt. Ltd., (hereinafter referred to as "ACENET") will maintain the equipments on terms &amp; conditions herein mentioned above.</p>
+</div>
 `;
+
 
 function amcNextContractNo(){
   if(!D.doc_seq) D.doc_seq={};
@@ -5369,9 +5371,11 @@ function printAmcContract(id){
     .words{font-size:11px;margin:6px 0;}
     .note{font-size:10.5px;color:#334155;line-height:1.8;margin-top:6px;}
     .sign{display:flex;justify-content:space-between;margin-top:34px;font-size:11.5px;}
-    .bm-page{page-break-before:always;font-size:11px;line-height:1.65;color:#0f172a;}
-    .bm-title{font-size:13px;font-weight:800;text-align:center;margin-bottom:10px;color:#0e7490;}
-    .bm-h{font-weight:800;margin-top:10px;margin-bottom:2px;}
+    .bm-page{page-break-before:always;color:#0f172a;}
+    .bm-intro{font-size:8px;line-height:1.35;margin-bottom:6px;font-weight:600;}
+    .bm-cols{column-count:2;column-gap:16px;column-rule:1px solid #e2e8f0;}
+    .bm-cols p{font-size:7.4px;line-height:1.32;margin:0 0 4px;break-inside:avoid;}
+    .bm-h{font-weight:800;margin-top:5px !important;margin-bottom:1px !important;break-after:avoid;break-inside:avoid;}
     @media print{body{padding:0;}}
   </style></head><body>
   <div class="hdr">
