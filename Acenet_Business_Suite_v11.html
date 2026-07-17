@@ -5197,6 +5197,7 @@ function deleteAmcContract(id){
   saveData(); renderAmcContracts(); updateAmcExpiryBadge();
 }
 function renderAmcContracts(){
+  migrateAmcContractNumbers();
   populateAmcCustDatalist();
   if(!g('amcItemsBody').children.length) addAmcItemRow();
   recalcAmcTotals();
@@ -5333,6 +5334,18 @@ function amcNextContractNo(){
   const yr=new Date().getFullYear();
   return 'AMC-'+yr+'-'+String(D.doc_seq.amc).padStart(4,'0');
 }
+function migrateAmcContractNumbers(){
+  let changed=false;
+  (D.amc_contracts||[]).forEach(c=>{
+    if(!c.contractNo) return;
+    const numPart=c.contractNo.replace(/^[A-Za-z]+-/,'');
+    if(!/^\d{4}-\d{4}$/.test(numPart)){
+      c.contractNo=amcNextContractNo();
+      changed=true;
+    }
+  });
+  if(changed) saveData();
+}
 function amcDisplayNo(c){
   if(!c.contractNo) return '';
   const numPart = c.contractNo.replace(/^[A-Za-z]+-/,'');
@@ -5372,10 +5385,10 @@ function printAmcContract(id){
     .note{font-size:10.5px;color:#334155;line-height:1.8;margin-top:6px;}
     .sign{display:flex;justify-content:space-between;margin-top:34px;font-size:11.5px;}
     .bm-page{page-break-before:always;color:#0f172a;}
-    .bm-intro{font-size:8px;line-height:1.35;margin-bottom:6px;font-weight:600;}
-    .bm-cols{column-count:2;column-gap:16px;column-rule:1px solid #e2e8f0;}
-    .bm-cols p{font-size:7.4px;line-height:1.32;margin:0 0 4px;break-inside:avoid;}
-    .bm-h{font-weight:800;margin-top:5px !important;margin-bottom:1px !important;break-after:avoid;break-inside:avoid;}
+    .bm-intro{font-size:11.8px;line-height:1.35;margin-bottom:7px;font-weight:600;}
+    .bm-cols{column-count:2;column-gap:18px;column-rule:1px solid #e2e8f0;}
+    .bm-cols p{font-size:10.5px;line-height:1.4;margin:0 0 6px;break-inside:avoid;}
+    .bm-h{font-weight:800;margin-top:8px !important;margin-bottom:2px !important;break-after:avoid;break-inside:avoid;}
     @media print{body{padding:0;}}
   </style></head><body>
   <div class="hdr">
