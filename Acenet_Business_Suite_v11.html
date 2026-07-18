@@ -4119,8 +4119,8 @@ function renderOrders(){
         </div>
       </div>
       <div class="order-body">
-        <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
-        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>HSN Code</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td style="font-size:.85em;color:var(--ink3);">${esc(it.hsn||'—')}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
       </div>
@@ -4243,14 +4243,14 @@ function orderAccCard(o,showConfirm){
     </div>
     <div class="order-body">
       ${o.returnedForEdit?`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.85em;color:#991b1b;"><i class="fas fa-reply" style="margin-right:5px;"></i>Returned to Service${o.returnedBy?' by '+esc(o.returnedBy):''}${o.returnedAt?' on '+new Date(o.returnedAt).toLocaleDateString('en-IN'):''}${o.returnedNote?': "'+esc(o.returnedNote)+'"':''}</div>`:''}
-      <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
-      <tbody>${o.items.map(it=>`<tr><td><strong>${esc(it.material)}</strong></td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody>
+      <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>HSN Code</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+      <tbody>${o.items.map(it=>`<tr><td><strong>${esc(it.material)}</strong></td><td style="font-size:.85em;color:var(--ink3);">${esc(it.hsn||'—')}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody>
       <tfoot>
-        ${o.gstType==='exclusive'?`<tr style="background:var(--bg);"><td colspan="3" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">Sub-total (before GST)</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.baseTotal||o.total/(1+GST_R))}</td></tr>
-        <tr style="background:var(--bg);"><td colspan="3" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">GST @18%</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.total-(o.baseTotal||o.total/(1+GST_R)))}</td></tr>`:
-        o.gstType==='inclusive'?`<tr style="background:var(--bg);"><td colspan="3" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">Sub-total (before GST @18%)</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.total/(1+GST_R))}</td></tr>
-        <tr style="background:var(--bg);"><td colspan="3" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">GST @18% (included)</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:''}
-        <tr style="background:var(--bg);"><td colspan="3" style="font-weight:700;padding:9px 12px;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td><td class="amt aa" style="padding:9px 12px;font-weight:800;">${fmt(o.total)}</td></tr>
+        ${o.gstType==='exclusive'?`<tr style="background:var(--bg);"><td colspan="4" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">Sub-total (before GST)</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.baseTotal||o.total/(1+GST_R))}</td></tr>
+        <tr style="background:var(--bg);"><td colspan="4" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">GST @18%</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.total-(o.baseTotal||o.total/(1+GST_R)))}</td></tr>`:
+        o.gstType==='inclusive'?`<tr style="background:var(--bg);"><td colspan="4" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">Sub-total (before GST @18%)</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.total/(1+GST_R))}</td></tr>
+        <tr style="background:var(--bg);"><td colspan="4" style="padding:7px 12px;color:var(--ink3);font-size:.85em;">GST @18% (included)</td><td class="amt aa" style="padding:7px 12px;color:var(--ink3);">${fmt(o.total-o.total/(1+GST_R))}</td></tr>`:''}
+        <tr style="background:var(--bg);"><td colspan="4" style="font-weight:700;padding:9px 12px;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td><td class="amt aa" style="padding:9px 12px;font-weight:800;">${fmt(o.total)}</td></tr>
       </tfoot>
       </table></div>
       ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${o.margin<0?'-':''}${fmt(o.margin)}</strong></span>`:''}</div>`:''}
@@ -4469,6 +4469,7 @@ function viewOrderModal(id){
             <table style="width:100%;border-collapse:collapse;font-size:.98em;">
               <thead><tr style="background:#ea580c;">
                 <th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">Material</th>
+                <th style="padding:10px 14px;text-align:left;color:#fff;font-weight:700;">HSN Code</th>
                 <th style="padding:10px 14px;text-align:center;color:#fff;font-weight:700;">Qty</th>
                 <th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Rate</th>
                 ${o.source==='service'?`<th style="padding:10px 14px;text-align:right;color:#fff;font-weight:700;">Purchase (₹)</th>`:''}
@@ -4477,6 +4478,7 @@ function viewOrderModal(id){
               <tbody>
                 ${o.items.map((it,i)=>`<tr style="border-bottom:1px solid #f1f5f9;background:${i%2===0?'#fff':'#fafafa'};">
                   <td style="padding:10px 14px;font-weight:600;">${esc(it.material||it.name||'')}</td>
+                  <td style="padding:10px 14px;color:var(--ink3);font-size:.92em;">${esc(it.hsn||'—')}</td>
                   <td style="padding:10px 14px;text-align:center;">${it.qty}</td>
                   <td style="padding:10px 14px;text-align:right;">${fmt(it.rate)}</td>
                   ${o.source==='service'?`<td style="padding:10px 14px;text-align:right;color:var(--ink3);">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td>`:''}
@@ -4486,7 +4488,7 @@ function viewOrderModal(id){
               <tfoot>
                 ${gstRows}
                 <tr style="background:#fff7ed;border-top:2px solid #fed7aa;">
-                  <td colspan="${o.source==='service'?5:3}" style="padding:11px 14px;font-weight:800;font-size:.95em;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td>
+                  <td colspan="${o.source==='service'?6:4}" style="padding:11px 14px;font-weight:800;font-size:.95em;">Total${o.gstType&&o.gstType!=='none'?' (incl. GST)':''}</td>
                   <td style="padding:11px 14px;text-align:right;font-weight:800;font-size:1.1em;color:var(--orange);">${fmt(_displayTotal)}</td>
                 </tr>
               </tfoot>
@@ -5355,7 +5357,7 @@ function amcDisplayNo(c){
   return prefix+numPart;
 }
 function amcDocTitle(c){
-  return (c.agreementType==='Non Comprehensive') ? 'SERVICE AGREEMENT' : 'MAINTENANCE AGREEMENT';
+  return 'MAINTENANCE AGREEMENT';
 }
 function printAmcContract(id){
   const c=D.amc_contracts.find(x=>x.id===id); if(!c){alert('Contract not found');return;}
@@ -5371,9 +5373,9 @@ function printAmcContract(id){
     @page{size:A4;margin:14mm 16mm;}
     *{box-sizing:border-box;}
     body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;margin:0;padding:0;font-size:12px;}
-    .hdr{display:flex;align-items:center;gap:14px;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;}
-    .hdr-logo{height:56px;width:auto;object-fit:contain;flex-shrink:0;}
-    .hdr-text{flex:1;text-align:center;}
+    .hdr{position:relative;text-align:center;border-bottom:2px solid #000;padding-bottom:8px;margin-bottom:12px;}
+    .hdr-logo{position:absolute;left:0;top:0;height:56px;width:auto;object-fit:contain;}
+    .hdr-text{width:100%;}
     .co-name{font-size:19px;font-weight:800;color:#000;font-family:Cambria,Georgia,serif;}
     .co-sub{font-size:10px;color:#334155;margin-top:2px;}
     .doc-title{font-size:14px;font-weight:800;text-align:center;margin:10px 0;letter-spacing:1px;color:#000;}
@@ -5402,7 +5404,7 @@ function printAmcContract(id){
   </div>
   <div class="doc-title">${amcDocTitle(c)} — ${esc(amcDisplayNo(c))}</div>
   <div class="meta-row">
-    This ${c.agreementType==='Non Comprehensive'?'Service':'Maintenance'} Agreement (hereinafter referred to as 'AGREEMENT') is made between Acenet Technologies India Pvt. Ltd. (hereinafter referred to as 'ACENET') and <strong>M/S. ${esc(c.custName)}</strong>${c.custGstin?` (GSTIN: ${esc(c.custGstin)})`:''}, hereinafter referred to as 'CUSTOMER'.<br>
+    This Maintenance Agreement (hereinafter referred to as 'AGREEMENT') is made between Acenet Technologies India Pvt. Ltd. (hereinafter referred to as 'ACENET') and <strong>M/S. ${esc(c.custName)}</strong>${c.custGstin?` (GSTIN: ${esc(c.custGstin)})`:''}, hereinafter referred to as 'CUSTOMER'.<br>
     Acenet at the request of the CUSTOMER hereby agrees to maintain the following mentioned Computer Systems along with specified Peripherals, subject to the terms of the AGREEMENT.<br><br>
     <strong>System Location:</strong> ${esc(c.systemLocation||'—')} &nbsp;&nbsp; <strong>Agreement Type:</strong> ${esc(c.agreementType||'Comprehensive')}<br>
     <strong>Agreement Period:</strong> From ${df(c.fromDate)} &nbsp;To&nbsp; ${df(c.toDate)}
@@ -5429,9 +5431,8 @@ function printAmcContract(id){
     <strong>Customer Name:</strong> M/S. ${esc(c.custName)}<br>
     <strong>Address:</strong> ${esc(c.custAddress||'—')}
   </div>
-  <div class="sign">
+  <div class="sign" style="justify-content:flex-start;">
     <div>Authorised Signatory Name: _______________________<br>Designation: _______________________<br>Signature</div>
-    <div style="text-align:right;">For ${esc(ACENET_CO.name)}<br><br>Authorised Signatory<br>Designation: INCHARGE SERVICE<br>Signature</div>
   </div>
   <div class="bm-page">${AMC_BACK_MATTER_HTML}</div>
   <script>window.onload=function(){window.focus();window.print();}<\/script>
@@ -6412,13 +6413,18 @@ function renderRptAdvances(){
     return true;
   });
   const totalAmt=data.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
-  const approved=data.filter(a=>a.status==='approved'||a.status==='settled').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  // 'approved' = approved but not yet deducted against a settled claim (still outstanding).
+  // 'deducted' = already used/settled. Older code lumped 'deducted' out of both buckets,
+  // which made Approved/Pending show ₹0 even when advances existed — fixed here.
+  const remaining=data.filter(a=>a.status==='approved').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+  const deducted=data.filter(a=>a.status==='deducted').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
   const pending=data.filter(a=>a.status==='pending').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
   const statsEl=g('advRptStats');
   if(statsEl) statsEl.innerHTML=`
     <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div class="stat-label">Advances</div><div class="stat-value">${data.length}</div></div>
-    <div class="stat s-green"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved)}</div></div>
     <div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(pending)}</div></div>
+    <div class="stat s-amber" title="Approved but not yet deducted against a settled claim"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><div class="stat-label">Remaining (To Deduct)</div><div class="stat-value">${fmt(remaining)}</div></div>
+    <div class="stat s-blue" title="Already deducted against a settled conveyance claim"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-scissors"></i></div><div class="stat-label">Deducted</div><div class="stat-value">${fmt(deducted)}</div></div>
     <div class="stat s-svc"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div><div class="stat-label">Total</div><div class="stat-value">${fmt(totalAmt)}</div></div>`;
   const tbody=g('advRptBody');if(!tbody)return;
   if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink3);">No advance records match the selected filters.</td></tr>';return;}
@@ -8582,15 +8588,31 @@ function renderAccConveyance(){
 
   // Per-engineer summary
   const engMap={};
-  D.svc_conveyance.forEach(c=>{if(!engMap[c.engineer])engMap[c.engineer]={name:c.engineer,total:0,approved:0,pending:0,rejected:0};engMap[c.engineer].total+=c.totalAmt;if(c.status==='approved')engMap[c.engineer].approved+=c.totalAmt;if(c.status==='pending')engMap[c.engineer].pending+=c.totalAmt;if(c.status==='rejected')engMap[c.engineer].rejected+=c.totalAmt;});
+  D.svc_conveyance.forEach(c=>{if(!engMap[c.engineer])engMap[c.engineer]={name:c.engineer,total:0,approved:0,pending:0,rejected:0,advRemaining:0,advPending:0,advDeducted:0};engMap[c.engineer].total+=c.totalAmt;if(c.status==='approved')engMap[c.engineer].approved+=c.totalAmt;if(c.status==='pending')engMap[c.engineer].pending+=c.totalAmt;if(c.status==='rejected')engMap[c.engineer].rejected+=c.totalAmt;});
+  // Fold in each engineer's conveyance advance position — how much is still outstanding
+  // (approved, not yet deducted), how much is awaiting approval, and how much has already
+  // been deducted against settled claims — since this wasn't visible anywhere before.
+  D.svc_conv_advances.forEach(a=>{
+    if(!engMap[a.engineer])engMap[a.engineer]={name:a.engineer,total:0,approved:0,pending:0,rejected:0,advRemaining:0,advPending:0,advDeducted:0};
+    const amt=parseFloat(a.amount)||0;
+    if(a.status==='approved')engMap[a.engineer].advRemaining+=amt;
+    else if(a.status==='pending')engMap[a.engineer].advPending+=amt;
+    else if(a.status==='deducted')engMap[a.engineer].advDeducted+=amt;
+  });
   const sumEl=g('convEngSummary');
   if(sumEl&&Object.keys(engMap).length){
     sumEl.innerHTML=`<div style="display:flex;gap:9px;flex-wrap:wrap;">${Object.values(engMap).map(eng=>`
-      <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:12px;padding:10px 14px;min-width:155px;">
+      <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:12px;padding:10px 14px;min-width:175px;">
         <div style="font-weight:700;font-size:.95em;color:var(--svc);margin-bottom:4px;"><i class="fas fa-user-helmet-safety" style="margin-right:5px;"></i>${esc(eng.name)}</div>
         <div style="font-size:.76em;"><span style="color:var(--ink3);">Total: </span><strong>${fmt(eng.total)}</strong></div>
         <div style="font-size:.76em;"><span style="color:var(--green);">Approved: ${fmt(eng.approved)}</span> &nbsp; <span style="color:var(--amber);">Pending: ${fmt(eng.pending)}</span></div>
         ${eng.rejected>0?`<div style="font-size:.9em;color:var(--red);">Rejected: ${fmt(eng.rejected)}</div>`:''}
+        ${(eng.advRemaining||eng.advPending||eng.advDeducted)?`<div style="margin-top:5px;padding-top:5px;border-top:1px dashed #99f6e4;font-size:.76em;">
+          <div style="color:var(--ink3);font-weight:700;">Advance:</div>
+          ${eng.advRemaining?`<div style="color:#c2410c;">${fmt(eng.advRemaining)} remaining (to deduct)</div>`:''}
+          ${eng.advPending?`<div style="color:var(--amber);">${fmt(eng.advPending)} awaiting approval</div>`:''}
+          ${eng.advDeducted?`<div style="color:#0369a1;">${fmt(eng.advDeducted)} already deducted</div>`:''}
+        </div>`:''}
       </div>`).join('')}
     </div>`;
   } else if(sumEl) sumEl.innerHTML='';
@@ -9545,8 +9567,8 @@ function renderSvcOrders(){
       </div>
       <div class="order-body" id="soc-body-${o.id}" style="display:none;">
         ${o.returnedForEdit?`<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:.85em;color:#991b1b;"><i class="fas fa-reply" style="margin-right:5px;"></i>Returned by Accounts${o.returnedBy?' ('+esc(o.returnedBy)+')':''}${o.returnedAt?' on '+new Date(o.returnedAt).toLocaleDateString('en-IN'):''}${o.returnedNote?': "'+esc(o.returnedNote)+'"':' — no note given.'} Please correct and click Edit above to resend.</div>`:''}
-        <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Purchase (₹)</th><th>Amount</th></tr></thead>
-        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="tw" style="margin-top:0;"><table><thead><tr><th>Material</th><th>HSN Code</th><th>Qty</th><th>Rate</th><th>Purchase (₹)</th><th>Amount</th></tr></thead>
+        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td style="font-size:.85em;color:var(--ink3);">${esc(it.hsn||'—')}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt">${it.purchaseVal?fmt(it.purchaseVal):'—'}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
         ${(o.supplier||o.purchaseVal)?`<div style="font-size:.8em;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;background:var(--bg);padding:8px 12px;border-radius:8px;">${o.supplier?`<span><i class="fas fa-truck" style="color:var(--orange);margin-right:4px;"></i>Supplier: <strong>${esc(o.supplier)}</strong></span>`:''}${o.purchaseVal?`<span>Purchase: <strong>${fmt(o.purchaseVal)}</strong></span>`:''}${o.margin!=null&&o.purchaseVal?`<span>Margin: <strong style="color:${o.margin>=0?'var(--green)':'var(--red)'};">${o.margin<0?'-':''}${fmt(o.margin)}</strong></span>`:''}</div>`:''}
         ${o.dc?.no?`<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 13px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:#0369a1;margin-bottom:6px;"><i class="fas fa-truck" style="margin-right:5px;"></i>Delivery Challan</div><div style="display:flex;flex-wrap:wrap;gap:12px;">${o.dc.no?`<span>DC No: <strong>${esc(o.dc.no)}</strong></span>`:''} ${o.dc.date?`<span>Date: <strong>${o.dc.date}</strong></span>`:''} ${o.dc.type?`<span>Type: <strong>${esc(o.dc.type)}</strong></span>`:''} ${o.dc.vehicle?`<span>Vehicle: <strong>${esc(o.dc.vehicle)}</strong></span>`:''} ${o.dc.driver?`<span>Carrier: <strong>${esc(o.dc.driver)}</strong></span>`:''} ${o.dc.addr?`<span>To: <strong>${esc(o.dc.addr)}</strong></span>`:''}</div>${o.dc.remarks?`<div style="color:var(--ink3);margin-top:4px;">${esc(o.dc.remarks)}</div>`:''}</div>`:''}
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
@@ -10401,11 +10423,14 @@ function incAccCard(e,context){
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   let actions='';
   if(context==='pending'){
+    // Pre-fill uses Net Profit (after expenses) — same base as the "Estimated Incentive" figure
+    // shown in the View drawer, so the two numbers always agree.
+    const npBase=e.netProfit!=null?e.netProfit:e.profit;
     actions=`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
       <label style="font-size:.87em;color:var(--ink3);">Incentive % or ₹</label>
       <div style="display:flex;align-items:center;gap:5px;">
         <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:70px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" oninput="calcIncAmt('${e.id}')" title="Enter %">
-        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" value="${e.profit>0?(e.profit*0.2).toFixed(2):''}">
+        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" value="${npBase>0?(npBase*0.2).toFixed(2):''}">
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
         <button class="btn btn-outline btn-sm" style="border-color:#c4b5fd;color:#7c3aed;" onclick="editIncPurchaseAcc('${e.id}')"><i class="fas fa-pen-to-square"></i> Edit Purchase</button>
@@ -10454,7 +10479,8 @@ function calcIncAmt(id){
   if(!pctEl||!amtEl)return;
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const pct=parseFloat(pctEl.value)||0;
-  if(pct>0) amtEl.value=(e.profit*pct/100).toFixed(2);
+  const npBase=e.netProfit!=null?e.netProfit:e.profit;
+  if(pct>0) amtEl.value=(npBase*pct/100).toFixed(2);
 }
 
 function editIncPurchaseAcc(id){
@@ -10536,7 +10562,8 @@ function acctApproveIncentive(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const pct=parseFloat(g('inc-pct-'+id)?.value)||0;
   const inp=g('inc-amt-'+id);
-  const amt=parseFloat(inp?.value)||(e.profit>0?e.profit*0.2:0);
+  const npBase=e.netProfit!=null?e.netProfit:e.profit;
+  const amt=parseFloat(inp?.value)||(npBase>0?npBase*0.2:0);
   showConfirm({
     icon:'ci-send',iconClass:'fa-check-circle',
     title:'Approve Incentive from Accounts?',
@@ -10565,7 +10592,8 @@ function bulkApproveAllIncentives(){
     onOk:()=>{
       let total=0;
       pending.forEach(e=>{
-        const amt=parseFloat(g('inc-amt-'+e.id)?.value)||(e.profit>0?e.profit*0.2:0);
+        const npBase=e.netProfit!=null?e.netProfit:e.profit;
+        const amt=parseFloat(g('inc-amt-'+e.id)?.value)||(npBase>0?npBase*0.2:0);
         e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Accounts';e.approvedByRole='accounts';e.approvedAt=new Date().toISOString();
         total+=amt;
       });
@@ -10677,7 +10705,7 @@ function mgmtIncCard(e,showActions){
     <label style="font-size:.73em;color:var(--ink3);">Adjust Incentive % or ₹</label>
     <div style="display:flex;align-items:center;gap:5px;">
       <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:65px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" oninput="calcIncAmt('${e.id}')" title="% of profit">
-      <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" value="${e.suggestedAmt||(e.profit>0?(e.profit*0.2).toFixed(2):'')}">
+      <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.82em;" value="${e.suggestedAmt||((e.netProfit!=null?e.netProfit:e.profit)>0?((e.netProfit!=null?e.netProfit:e.profit)*0.2).toFixed(2):'')}">
     </div>
     <div style="display:flex;gap:5px;">
       <button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="approveIncentive('${e.id}')"><i class="fas fa-check"></i> Approve</button>
@@ -12353,8 +12381,8 @@ function showMgmtDetail(type){
           <span class="st-badge st-pending"><i class="fas fa-clock"></i> Pending</span>
         </div>
         <div style="font-size:.8em;color:var(--ink3);">${o.date} &nbsp;·&nbsp; <strong>${esc(o.customer)}</strong> &nbsp;·&nbsp; ${o.items.length} item(s)</div>
-        <div class="tw" style="margin-top:8px;margin-bottom:0;"><table><thead><tr><th>Material</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
-        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
+        <div class="tw" style="margin-top:8px;margin-bottom:0;"><table><thead><tr><th>Material</th><th>HSN Code</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+        <tbody>${o.items.map(it=>`<tr><td>${esc(it.material)}</td><td style="font-size:.85em;color:var(--ink3);">${esc(it.hsn||'—')}</td><td>${it.qty}</td><td>${fmt(it.rate)}</td><td class="amt aa">${fmt(it.amount)}</td></tr>`).join('')}</tbody></table></div>
         <div style="text-align:right;font-family:'Sora',sans-serif;font-weight:800;color:var(--orange);margin-top:6px;">${fmt(o.total)}</div>
       </div>`).join('') : '<div class="empty"><i class="fas fa-clipboard-check"></i><p>No pending orders</p></div>';
       openMgmtDrawer('fa-clipboard-list','Pending Orders — Awaiting Billing',html); break;}
