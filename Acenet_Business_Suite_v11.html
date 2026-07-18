@@ -1387,7 +1387,7 @@ tbody tr:last-child td{border-bottom:none;}
     <select id="advEngFilter" onchange="renderAdvances()" ><option value="">All Engineers</option></select>
     <span id="advEngCount" style="margin-left:auto;font-size:.78em;color:var(--ink3);font-weight:700;"></span>
   </div>
-  <div class="tw"><table><thead><tr><th>Date</th><th>Engineer</th><th>Amount</th><th>Purpose</th><th>Call Ref</th><th>Mode</th><th>Status</th><th></th></tr></thead><tbody id="svcAdvAccBody"></tbody></table></div>
+  <div class="tw"><table><thead><tr><th>Date</th><th>Engineer</th><th>Amount</th><th>Balance</th><th>Purpose</th><th>Call Ref</th><th>Mode</th><th>Status</th><th></th></tr></thead><tbody id="svcAdvAccBody"></tbody></table></div>
 </div>
 
 <!-- ════ ACCOUNTS: BILL ENTRY (syncs to Marketing P&L) ════ -->
@@ -4740,10 +4740,10 @@ function renderAdvStats(){
   const totUsed=D.ac_payments.filter(p=>p.mode==='Advance Applied').reduce((s,p)=>s+p.amount,0);
   const bal=Math.max(0,totAdv-totUsed);
   const svcTotal=D.svc_conv_advances.reduce((s,a)=>s+a.amount,0);
-  const svcApproved=D.svc_conv_advances.filter(a=>a.status==='approved').reduce((s,a)=>s+a.amount,0);
+  const svcOutstanding=D.svc_conv_advances.filter(a=>a.status==='approved').reduce((s,a)=>s+advRemainingBal(a),0);
   const svcPending=D.svc_conv_advances.filter(a=>a.status==='pending').length;
   const el=g('advStats');if(!el)return;
-  el.innerHTML=`<div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Customer Adv. Received</div><div class="stat-value">${fmt(totAdv)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Applied to Invoices</div><div class="stat-value">${fmt(totUsed)}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Customer Balance</div><div class="stat-value">${fmt(bal)}</div></div><div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Service Adv. Issued</div><div class="stat-value">${fmt(svcTotal)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Svc. Pending</div><div class="stat-value">${svcPending}</div></div>`;
+  el.innerHTML=`<div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Customer Adv. Received</div><div class="stat-value">${fmt(totAdv)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Applied to Invoices</div><div class="stat-value">${fmt(totUsed)}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Customer Balance</div><div class="stat-value">${fmt(bal)}</div></div><div class="stat s-teal2" title="Total ever issued: ${fmt(svcTotal)}"><div class="stat-bar"></div><div class="stat-label">Service Adv. Outstanding</div><div class="stat-value">${fmt(svcOutstanding)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Svc. Pending</div><div class="stat-value">${svcPending}</div></div>`;
 }
 
 function renderAdvances(){
@@ -4765,7 +4765,7 @@ function renderAdvances(){
   const stBg2={pending:'var(--amber-l)',approved:'var(--green-l)',rejected:'var(--red-l)'};
   const sb=g('svcAdvAccBody');if(!sb)return;
   sb.innerHTML=!svcRows.length?'<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--ink3);">No service advance records.</td></tr>':
-    svcRows.map(a=>`<tr><td>${a.date}</td><td><strong style="color:var(--svc)">${esc(a.engineer)}</strong></td><td class="amt" style="color:var(--svc)">${fmt(a.amount)}</td><td style="font-size:.94em;">${esc(a.purpose||'—')}</td><td style="font-size:.94em;">${esc(a.callRef||'—')}</td><td>${mTag(a.mode||'Cash')}</td><td><span style="padding:3px 8px;border-radius:8px;font-size:.97em;font-weight:700;background:${stBg2[a.status]};color:${stClr[a.status]};">${a.status}</span>${a.approvedBy?`<div style="font-size:.96em;color:var(--green)">✓ ${esc(a.approvedBy)}</div>`:''}</td><td><button class="btn btn-danger btn-sm" onclick="delSvcAdv('${a.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('');
+    svcRows.map(a=>{const bal=advRemainingBal(a);return`<tr><td>${a.date}</td><td><strong style="color:var(--svc)">${esc(a.engineer)}</strong></td><td class="amt" style="color:var(--svc)">${fmt(a.amount)}</td><td class="amt ${bal>0?'at':'ag'}">${fmt(bal)}</td><td style="font-size:.94em;">${esc(a.purpose||'—')}</td><td style="font-size:.94em;">${esc(a.callRef||'—')}</td><td>${mTag(a.mode||'Cash')}</td><td><span style="padding:3px 8px;border-radius:8px;font-size:.97em;font-weight:700;background:${stBg2[a.status]};color:${stClr[a.status]};">${a.status}</span>${a.approvedBy?`<div style="font-size:.96em;color:var(--green)">✓ ${esc(a.approvedBy)}</div>`:''}</td><td><button class="btn btn-danger btn-sm" onclick="delSvcAdv('${a.id}')"><i class="fas fa-trash"></i></button></td></tr>`;}).join('');
 
   // Populate filter dropdowns
   populateAdvanceFilters();
@@ -8552,11 +8552,12 @@ function renderConveyance(){
     </div>`).join('');
 
   g('convAdvList').innerHTML=!advs.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.96em;">No advance requests</div>':
-    [...advs].reverse().map(a=>`<div class="conv-card" style="border-left:4px solid var(--svc);">
+    [...advs].reverse().map(a=>{const bal=advRemainingBal(a),used=parseFloat(a.deductedAmt)||0;return `<div class="conv-card" style="border-left:4px solid var(--svc);">
       <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.98em;">${esc(a.no)}</strong><span class="conv-status" style="background:${stBg[a.status]||'var(--bg)'};color:${stClr[a.status]||'var(--ink)'};">${a.status}</span></div>
-      <div style="font-size:.9em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div></div>
-      <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1em;flex-shrink:0;">${fmt(a.amount)}</div>
-    </div>`).join('');
+      <div style="font-size:.9em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div>
+      ${used>0.01?`<div style="font-size:.87em;color:#0369a1;margin-top:2px;"><i class="fas fa-scissors"></i> ₹${used.toFixed(2)} already deducted${a.deductedFrom?' from '+esc(a.deductedFrom):''} — ₹${bal.toFixed(2)} remaining</div>`:''}</div>
+      <div style="text-align:right;flex-shrink:0;"><div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--svc);font-size:1em;">${fmt(bal)}</div>${used>0.01?`<div style="font-size:.72em;font-weight:600;color:var(--ink3);">of ${fmt(a.amount)}</div>`:''}</div>
+    </div>`;}).join('');
 }
 
 // ════════════════════════════════════════════════════════════════
