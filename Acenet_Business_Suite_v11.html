@@ -6431,13 +6431,17 @@ function renderRptAdvances(){
   const pending=data.filter(a=>a.status==='pending').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
   const remaining=data.filter(a=>a.status!=='pending'&&a.status!=='rejected').reduce((s,a)=>s+advRemainingBal(a),0);
   const deducted=data.filter(a=>a.status!=='pending'&&a.status!=='rejected').reduce((s,a)=>s+advDeductedAmt(a),0);
+  // "Total" here means money actually issued to the engineer (approved + deducted) — a
+  // pending request hasn't been given to them yet, so it shouldn't inflate this figure, and
+  // a rejected one was never given either. Remaining + Deducted always equals this Total.
+  const totalIssued=remaining+deducted;
   const statsEl=g('advRptStats');
   if(statsEl) statsEl.innerHTML=`
     <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div class="stat-label">Advances</div><div class="stat-value">${data.length}</div></div>
     <div class="stat s-orange"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(pending)}</div></div>
     <div class="stat s-amber" title="Approved but not yet deducted against a settled claim"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-hourglass-half"></i></div><div class="stat-label">Remaining (To Deduct)</div><div class="stat-value">${fmt(remaining)}</div></div>
     <div class="stat s-blue" title="Already deducted against a settled conveyance claim"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-scissors"></i></div><div class="stat-label">Deducted</div><div class="stat-value">${fmt(deducted)}</div></div>
-    <div class="stat s-svc"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div><div class="stat-label">Total</div><div class="stat-value">${fmt(totalAmt)}</div></div>`;
+    <div class="stat s-svc" title="Actually issued to the engineer so far (Remaining + Deducted) — excludes any still-pending, unapproved request"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div><div class="stat-label">Total Issued</div><div class="stat-value">${fmt(totalIssued)}</div></div>`;
   const tbody=g('advRptBody');if(!tbody)return;
   if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink3);">No advance records match the selected filters.</td></tr>';return;}
   tbody.innerHTML=data.map(a=>{
@@ -8692,6 +8696,7 @@ function renderAccConveyance(){
 function convClaimCard(c,context){
   const stMap={pending:'cs-pending',approved:'cs-approved',rejected:'cs-rejected',settled:'cs-approved',draft:'cs-pending'};
   const borderMap={pending:'border-left:3px solid var(--amber);',rejected:'border-left:3px solid var(--red);',settled:'border-left:3px solid var(--acc);',approved:''};
+  const canApplyRetro=context==='settled'&&!c.advDeducted&&(D.svc_conv_advances||[]).some(a=>a.engineer===c.engineer&&a.status==='approved'&&advRemainingBal(a)>0.01);
   return `<div class="conv-card" style="${borderMap[c.status]||''}">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status ${stMap[c.status]||'cs-pending'}">${c.status}</span></div>
@@ -8699,7 +8704,7 @@ function convClaimCard(c,context){
       <div style="font-size:.9em;margin-top:3px;color:var(--ink2);">Travel: ${fmt(c.travelAmt)} &nbsp;|&nbsp; Food: ${fmt(c.foodAmt)} &nbsp;|&nbsp; Other: ${fmt(c.otherAmt)}</div>
       ${c.remarks?`<div style="font-size:.98em;color:var(--ink3);margin-top:2px;font-style:italic;">"${esc(c.remarks)}"</div>`:''}
       ${c.approvedBy?`<div style="font-size:.97em;color:var(--green);margin-top:2px;"><i class="fas fa-check-circle"></i> Approved by ${esc(c.approvedBy)}</div>`:''}
-      ${c.settledBy?`<div style="font-size:.97em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Adv. deducted: ${fmt(c.advDeducted)} · Net: ${fmt(c.netSettled||0)}`:''}</div>`:''}
+      ${c.settledBy?`<div style="font-size:.97em;color:var(--acc);margin-top:2px;"><i class="fas fa-wallet"></i> Settled by ${esc(c.settledBy)} on ${c.settledAt?c.settledAt.slice(0,10):''}${c.advDeducted?` · Adv. deducted: ${fmt(c.advDeducted)} · Net: ${fmt(c.netSettled||0)}${c.advAppliedRetro?' <span style="color:var(--amber);font-weight:700;">(recovered later, not at settlement)</span>':''}`:''}</div>`:''}
       ${c.rejectedReason?`<div style="font-size:.97em;color:var(--red);margin-top:2px;"><i class="fas fa-times-circle"></i> ${esc(c.rejectedReason)}</div>`:''}
     </div>
     <div style="flex-shrink:0;text-align:right;">
@@ -8709,6 +8714,7 @@ function convClaimCard(c,context){
         <button class="btn btn-outline btn-sm" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button>
         ${context==='pending'?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
         ${context==='approved'?`<button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>`:''}
+        ${canApplyRetro?`<button class="btn btn-sm" style="background:var(--amber);color:#fff;" onclick="applyAdvanceToSettledClaim('${c.id}')" title="This claim was paid in full with no advance deducted — recover available advance against it now"><i class="fas fa-hand-holding-dollar"></i> Apply Advance</button>`:''}
       </div>
     </div>
   </div>`;
@@ -8974,6 +8980,61 @@ function settleConvClaim(id){
       c.netSettled=Math.max(0,c.totalAmt-claimAdvUsed);
       saveData();renderAccConveyance();
       showSuccessToast(`✓ ${c.no} settled${claimAdvUsed>0?' · Advance ₹'+claimAdvUsed.toFixed(2)+' deducted':''}`,'var(--acc)');
+    }
+  });
+}
+// Retroactively apply available advance balance to a claim that's already settled/paid but
+// never had any advance deducted — e.g. because at the time it was settled, this engineer's
+// advance pool had already been wrongly drained by an over-deduction on a different claim.
+// This does NOT move any new cash (the claim was already paid in full) — it only formally
+// recognizes that this much of the engineer's outstanding advance is now recovered, so it
+// stops sitting as "available" and isn't double-counted against a future claim too.
+function applyAdvanceToSettledClaim(id){
+  const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
+  if(c.advDeducted){showSuccessToast('This claim already has an advance applied.','var(--red)');return;}
+  const availAdvances=(D.svc_conv_advances||[])
+    .filter(a=>a.engineer===c.engineer&&a.status==='approved'&&advRemainingBal(a)>0.01)
+    .sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.createdAt||'').localeCompare(b.createdAt||''));
+  let remainingClaim=c.totalAmt,totalAdv=0;
+  const usedNos=[];
+  for(const a of availAdvances){
+    if(remainingClaim<=0.01)break;
+    const bal=advRemainingBal(a);
+    const use=Math.min(bal,remainingClaim);
+    if(use>0){remainingClaim-=use;totalAdv+=use;usedNos.push(a.no+(use<bal-0.01?` (₹${use.toFixed(2)} of ₹${bal.toFixed(2)})`:''));}
+  }
+  if(totalAdv<=0.01){showSuccessToast('No available advance balance for '+c.engineer+' right now.','var(--red)');return;}
+  showConfirm({
+    icon:'ci-warn',iconClass:'fa-triangle-exclamation',
+    title:'Apply Advance to Already-Settled Claim?',
+    msg:`${c.no} was already paid in full — this won't move any new cash. It will record ₹${totalAdv.toFixed(2)} of ${c.engineer}'s available advance as recovered against it, so that advance stops showing as available for future claims.`,
+    details:[{k:'Claim',v:c.no},{k:'Claim Total',v:fmt(c.totalAmt)},{k:'Advance To Recover',v:fmt(totalAdv)+' ('+usedNos.join(', ')+')'}],
+    btnLabel:'Apply',btnColor:'var(--amber)',
+    onOk:()=>{
+      let claimRemaining=c.totalAmt,claimAdvUsed=0;
+      const appliedNos=[];
+      for(const a of availAdvances){
+        if(claimRemaining<=0.01)break;
+        const bal=advRemainingBal(a);
+        const use=Math.min(bal,claimRemaining);
+        if(use>0.01){
+          a.deductedAmt=(parseFloat(a.deductedAmt)||0)+use;
+          a.deductedFrom=a.deductedFrom?a.deductedFrom+', '+c.no:c.no;
+          a.deductedAt=new Date().toISOString();
+          a.deductedBy=D.currentUser?.name||'Accounts';
+          if(advRemainingBal(a)<=0.01) a.status='deducted';
+          claimRemaining-=use;claimAdvUsed+=use;
+          appliedNos.push(a.no);
+        }
+      }
+      if(claimAdvUsed>0){
+        c.advDeducted=claimAdvUsed;
+        c.advDeductedNos=appliedNos.join(', ');
+        c.netSettled=Math.max(0,c.totalAmt-claimAdvUsed);
+        c.advAppliedRetro=true;
+      }
+      saveData();renderAccConveyance();
+      showSuccessToast(`✓ Advance ₹${claimAdvUsed.toFixed(2)} recovered against ${c.no} (retroactive)`,'var(--amber)');
     }
   });
 }
@@ -12555,9 +12616,19 @@ function repairConveyanceDeductions(){
     if(c.advDeducted>c.totalAmt+0.01){
       const excess=c.advDeducted-c.totalAmt;
       const advNos=(c.advDeductedNos||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const advs=D.svc_conv_advances.filter(a=>advNos.includes(a.no)&&(a.deductedFrom||'').split(',').map(s=>s.trim()).includes(c.no));
+      let advs=D.svc_conv_advances.filter(a=>advNos.includes(a.no)&&(a.deductedFrom||'').split(',').map(s=>s.trim()).includes(c.no));
+      // Legacy claims settled before advDeductedNos/deductedFrom existed have no way to be
+      // linked back to the specific advances that were drawn down — without this fallback the
+      // excess is detected but never actually refunded, silently leaving it stuck as "deducted"
+      // forever. Fall back to this engineer's most-recently-deducted advances instead, since we
+      // can't know exactly which ones were used, but restoring the balance to *some* of the
+      // engineer's advances is correct and far better than letting it vanish.
+      if(!advs.length){
+        advs=D.svc_conv_advances.filter(a=>a.engineer===c.engineer&&a.status==='deducted')
+          .sort((a,b)=>(b.deductedAt||b.date||'').localeCompare(a.deductedAt||a.date||''));
+      }
       let toRefund=excess;
-      for(let i=advs.length-1;i>=0&&toRefund>0.01;i--){
+      for(let i=0;i<advs.length&&toRefund>0.01;i++){
         const a=advs[i];
         const consumed=a.deductedAmt!=null?a.deductedAmt:(parseFloat(a.amount)||0);
         const refund=Math.min(consumed,toRefund);
