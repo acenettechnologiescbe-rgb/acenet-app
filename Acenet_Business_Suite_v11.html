@@ -3884,7 +3884,13 @@ function getAdvBal(cn){const tot=D.ac_advances.filter(a=>a.custName===cn).reduce
 // A conveyance advance can be consumed across MULTIPLE settled claims (partial deductions),
 // tracked via deductedAmt (cumulative amount already used). Remaining balance = amount - deductedAmt.
 // status only flips to 'deducted' once the balance reaches zero — see settleConvClaim.
-function advRemainingBal(a){return Math.max(0,(parseFloat(a.amount)||0)-(parseFloat(a.deductedAmt)||0));}
+function advRemainingBal(a){if(a.status==='deducted')return 0;return Math.max(0,(parseFloat(a.amount)||0)-(parseFloat(a.deductedAmt)||0));}
+// Companion to advRemainingBal: how much of an advance has been used. Normally this is just
+// deductedAmt, but some older records were flipped to status 'deducted' before deductedAmt
+// existed as a field — for those, status is the authoritative signal, so fall back to the
+// full amount rather than showing 0 used / full amount "remaining" (which is what caused the
+// Remaining vs Deducted stats to show swapped totals).
+function advDeductedAmt(a){if(a.status==='deducted'&&a.deductedAmt==null)return parseFloat(a.amount)||0;return parseFloat(a.deductedAmt)||0;}
 function getSt(invId){const out=getOut(invId);if(out<=0)return 'paid';const i=D.ac_invoices.find(x=>x.id===invId);if(!i)return 'unpaid';if(i.dueDate&&i.dueDate<today())return 'overdue';if(getPaid(invId)>0)return 'partial';return 'unpaid';}
 function daysOD(inv){if(!inv.dueDate)return 0;const d=Math.floor((Date.now()-new Date(inv.dueDate))/(86400000));return d>0?d:0;}
 function stBadge(st){const m={paid:'b-paid Paid',partial:'b-partial Partial',unpaid:'b-unpaid Unpaid',overdue:'b-overdue Overdue'};const p=(m[st]||'b-unpaid Unpaid').split(' ');return`<span class="badge ${p[0]}">${p[1]}</span>`;}
@@ -6424,7 +6430,7 @@ function renderRptAdvances(){
   // are still technically status 'approved'.
   const pending=data.filter(a=>a.status==='pending').reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
   const remaining=data.filter(a=>a.status!=='pending'&&a.status!=='rejected').reduce((s,a)=>s+advRemainingBal(a),0);
-  const deducted=data.filter(a=>a.status!=='pending'&&a.status!=='rejected').reduce((s,a)=>s+(parseFloat(a.deductedAmt)||0),0);
+  const deducted=data.filter(a=>a.status!=='pending'&&a.status!=='rejected').reduce((s,a)=>s+advDeductedAmt(a),0);
   const statsEl=g('advRptStats');
   if(statsEl) statsEl.innerHTML=`
     <div class="stat s-blue"><div class="stat-bar"></div><div class="stat-icon"><i class="fas fa-file-alt"></i></div><div class="stat-label">Advances</div><div class="stat-value">${data.length}</div></div>
@@ -6436,7 +6442,7 @@ function renderRptAdvances(){
   if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--ink3);">No advance records match the selected filters.</td></tr>';return;}
   tbody.innerHTML=data.map(a=>{
     const stColor=a.status==='approved'||a.status==='settled'?'var(--green)':a.status==='rejected'?'var(--red)':'var(--amber)';
-    const bal=advRemainingBal(a),used=parseFloat(a.deductedAmt)||0;
+    const bal=advRemainingBal(a),used=advDeductedAmt(a);
     return `<tr>
       <td><strong style="color:var(--svc);">${esc(a.no||'—')}</strong></td>
       <td>${a.date}</td>
@@ -8552,7 +8558,7 @@ function renderConveyance(){
     </div>`).join('');
 
   g('convAdvList').innerHTML=!advs.length?'<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.96em;">No advance requests</div>':
-    [...advs].reverse().map(a=>{const bal=advRemainingBal(a),used=parseFloat(a.deductedAmt)||0;return `<div class="conv-card" style="border-left:4px solid var(--svc);">
+    [...advs].reverse().map(a=>{const bal=advRemainingBal(a),used=advDeductedAmt(a);return `<div class="conv-card" style="border-left:4px solid var(--svc);">
       <div style="flex:1;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;"><strong style="color:var(--svc);font-size:.98em;">${esc(a.no)}</strong><span class="conv-status" style="background:${stBg[a.status]||'var(--bg)'};color:${stClr[a.status]||'var(--ink)'};">${a.status}</span></div>
       <div style="font-size:.9em;color:var(--ink3);">${a.date} &nbsp;·&nbsp; ${esc(a.purpose||'')} ${a.callRef?'— Call: '+esc(a.callRef):''}</div>
       ${used>0.01?`<div style="font-size:.87em;color:#0369a1;margin-top:2px;"><i class="fas fa-scissors"></i> ₹${used.toFixed(2)} already deducted${a.deductedFrom?' from '+esc(a.deductedFrom):''} — ₹${bal.toFixed(2)} remaining</div>`:''}</div>
@@ -8603,7 +8609,7 @@ function renderAccConveyance(){
   D.svc_conv_advances.forEach(a=>{
     if(!engMap[a.engineer])engMap[a.engineer]={name:a.engineer,total:0,approved:0,pending:0,rejected:0,advRemaining:0,advPending:0,advDeducted:0};
     const amt=parseFloat(a.amount)||0;
-    const deducted=parseFloat(a.deductedAmt)||0;
+    const deducted=advDeductedAmt(a);
     if(a.status==='pending')engMap[a.engineer].advPending+=amt;
     else {
       // 'approved' (whether untouched or partially used) and 'deducted' (fully used) both
