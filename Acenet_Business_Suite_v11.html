@@ -3317,6 +3317,12 @@ function _initFirestore(){
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
                     'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','amc_contracts'];
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
+      // Re-run this on every sync, not just once at boot: since saveData() overwrites the
+      // whole shared document, a stale browser tab that still holds the old bad numbers in
+      // memory can silently undo this fix the moment it saves anything unrelated. Re-checking
+      // here means the very next sync from any device catches and re-corrects it, instead of
+      // the bad data sticking around until someone manually reloads.
+      try{repairConveyanceDeductions();}catch(e){}
       // Hide the sync indicator — data is ready
       const syncEl=g('loginSyncStatus');if(syncEl)syncEl.style.display='none';
       // If the login page is still visible (session check may have failed before
