@@ -8702,7 +8702,9 @@ function renderAccConveyance(){
 function convClaimCard(c,context){
   const stMap={pending:'cs-pending',approved:'cs-approved',rejected:'cs-rejected',settled:'cs-approved',draft:'cs-pending'};
   const borderMap={pending:'border-left:3px solid var(--amber);',rejected:'border-left:3px solid var(--red);',settled:'border-left:3px solid var(--acc);',approved:''};
-  const canApplyRetro=context==='settled'&&!c.advDeducted&&(D.svc_conv_advances||[]).some(a=>a.engineer===c.engineer&&a.status==='approved'&&advRemainingBal(a)>0.01);
+  const retroAlready=parseFloat(c.advDeducted)||0;
+  const retroOutstanding=retroAlready>0?(c.netSettled!=null?parseFloat(c.netSettled)||0:Math.max(0,c.totalAmt-retroAlready)):c.totalAmt;
+  const canApplyRetro=context==='settled'&&retroOutstanding>0.01&&(D.svc_conv_advances||[]).some(a=>a.engineer===c.engineer&&a.status==='approved'&&advRemainingBal(a)>0.01);
   return `<div class="conv-card" style="${borderMap[c.status]||''}">
     <div style="flex:1;min-width:0;">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><strong style="color:var(--svc);font-size:.9em;">${esc(c.no)}</strong><span class="conv-status ${stMap[c.status]||'cs-pending'}">${c.status}</span></div>
@@ -8720,7 +8722,7 @@ function convClaimCard(c,context){
         <button class="btn btn-outline btn-sm" onclick="viewConvClaimDetails('${c.id}')"><i class="fas fa-eye"></i> View</button>
         ${context==='pending'?`<button class="btn btn-success btn-sm" onclick="approveConvClaim('${c.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="rejectConvClaim('${c.id}')"><i class="fas fa-times"></i> Reject</button>`:''}
         ${context==='approved'?`<button class="btn btn-sm" style="background:var(--acc);color:#fff;" onclick="settleConvClaim('${c.id}')"><i class="fas fa-wallet"></i> Mark Settled</button>`:''}
-        ${canApplyRetro?`<button class="btn btn-sm" style="background:var(--amber);color:#fff;" onclick="applyAdvanceToSettledClaim('${c.id}')" title="This claim was paid in full with no advance deducted — recover available advance against it now"><i class="fas fa-hand-holding-dollar"></i> Apply Advance</button>`:''}
+        ${canApplyRetro?`<button class="btn btn-sm" style="background:var(--amber);color:#fff;" onclick="applyAdvanceToSettledClaim('${c.id}')" title="${retroAlready>0?'More advance is now available — recover more against the remaining outstanding balance':'This claim was paid in full with no advance deducted — recover available advance against it now'}"><i class="fas fa-hand-holding-dollar"></i> ${retroAlready>0?'Apply More Advance':'Apply Advance'}</button>`:''}
       </div>
     </div>
   </div>`;
@@ -8997,11 +8999,16 @@ function settleConvClaim(id){
 // stops sitting as "available" and isn't double-counted against a future claim too.
 function applyAdvanceToSettledClaim(id){
   const c=D.svc_conveyance.find(x=>x.id===id);if(!c)return;
-  if(c.advDeducted){showSuccessToast('This claim already has an advance applied.','var(--red)');return;}
+  const already=parseFloat(c.advDeducted)||0;
+  // Outstanding = whatever hasn't yet been recovered against this claim. For a claim that's
+  // never had any advance applied, that's its full total; for one that's had a partial top-up
+  // already (like CONV-0002's earlier ₹300), it's whatever's still left (netSettled).
+  const netOutstanding=already>0?(c.netSettled!=null?parseFloat(c.netSettled)||0:Math.max(0,c.totalAmt-already)):c.totalAmt;
+  if(netOutstanding<=0.01){showSuccessToast('This claim has nothing left outstanding to recover advance against.','var(--red)');return;}
   const availAdvances=(D.svc_conv_advances||[])
     .filter(a=>a.engineer===c.engineer&&a.status==='approved'&&advRemainingBal(a)>0.01)
     .sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.createdAt||'').localeCompare(b.createdAt||''));
-  let remainingClaim=c.totalAmt,totalAdv=0;
+  let remainingClaim=netOutstanding,totalAdv=0;
   const usedNos=[];
   for(const a of availAdvances){
     if(remainingClaim<=0.01)break;
@@ -9012,12 +9019,12 @@ function applyAdvanceToSettledClaim(id){
   if(totalAdv<=0.01){showSuccessToast('No available advance balance for '+c.engineer+' right now.','var(--red)');return;}
   showConfirm({
     icon:'ci-warn',iconClass:'fa-triangle-exclamation',
-    title:'Apply Advance to Already-Settled Claim?',
-    msg:`${c.no} was already paid in full — this won't move any new cash. It will record ₹${totalAdv.toFixed(2)} of ${c.engineer}'s available advance as recovered against it, so that advance stops showing as available for future claims.`,
-    details:[{k:'Claim',v:c.no},{k:'Claim Total',v:fmt(c.totalAmt)},{k:'Advance To Recover',v:fmt(totalAdv)+' ('+usedNos.join(', ')+')'}],
-    btnLabel:'Apply',btnColor:'var(--amber)',
+    title:already>0?'Apply More Advance to This Claim?':'Apply Advance to Already-Settled Claim?',
+    msg:`${c.no} was already paid in full${already>0?` (₹${already.toFixed(2)} advance already recovered against it, ₹${netOutstanding.toFixed(2)} still outstanding)`:''} — this won't move any new cash. It will record ₹${totalAdv.toFixed(2)} more of ${c.engineer}'s available advance as recovered against it, so it stops showing as available for future claims.`,
+    details:[{k:'Claim',v:c.no},{k:'Still Outstanding',v:fmt(netOutstanding)},{k:'Advance To Recover Now',v:fmt(totalAdv)+' ('+usedNos.join(', ')+')'}],
+    btnLabel:already>0?'Apply More':'Apply',btnColor:'var(--amber)',
     onOk:()=>{
-      let claimRemaining=c.totalAmt,claimAdvUsed=0;
+      let claimRemaining=netOutstanding,claimAdvUsed=0;
       const appliedNos=[];
       for(const a of availAdvances){
         if(claimRemaining<=0.01)break;
@@ -9034,9 +9041,9 @@ function applyAdvanceToSettledClaim(id){
         }
       }
       if(claimAdvUsed>0){
-        c.advDeducted=claimAdvUsed;
-        c.advDeductedNos=appliedNos.join(', ');
-        c.netSettled=Math.max(0,c.totalAmt-claimAdvUsed);
+        c.advDeducted=already+claimAdvUsed;
+        c.advDeductedNos=(c.advDeductedNos?c.advDeductedNos+', ':'')+appliedNos.join(', ');
+        c.netSettled=Math.max(0,netOutstanding-claimAdvUsed);
         c.advAppliedRetro=true;
       }
       saveData();renderAccConveyance();
