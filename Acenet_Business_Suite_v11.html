@@ -3472,7 +3472,10 @@ async function loadData(){
 }
 
 // saveData() — writes to Firestore AND localStorage (belt-and-suspenders).
+window._pendingSaves = 0;
 async function saveData(notifyType){
+  window._pendingSaves++;
+  try{
   // Always write to localStorage as instant offline backup
   localStorage.setItem('ac_users',     JSON.stringify(D.users));
   localStorage.setItem('ac_pl_bills',  JSON.stringify(D.pl_bills));
@@ -3538,6 +3541,9 @@ async function saveData(notifyType){
   flashSaved();
   refreshDataLists();
   if(bc) try{bc.postMessage(notifyType||'sync');}catch(e){}
+  } finally {
+    window._pendingSaves--;
+  }
 }
 
 // Shows a small non-blocking warning when Firestore is unreachable
@@ -3660,7 +3666,43 @@ function doLogin(){
   bootApp();
 }
 function qLogin(u,p){g('lUser').value=u;g('lPass').value=p;doLogin();}
-function doLogout(){D.currentUser=null;sessionStorage.removeItem('ac_sess');g('appShell').style.display='none';g('loginPage').style.display='flex';g('lPass').value='';}
+function _syncOverlay(msg){
+  let o=document.getElementById('_syncOverlay');
+  if(!o){
+    o=document.createElement('div');
+    o.id='_syncOverlay';
+    o.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    o.innerHTML='<div style="background:#fff;border-radius:14px;padding:28px 34px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.25);min-width:240px;"><i class="fas fa-spinner fa-spin" style="font-size:1.6em;color:var(--acc,#0369a1);"></i><div id="_syncOverlayMsg" style="margin-top:12px;font-weight:600;color:#1e293b;font-size:.95em;"></div></div>';
+    document.body.appendChild(o);
+  }
+  document.getElementById('_syncOverlayMsg').textContent=msg;
+  o.style.display='flex';
+  return o;
+}
+function _hideSyncOverlay(){const o=document.getElementById('_syncOverlay');if(o)o.style.display='none';}
+// Waits for any in-flight Firestore write (tracked by window._pendingSaves in saveData) to
+// finish before proceeding, so a logout or page-close can't race ahead of a save that's still
+// on its way to the server — which is what was causing changes to look like they'd "reverted."
+async function _waitForPendingSaves(msg){
+  if(!window._pendingSaves) return;
+  _syncOverlay(msg||'Syncing your changes\u2026 please wait');
+  const start=Date.now();
+  while(window._pendingSaves>0 && Date.now()-start<10000){
+    await new Promise(r=>setTimeout(r,150));
+  }
+  _hideSyncOverlay();
+}
+window.addEventListener('beforeunload', e => {
+  if(window._pendingSaves>0){
+    e.preventDefault();
+    e.returnValue='Your last change is still saving. Are you sure you want to leave?';
+    return e.returnValue;
+  }
+});
+async function doLogout(){
+  await _waitForPendingSaves('Saving your last changes before logout\u2026');
+  D.currentUser=null;sessionStorage.removeItem('ac_sess');g('appShell').style.display='none';g('loginPage').style.display='flex';g('lPass').value='';
+}
 
 function bootApp(){
   g('loginPage').style.display='none';g('appShell').style.display='block';
@@ -4253,7 +4295,6 @@ function orderAccCard(o,showConfirm){
           <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();viewOrderModal('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--orange);color:var(--orange);"><i class="fas fa-eye"></i> View</button>
           ${o.addedToIncentive?`<span style="font-size:.77em;padding:3px 9px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;white-space:nowrap;"><i class="fas fa-gift"></i> ${esc(o.incentiveRef||'')}</span>`:`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();addOrderToIncentiveManually('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:#c4b5fd;color:#7c3aed;" title="Add to Incentive"><i class="fas fa-gift"></i></button>`}
           ${o.status==='pending'&&!o.returnedForEdit?`<button class="btn btn-outline btn-sm" onclick="event.stopPropagation();returnOrderToService('${o.id}')" style="font-size:.77em;padding:3px 9px;border-color:var(--red);color:var(--red);" title="Send back to Service for correction"><i class="fas fa-reply"></i> Return</button>`:''}
-          ${o.status!=='billed'?`<button class="btn btn-sm" onclick="event.stopPropagation();deleteAccOrder('${o.id}')" style="font-size:.77em;padding:3px 9px;background:var(--red);color:#fff;" title="Delete"><i class="fas fa-trash"></i></button>`:''}
         </div>
       </div>
     </div>
