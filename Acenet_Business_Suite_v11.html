@@ -1010,6 +1010,8 @@ tbody tr:last-child td{border-bottom:none;}
       /* ── Logout: always show with text on mobile ── */
       .btn-logout span{display:inline !important;}
       .btn-logout{padding:5px 10px !important;background:rgba(220,38,38,.35) !important;border-color:rgba(220,38,38,.5) !important;color:#fff !important;font-size:.72em !important;}
+      #btnSyncNow{background:rgba(255,255,255,.12) !important;border-color:rgba(255,255,255,.25) !important;}
+      #btnSyncNow span{display:none !important;}
       /* ── Role badge: slim ── */
       .role-badge{font-size:.64em;padding:2px 7px;}
       /* ── Hide username text ── */
@@ -1020,6 +1022,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="save-ind" id="saveInd"><i class="fas fa-check-circle"></i> Saved</div>
     <div class="role-badge" id="roleBadge"></div>
     <div class="user-nm" id="userNm"><i class="fas fa-user-circle"></i><span id="userName"></span></div>
+    <button class="btn-logout" id="btnSyncNow" onclick="manualSyncNow(this)" style="background:rgba(255,255,255,.08);" title="Pull the latest data from the cloud now"><i class="fas fa-sync-alt"></i><span style="margin-left:5px;"> Sync Now</span></button>
     <button class="btn-logout" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i><span style="margin-left:5px;"> Logout</span></button>
   </div>
 </div>
@@ -3315,13 +3318,18 @@ function _initFirestore(){
       const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                     'ac_invoices','ac_payments','ac_advances','ac_customers',
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                    'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','amc_contracts'];
+                    'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns',
+                    'salary_advances','hsn_learned_map','amc_contracts','fy_archives','doc_seq'];
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
-      // Re-run this on every sync, not just once at boot: since saveData() overwrites the
-      // whole shared document, a stale browser tab that still holds the old bad numbers in
-      // memory can silently undo this fix the moment it saves anything unrelated. Re-checking
-      // here means the very next sync from any device catches and re-corrects it, instead of
-      // the bad data sticking around until someone manually reloads.
+      // Keep our "last known synced state" current so the next saveData() call
+      // compares this tab's edits against the freshest server data, not a
+      // stale copy from whenever this tab first loaded.
+      window._syncedSnapshot = _deepClone(remote);
+      window._lastSyncedAt = new Date();
+      // Re-run this on every sync, not just once at boot: a stale browser tab that still
+      // holds the old bad numbers in memory could otherwise re-introduce them the next time
+      // it saves. Re-checking here means the very next sync from any device catches and
+      // re-corrects it, instead of the bad data sticking around until someone manually reloads.
       try{repairConveyanceDeductions();}catch(e){}
       // Hide the sync indicator — data is ready
       const syncEl=g('loginSyncStatus');if(syncEl)syncEl.style.display='none';
@@ -3459,16 +3467,114 @@ async function loadData(){
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
                       'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','doc_seq','amc_contracts'];
         keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
+        // Remember exactly what the server had at load time. saveData() compares
+        // against this "baseline" later to figure out what *this tab* actually
+        // changed, instead of blindly overwriting the whole shared document.
+        window._syncedSnapshot = _deepClone(remote);
+        window._lastSyncedAt = new Date();
         console.log('✅ Data loaded from Firestore');
       } else {
         // First run — push default users to Firestore
         await _db.collection('acenet').doc('appdata').set({ users: DEF_USERS, _lastNotify: 'init' });
+        window._syncedSnapshot = { users: DEF_USERS };
+        window._lastSyncedAt = new Date();
         console.log('✅ First run — default users saved to Firestore');
       }
     } catch(err) {
       console.warn('Firestore read failed, using localStorage data:', err);
     }
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+// MERGE-SAFE SYNC HELPERS
+// ────────────────────────────────────────────────────────────────
+// The whole app's data lives in one shared Firestore document
+// (acenet/appdata). Older versions of saveData() simply overwrote
+// that entire document with whatever was in memory on this tab —
+// so if two people saved close together, the later save silently
+// erased anything the earlier save had added (this is what caused
+// Nandakumar's service-call entry to vanish).
+//
+// The fix: before writing, we look at what THIS tab has actually
+// changed since it last synced (window._syncedSnapshot, captured on
+// every load/save), and apply only those specific changes on top of
+// whatever is freshest on the server — instead of replacing the
+// server's copy wholesale. Two people adding/editing/deleting
+// different records at the same time no longer clobber each other.
+// ════════════════════════════════════════════════════════════════
+
+const ID_ARRAY_KEYS = ['pl_bills','pl_ledger','pl_customers','pl_materials',
+  'ac_invoices','ac_payments','ac_advances','ac_customers','orders','svc_calls',
+  'svc_conveyance','svc_conv_advances','svc_incentives','mkt_sent_reports',
+  'messages','stock_items','stock_txns','salary_advances','fy_archives',
+  'amc_contracts','users'];
+
+function _deepClone(obj){ try{ return obj===undefined?undefined:JSON.parse(JSON.stringify(obj)); }catch(e){ return obj; } }
+
+// Merge one array-of-records field (matched by .id) using 3-way comparison:
+//   baseline = what the server had the last time this tab synced
+//   local    = what this tab has right now (may include local edits/deletes/adds)
+//   remote   = the freshest copy just read from the server (may include other users' changes)
+function mergeArrayField(remote, baseline, local){
+  remote   = Array.isArray(remote)   ? remote   : [];
+  baseline = Array.isArray(baseline) ? baseline : [];
+  local    = Array.isArray(local)    ? local    : [];
+
+  const baseMap   = new Map(baseline.filter(x=>x&&x.id!=null).map(x=>[x.id,x]));
+  const localMap  = new Map(local.filter(x=>x&&x.id!=null).map(x=>[x.id,x]));
+  const remoteMap = new Map(remote.filter(x=>x&&x.id!=null).map(x=>[x.id,x]));
+
+  const result = new Map(remoteMap); // start from the freshest server state
+
+  // Apply this tab's own additions/edits
+  localMap.forEach((item,id)=>{
+    const base = baseMap.get(id);
+    if(!base){
+      // New record this tab created since last sync
+      result.set(id,item);
+    } else if(JSON.stringify(base) !== JSON.stringify(item)){
+      // Record this tab edited since last sync
+      result.set(id,item);
+    }
+    // else: unchanged locally — leave whatever is on the server (could be
+    // someone else's newer edit) untouched.
+  });
+
+  // Apply this tab's own deletions (present in baseline, gone from local)
+  baseMap.forEach((_,id)=>{
+    if(!localMap.has(id)) result.delete(id);
+  });
+
+  // Preserve a stable order: remote order first, then any brand-new local items
+  const order=[]; const seen=new Set();
+  remote.forEach(item=>{ if(item&&item.id!=null&&!seen.has(item.id)&&result.has(item.id)){order.push(item.id);seen.add(item.id);} });
+  local.forEach(item=>{ if(item&&item.id!=null&&!seen.has(item.id)&&result.has(item.id)){order.push(item.id);seen.add(item.id);} });
+  return order.map(id=>result.get(id));
+}
+
+// Merge a plain key/value map field (e.g. hsn_learned_map) the same 3-way way.
+function mergeMapField(remote, baseline, local){
+  remote = remote || {}; baseline = baseline || {}; local = local || {};
+  const result = {...remote};
+  Object.keys(local).forEach(k=>{
+    if(baseline[k]===undefined || JSON.stringify(baseline[k])!==JSON.stringify(local[k])) result[k]=local[k];
+  });
+  Object.keys(baseline).forEach(k=>{
+    if(local[k]===undefined) delete result[k];
+  });
+  return result;
+}
+
+// doc_seq holds running counters (quotation/PO numbers) — always take the
+// higher value from either side so two people saving at once never reuse
+// the same document number.
+function mergeDocSeq(remote, local){
+  remote = remote || {}; local = local || {};
+  const keys = new Set([...Object.keys(remote), ...Object.keys(local)]);
+  const out = {};
+  keys.forEach(k=>{ out[k] = Math.max(Number(remote[k])||0, Number(local[k])||0); });
+  return out;
 }
 
 // saveData() — writes to Firestore AND localStorage (belt-and-suspenders).
@@ -3501,37 +3607,37 @@ async function saveData(notifyType){
   localStorage.setItem('ac_doc_seq',    JSON.stringify(D.doc_seq||{quotation:0,po:0}));
   localStorage.setItem('ac_amc_contracts', JSON.stringify(D.amc_contracts||[]));
 
-  // Then write the full state to Firestore so all users get the update
+  // Then merge this tab's changes into the freshest server copy and write
+  // that back — inside a transaction, so two people saving at the same
+  // moment can't stomp on each other (see MERGE-SAFE SYNC HELPERS above).
   if(_fbReady && _db){
     try {
-      await _db.collection('acenet').doc('appdata').set({
-        users:              D.users,
-        pl_bills:           D.pl_bills,
-        pl_ledger:          D.pl_ledger,
-        pl_customers:       D.pl_customers,
-        pl_materials:       D.pl_materials,
-        ac_invoices:        D.ac_invoices,
-        ac_payments:        D.ac_payments,
-        ac_advances:        D.ac_advances,
-        ac_customers:       D.ac_customers,
-        orders:             D.orders,
-        svc_calls:          D.svc_calls,
-        svc_conveyance:     D.svc_conveyance,
-        svc_conv_advances:  D.svc_conv_advances,
-        svc_incentives:     D.svc_incentives || [],
-        mkt_sent_reports:   D.mkt_sent_reports || [],
-        messages:           D.messages || [],
-        stock_items:        D.stock_items || [],
-        stock_txns:         D.stock_txns || [],
-        hsn_learned_map:    D.hsn_learned_map || {},
-        salary_advances:    D.salary_advances || [],
-        fy_archives:        D.fy_archives || [],
-        doc_seq:            D.doc_seq || {quotation:0,po:0},
-        amc_contracts:      D.amc_contracts || [],
-        _lastNotify:        notifyType || 'sync',
-        _savedAt:           new Date().toISOString(),
-        _savedBy:           D.currentUser?.name || 'system'
+      const ref = _db.collection('acenet').doc('appdata');
+      const baseline = window._syncedSnapshot || {};
+      let merged = null;
+      await _db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const remote = snap.exists ? snap.data() : {};
+        merged = {};
+        ID_ARRAY_KEYS.forEach(k=>{
+          merged[k] = mergeArrayField(remote[k], baseline[k], D[k]);
+        });
+        merged.hsn_learned_map = mergeMapField(remote.hsn_learned_map, baseline.hsn_learned_map, D.hsn_learned_map);
+        merged.doc_seq         = mergeDocSeq(remote.doc_seq, D.doc_seq);
+        merged._lastNotify = notifyType || 'sync';
+        merged._savedAt    = new Date().toISOString();
+        merged._savedBy    = D.currentUser?.name || 'system';
+        tx.set(ref, merged);
       });
+      // Pull the merged result straight back into this tab so it immediately
+      // reflects anything another user added/changed at the same time.
+      if(merged){
+        ID_ARRAY_KEYS.forEach(k=>{ D[k] = merged[k]; });
+        D.hsn_learned_map = merged.hsn_learned_map;
+        D.doc_seq         = merged.doc_seq;
+        window._syncedSnapshot = _deepClone(merged);
+        window._lastSyncedAt = new Date();
+      }
     } catch(err) {
       console.warn('Firestore write failed, data saved locally only:', err);
       showFirebaseError();
@@ -3543,6 +3649,54 @@ async function saveData(notifyType){
   if(bc) try{bc.postMessage(notifyType||'sync');}catch(e){}
   } finally {
     window._pendingSaves--;
+  }
+}
+
+// Manual "Sync Now" — force-pulls the latest data straight from the server
+// (bypassing any local/offline cache) and refreshes the screen. Useful if a
+// tab has been open a while, was briefly offline, or you just want to make
+// sure you're seeing the very latest entries from everyone else.
+async function manualSyncNow(btn){
+  if(!_fbReady || !_db){
+    showSuccessToast('Not connected to the cloud — check your internet connection.', 'var(--red,#dc2626)');
+    return;
+  }
+  const icon = btn ? btn.querySelector('i') : null;
+  if(icon) icon.classList.add('fa-spin');
+  if(btn) btn.disabled = true;
+  try{
+    // Make sure anything this tab still has queued gets sent first, so a
+    // sync doesn't wipe unsaved local work off the screen.
+    if(window._pendingSaves > 0){
+      await new Promise(res=>{
+        const iv=setInterval(()=>{ if(window._pendingSaves<=0){clearInterval(iv);res();} },150);
+        setTimeout(()=>{clearInterval(iv);res();},8000);
+      });
+    }
+    const snap = await _db.collection('acenet').doc('appdata').get({source:'server'});
+    if(snap.exists){
+      const remote = snap.data();
+      const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
+                    'ac_invoices','ac_payments','ac_advances','ac_customers',
+                    'orders','svc_calls','svc_conveyance','svc_conv_advances',
+                    'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns',
+                    'salary_advances','hsn_learned_map','amc_contracts','fy_archives','doc_seq'];
+      keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
+      window._syncedSnapshot = _deepClone(remote);
+      window._lastSyncedAt = new Date();
+      refreshUI();
+      refreshDataLists();
+      const t = window._lastSyncedAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+      showSuccessToast(`Synced with cloud — up to date as of ${t}`, 'var(--green)');
+    } else {
+      showSuccessToast('Connected, but no cloud data found yet.', 'var(--red,#dc2626)');
+    }
+  } catch(err){
+    console.warn('Manual sync failed:', err);
+    showSuccessToast('Sync failed — check your internet connection and try again.', 'var(--red,#dc2626)');
+  } finally {
+    if(icon) icon.classList.remove('fa-spin');
+    if(btn) btn.disabled = false;
   }
 }
 
