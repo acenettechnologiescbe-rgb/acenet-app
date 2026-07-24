@@ -6429,7 +6429,7 @@ function exportConvReport(){
     legs.forEach(l=>{
       const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
       const amt=km>0&&rate>0?km*rate:rate;
-      legRows.push({'Claim ID':c.no,'Date':c.date,'Engineer':c.engineer,'From':l.from||'','To':l.to||'','Mode':l.mode||'','KM':km||'','Rate/KM (₹)':rate?rate.toFixed(2):'','Leg Amount (₹)':amt.toFixed(2)});
+      legRows.push({'Claim ID':c.no,'Date':legActualDate(c,l),'Engineer':c.engineer,'From':l.from||'','To':l.to||'','Mode':l.mode||'','KM':km||'','Rate/KM (₹)':rate?rate.toFixed(2):'','Leg Amount (₹)':amt.toFixed(2)});
     });
   });
   xlsxExport([{name:'Conveyance Claims',rows},{name:'Travel Log (Audit)',rows:legRows},{name:'Advance Requests',rows:D.svc_conv_advances.map(a=>({'Adv ID':a.no,'Date':a.date,'Engineer':a.engineer,'Amount (₹)':a.amount.toFixed(2),'Purpose':a.purpose||'','Call Ref':a.callRef||'','Status':a.status,'Approved By':a.approvedBy||''}))}],'acenet_conveyance_'+today());
@@ -6508,6 +6508,19 @@ function getConvRptFiltered(){
 // mode of travel and how many kilometers (and the per-km rate) were claimed on each leg.
 function convClaimLegs(c){
   return (c.items&&c.items.length)?c.items:[];
+}
+// Each leg records which service call (or order) it came from via l.callNo — but not its own
+// date, so reports were falling back to the claim's creation date for every single leg, even
+// when the underlying calls happened on completely different days. This looks the real date
+// up from that call/order record instead, matching what the Service Calls Report already shows.
+function legActualDate(c,l){
+  if(l&&l.callNo){
+    const sc=(D.svc_calls||[]).find(x=>x.no===l.callNo);
+    if(sc) return sc.date||(sc.datetime||'').slice(0,10)||c.date;
+    const ord=(D.orders||[]).find(o=>o.orderNo===l.callNo);
+    if(ord) return ord.date||c.date;
+  }
+  return c.date;
 }
 function convRouteSummary(c,forHtml){
   const legs=convClaimLegs(c);
@@ -6692,7 +6705,7 @@ function printConvReport(){
     legs.forEach((l,i)=>{
       const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
       const amt=km>0&&rate>0?km*rate:rate;
-      legRows.push(`<tr><td>${esc(c.no)}</td><td>${c.date}</td><td>${esc(c.engineer)}</td><td>${esc(l.from||'—')}</td><td>${esc(l.to||'—')}</td><td>${esc(l.mode||'—')}</td><td style="text-align:right;">${km||'—'}</td><td style="text-align:right;">${rate?fmt(rate):'—'}</td><td style="text-align:right;font-weight:700;">${fmt(amt)}</td></tr>`);
+      legRows.push(`<tr><td>${esc(c.no)}</td><td>${legActualDate(c,l)}</td><td>${esc(c.engineer)}</td><td>${esc(l.from||'—')}</td><td>${esc(l.to||'—')}</td><td>${esc(l.mode||'—')}</td><td style="text-align:right;">${km||'—'}</td><td style="text-align:right;">${rate?fmt(rate):'—'}</td><td style="text-align:right;font-weight:700;">${fmt(amt)}</td></tr>`);
     });
   });
   openPrintWindow('Conveyance Claims Report',`
@@ -6751,7 +6764,7 @@ function exportConvRptExcel(){
     legs.forEach(l=>{
       const km=parseFloat(l.km)||0,rate=parseFloat(l.rate)||0;
       const amt=km>0&&rate>0?km*rate:rate;
-      legRows.push({'Claim No':c.no,'Date':c.date,'Engineer':c.engineer,'From':l.from||'','To':l.to||'','Mode':l.mode||'','KM':km||'','Rate/KM (₹)':rate?rate.toFixed(2):'','Leg Amount (₹)':amt.toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''});
+      legRows.push({'Claim No':c.no,'Date':legActualDate(c,l),'Engineer':c.engineer,'From':l.from||'','To':l.to||'','Mode':l.mode||'','KM':km||'','Rate/KM (₹)':rate?rate.toFixed(2):'','Leg Amount (₹)':amt.toFixed(2),'Status':c.status,'Approved By':c.approvedBy||''});
     });
   });
   xlsxExport([{name:'Conveyance Claims',rows},{name:'Travel Log (Audit)',rows:legRows}],'acenet_conv_report_'+today());
@@ -8843,9 +8856,11 @@ function renderAccConveyance(){
     </div>`;
   } else if(sumEl) sumEl.innerHTML='';
 
-  // Advance requests — split into active (still has a remaining balance) vs fully deducted
-  const advActive=D.svc_conv_advances.filter(a=>a.status!=='deducted'&&a.status!=='rejected');
-  const advDeducted=D.svc_conv_advances.filter(a=>a.status==='deducted');
+  // Advance requests — split into active (still has a remaining balance) vs fully deducted.
+  // Filtered by the same engineer picker as everything else on this page, so switching to a
+  // specific engineer shows only their advances, not the whole company's.
+  const advActive=D.svc_conv_advances.filter(a=>a.status!=='deducted'&&a.status!=='rejected'&&(!engF||a.engineer===engF));
+  const advDeducted=D.svc_conv_advances.filter(a=>a.status==='deducted'&&(!engF||a.engineer===engF));
 
   g('accConvAdvList').innerHTML=!advActive.length?emptyMsg('No active advance requests'):
     advActive.map(a=>{const bal=advRemainingBal(a);const used=(parseFloat(a.deductedAmt)||0);return `<div class="conv-card" style="${a.status==='pending'?'border-left:3px solid var(--amber);':a.status==='approved'?'border-left:3px solid var(--green);':''}">
@@ -8883,7 +8898,7 @@ function renderAccConveyance(){
   // Update stats to include advance info — sums remaining balance, not full original amount,
   // so a partially-consumed advance only counts what's actually still outstanding.
   const totalAdv=advActive.filter(a=>a.status==='approved').reduce((s,a)=>s+advRemainingBal(a),0);
-  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(pending.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,c)=>a+c.totalAmt,0))}</div></div>${totalAdv>0?`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Advance (to Deduct)</div><div class="stat-value" style="font-size:.9em;">${fmt(totalAdv)}</div></div>`:''}`;
+  g('accConvStats').innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending Claims</div><div class="stat-value">${pending.length}</div></div><div class="stat s-red"><div class="stat-bar"></div><div class="stat-label">Pending Amount</div><div class="stat-value">${fmt(pending.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(approved.reduce((a,c)=>a+c.totalAmt,0))}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,c)=>a+c.totalAmt,0))}</div></div>${totalAdv>0?`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Advance (to Deduct)${engF?' — '+esc(engF):''}</div><div class="stat-value" style="font-size:.9em;">${fmt(totalAdv)}</div></div>`:''}`;
 
   g('accConvPending').innerHTML=!pending.length?emptyMsg('No pending claims'):pending.map(c=>convClaimCard(c,'pending')).join('');
   g('accConvApproved').innerHTML=!approved.length?emptyMsg('No approved claims yet'):[...approved].reverse().map(c=>convClaimCard(c,'approved')).join('');
