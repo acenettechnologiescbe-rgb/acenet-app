@@ -8309,21 +8309,43 @@ function sendSvcCallReportWhatsApp(id){
 // normal login screen; lets the customer confirm receipt with one tap, which writes
 // customerAck/customerAckAt back onto the matching service call record.
 // ════════════════════════════════════════════════════════════════
-function showAckPage(callId){
-  const c=D.svc_calls.find(x=>x.id===callId);
+async function showAckPage(callId){
   const loginPage=g('loginPage'),appShell=g('appShell');
   if(loginPage)loginPage.style.display='none';
   if(appShell)appShell.style.display='none';
   const box=document.createElement('div');
   box.id='ackPage';
   box.style.cssText='position:fixed;inset:0;background:#f1f5f9;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;font-family:"Segoe UI",Arial,sans-serif;';
+  document.body.appendChild(box);
+  box.innerHTML=`<div style="background:#fff;border-radius:16px;padding:36px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.15);text-align:center;">
+    <i class="fas fa-spinner fa-spin" style="font-size:1.8em;color:#0e7490;"></i>
+    <div style="font-weight:700;font-size:.95em;margin-top:14px;color:#334155;">Loading service call…</div>
+  </div>`;
+  // On a brand-new device (e.g. a customer opening this link for the first time, with no
+  // cached data), the Firebase SDK is still loading its scripts over the network at this
+  // exact moment — a single instant check would wrongly say "not found" before Firestore
+  // ever gets a chance to connect. Actively wait for it and re-fetch directly instead.
+  let c=D.svc_calls.find(x=>x.id===callId);
+  if(!c && typeof _fbConfigured==='function' && _fbConfigured()){
+    const deadline=Date.now()+10000;
+    while(!c && Date.now()<deadline){
+      await new Promise(r=>setTimeout(r,300));
+      if(_fbReady && _db){
+        try{
+          const snap=await _db.collection('acenet').doc('appdata').get();
+          if(snap.exists && snap.data().svc_calls) D.svc_calls=snap.data().svc_calls;
+        }catch(e){}
+      }
+      c=D.svc_calls.find(x=>x.id===callId);
+    }
+  }
   if(!c){
     box.innerHTML=`<div style="background:#fff;border-radius:16px;padding:36px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.15);text-align:center;">
       <i class="fas fa-circle-exclamation" style="font-size:2.2em;color:#dc2626;"></i>
       <div style="font-weight:800;font-size:1.05em;margin-top:14px;color:#0f172a;">Service call not found</div>
-      <div style="font-size:.88em;color:#64748b;margin-top:6px;">This link may be outdated. Please contact Acenet Technologies if you need help.</div>
+      <div style="font-size:.88em;color:#64748b;margin-top:6px;">This link may be outdated, or the connection was too slow to load it. Please try reopening the link, or contact Acenet Technologies if you need help.</div>
+      <button onclick="location.reload()" style="margin-top:16px;background:#0e7490;color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:.88em;font-weight:700;cursor:pointer;"><i class="fas fa-rotate-right" style="margin-right:6px;"></i>Retry</button>
     </div>`;
-    document.body.appendChild(box);
     return;
   }
   const renderInner=()=>{
@@ -8354,7 +8376,6 @@ function showAckPage(callId){
   };
   window._ackRerender=renderInner;
   renderInner();
-  document.body.appendChild(box);
 }
 function ackConfirm(id){
   const c=D.svc_calls.find(x=>x.id===id);if(!c)return;
