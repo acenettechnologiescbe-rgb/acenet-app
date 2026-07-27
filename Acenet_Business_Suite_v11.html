@@ -8893,7 +8893,10 @@ function renderConveyance(){
 
   // Stats (excluding drafts)
   const totClaim=convs.reduce((a,c)=>a+c.totalAmt,0),totApproved=convs.filter(c=>c.status==='approved'||c.status==='settled').reduce((a,c)=>a+c.totalAmt,0),totPending=convs.filter(c=>c.status==='pending').reduce((a,c)=>a+c.totalAmt,0),totSettled=convs.filter(c=>c.status==='settled').reduce((a,c)=>a+c.totalAmt,0);
-  g('convStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Claimed</div><div class="stat-value">${fmt(totClaim)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(totPending)}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled</div><div class="stat-value">${fmt(totSettled)}</div></div>`;
+  // Outstanding conveyance advances still to be deducted (FIFO) from this engineer's
+  // future claim settlements — same figure Accounts sees, scoped to this view.
+  const totAdvToDeduct=advs.filter(a=>a.status==='approved').reduce((s,a)=>s+advRemainingBal(a),0);
+  g('convStats').innerHTML=`<div class="stat s-teal2"><div class="stat-bar"></div><div class="stat-label">Total Claimed</div><div class="stat-value">${fmt(totClaim)}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${fmt(totPending)}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled</div><div class="stat-value">${fmt(totSettled)}</div></div><div class="stat s-red" title="Approved advance amount still to be deducted from future settlements"><div class="stat-bar"></div><div class="stat-label">Advance to Deduct</div><div class="stat-value">${fmt(totAdvToDeduct)}</div></div>`;
 
   const stBg={pending:'var(--amber-l)',approved:'var(--green-l)',rejected:'var(--red-l)',settled:'#e0f2fe'};
   const stClr={pending:'#92400e',approved:'#065f46',rejected:'#991b1b',settled:'#0369a1'};
