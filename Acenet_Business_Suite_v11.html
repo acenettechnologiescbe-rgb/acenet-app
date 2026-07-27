@@ -9927,7 +9927,7 @@ function calcOrdConvTotal(){
     const rate=parseFloat(row.querySelector('.ocr-rate')?.value)||0;
     const f=parseFloat(row.querySelector('.ocr-food')?.value)||0;
     const o=parseFloat(row.querySelector('.ocr-other')?.value)||0;
-    const trav=km*rate;
+    const trav=km>0&&rate>0?km*rate:rate;
     const amtEl=row.querySelector('.ocr-amt');
     if(amtEl)amtEl.value='₹'+trav.toFixed(2);
     _tv+=trav;_fd+=f;_ot+=o;
@@ -9949,7 +9949,7 @@ function getOrdConvRows(){
     const rate=parseFloat(row.querySelector('.ocr-rate')?.value)||0;
     const food=parseFloat(row.querySelector('.ocr-food')?.value)||0;
     const other=parseFloat(row.querySelector('.ocr-other')?.value)||0;
-    if(from||to||km)rows.push({from,to,mode:row.querySelector('.ocr-mode')?.value||'Two-wheeler',km,rate,food,other,travel:km*rate,remarks:row.querySelector('.ocr-remarks')?.value||''});
+    if(from||to||km||rate)rows.push({from,to,mode:row.querySelector('.ocr-mode')?.value||'Two-wheeler',km,rate,food,other,travel:km>0&&rate>0?km*rate:rate,remarks:row.querySelector('.ocr-remarks')?.value||''});
   });
   return rows;
 }
