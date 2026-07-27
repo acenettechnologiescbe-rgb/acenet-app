@@ -9821,6 +9821,41 @@ function toggleOrdConv(){
   if(chev)chev.style.transform=open?'':'rotate(180deg)';
   if(!open&&g('ordConvRows')&&g('ordConvRows').children.length===0)addOrdConvRow();
 }
+// ── Conveyance leg: Mode of Transport rules (shared by Service Call & Order Checklist forms) ──
+// Two-wheeler: distance stays visible, rate is locked at the company's fixed ₹2.5/km.
+// Auto/Taxi: distance doesn't apply (fare isn't per-km), so it's hidden and the rate
+// field becomes a flat fare amount instead. All other modes behave as before (free entry).
+function applyConvModeRules(selectEl){
+  const row=selectEl.closest('div[id^="scr-"],div[id^="ocr-"]');
+  if(!row) return;
+  const kmInput=row.querySelector('input[class$="-km"]');
+  const rateInput=row.querySelector('input[class$="-rate"]');
+  if(!kmInput||!rateInput) return;
+  const kmWrap=kmInput.closest('.fg');
+  const rateLabel=rateInput.closest('.fg')?.querySelector('label');
+  const mode=selectEl.value;
+  if(mode==='Two-wheeler'){
+    if(kmWrap) kmWrap.style.display='';
+    kmInput.disabled=false;
+    rateInput.value='2.5';
+    rateInput.readOnly=true;
+    rateInput.style.background='#eef2f7';
+    if(rateLabel) rateLabel.textContent='Rate ₹/km (fixed)';
+  } else if(mode==='Auto/Taxi'){
+    if(kmWrap) kmWrap.style.display='none';
+    kmInput.value=0;
+    kmInput.disabled=true;
+    rateInput.readOnly=false;
+    rateInput.style.background='';
+    if(rateLabel) rateLabel.textContent='Fare (₹)';
+  } else {
+    if(kmWrap) kmWrap.style.display='';
+    kmInput.disabled=false;
+    rateInput.readOnly=false;
+    rateInput.style.background='';
+    if(rateLabel) rateLabel.textContent='Rate ₹/km';
+  }
+}
 function addOrdConvRow(data){
   ordConvRC++;const n=ordConvRC;
   const custs=(D.ac_customers||[]).map(c=>`<option value="${c.name.replace(/"/g,'&quot;')}">${c.name}</option>`).join('');
@@ -9844,7 +9879,7 @@ function addOrdConvRow(data){
       <input type="text" class="ocr-to-custom" placeholder="Enter destination" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcOrdConvTotal()">
     </div>
     <div class="fg"><label style="font-size:.72em;">Mode of Transport</label>
-      <select class="ocr-mode" onchange="calcOrdConvTotal()">
+      <select class="ocr-mode" onchange="applyConvModeRules(this);calcOrdConvTotal()">
         <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
         <option>Train</option><option>Company Vehicle</option><option>Other</option>
       </select>
@@ -9881,6 +9916,7 @@ function addOrdConvRow(data){
     div.querySelector('.ocr-other').value=data.other||0;
     div.querySelector('.ocr-remarks').value=data.remarks||'';
   }
+  applyConvModeRules(div.querySelector('.ocr-mode'));
   calcOrdConvTotal();
 }
 function removeOrdConvRow(n){const el=g('ocr-'+n);if(el){el.remove();calcOrdConvTotal();}}
@@ -13326,7 +13362,7 @@ function addConvRow(data){
         <input type="text" class="scr-to-custom" placeholder="Enter destination" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--line);font-size:.85em;margin-top:4px;display:none;" oninput="calcConvTotal()">
       </div>
       <div class="fg"><label style="font-size:.72em;">Mode of Transport</label>
-        <select class="scr-mode" onchange="calcConvTotal()">
+        <select class="scr-mode" onchange="applyConvModeRules(this);calcConvTotal()">
           <option>Two-wheeler</option><option>Auto/Taxi</option><option>Bus</option>
           <option>Train</option><option>Company Vehicle</option><option>Other</option>
         </select>
@@ -13380,6 +13416,7 @@ function addConvRow(data){
     r.querySelector('.scr-other').value=data.other||0;
     r.querySelector('.scr-remarks').value=data.remarks||'';
   }
+  applyConvModeRules(div.querySelector('.scr-mode'));
   calcConvTotal();
 }
 
