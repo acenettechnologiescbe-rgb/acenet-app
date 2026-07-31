@@ -2043,44 +2043,6 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="mgmtRptBody"></div>
 </div>
 
-<!-- ════ MANAGEMENT: LEAVE ════ -->
-<div class="page" id="page-mgmt-leave">
-<div class="ph">
-  <div><h2><span class="phi" style="background:var(--mgmt)"><i class="fas fa-calendar-days"></i></span><span class="sora">Leave</span></h2><p>Approve requests, track the team's monthly leave, and set annual quotas</p></div>
-</div>
-<div class="sdiv">⏳ Pending Approvals</div>
-<div id="mgmtLvPending"></div>
-
-<div class="g2" style="margin-top:20px;align-items:start;">
-  <div>
-    <div class="sdiv">👥 Team Leave — Monthly Overview <input type="month" id="mgmtLvMonth" style="margin-left:auto;padding:5px 9px;border-radius:7px;border:1.5px solid var(--bd);font-size:.85em;" onchange="changeLeaveMonth('mgmt')"></div>
-    <div id="mgmtLvTeam"></div>
-  </div>
-  <div class="card">
-    <div class="sdiv">⚙️ Leave Policy (days / year) <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="addLeaveType()"><i class="fas fa-plus"></i> Add Type</button></div>
-    <div id="mgmtLvPolicy"></div>
-  </div>
-</div>
-
-<div class="sdiv" style="margin-top:20px;">🙋 My Own Leave</div>
-<div id="mgmtLvBalance"></div>
-<div class="card" style="margin-bottom:16px;">
-  <div class="g3">
-    <div class="fg"><label>Leave Type</label>
-      <select id="mgmtLvType"></select>
-    </div>
-    <div class="fg"><label>From</label><input type="date" id="mgmtLvFrom"></div>
-    <div class="fg"><label>To</label><input type="date" id="mgmtLvTo"></div>
-  </div>
-  <div class="g2">
-    <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:22px;"><input type="checkbox" id="mgmtLvHalf" style="width:16px;height:16px;"> <label style="margin:0;">Half day</label></div>
-    <div class="fg"><label>Reason</label><input type="text" id="mgmtLvReason" placeholder="Optional"></div>
-  </div>
-  <button class="btn btn-primary" onclick="applyLeaveSubmit('management')"><i class="fas fa-paper-plane"></i> Submit Application</button>
-</div>
-<div id="mgmtLvHistory"></div>
-</div>
-
 <!-- ════ MANAGEMENT: SERVICE OVERVIEW ════ -->
 <!-- (Added to management overview inline rendering) -->
 
@@ -2396,31 +2358,6 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="svcIncList"></div>
 </div>
 
-<!-- ════ SERVICE: LEAVE ════ -->
-<div class="page" id="page-svc-leave">
-<div class="ph">
-  <div><h2><span class="phi" style="background:var(--svc)"><i class="fas fa-calendar-days"></i></span><span class="sora">Leave</span></h2><p>Apply for leave and track your balance</p></div>
-</div>
-<div id="svcLvBalance"></div>
-<div class="card" style="margin-bottom:16px;">
-  <div class="sdiv">📝 Apply for Leave</div>
-  <div class="g3">
-    <div class="fg"><label>Leave Type</label>
-      <select id="svcLvType"></select>
-    </div>
-    <div class="fg"><label>From</label><input type="date" id="svcLvFrom"></div>
-    <div class="fg"><label>To</label><input type="date" id="svcLvTo"></div>
-  </div>
-  <div class="g2">
-    <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:22px;"><input type="checkbox" id="svcLvHalf" style="width:16px;height:16px;"> <label style="margin:0;">Half day</label></div>
-    <div class="fg"><label>Reason</label><input type="text" id="svcLvReason" placeholder="Optional"></div>
-  </div>
-  <button class="btn btn-primary" onclick="applyLeaveSubmit('service')"><i class="fas fa-paper-plane"></i> Submit Application</button>
-</div>
-<div class="sdiv">📋 My Leave History</div>
-<div id="svcLvHistory"></div>
-</div>
-
 <!-- ════ ACCOUNTS: INCENTIVES ════ -->
 <!-- ════ SERVICE: OUTSTANDING COLLECTION ════ -->
 <div class="page" id="page-svc-outstanding">
@@ -2472,33 +2409,6 @@ tbody tr:last-child td{border-bottom:none;}
   <div id="accIncSettled"></div>
   <div class="sdiv">❌ Rejected</div>
   <div id="accIncRejected"></div>
-</div>
-
-<!-- ════ ACCOUNTS: LEAVE ════ -->
-<div class="page" id="page-acc-leave">
-<div class="ph">
-  <div><h2><span class="phi" style="background:var(--acc)"><i class="fas fa-calendar-days"></i></span><span class="sora">Leave</span></h2><p>Apply for your own leave, and see the team's monthly leave overview</p></div>
-</div>
-<div id="accLvBalance"></div>
-<div class="card" style="margin-bottom:16px;">
-  <div class="sdiv">📝 Apply for Leave</div>
-  <div class="g3">
-    <div class="fg"><label>Leave Type</label>
-      <select id="accLvType"></select>
-    </div>
-    <div class="fg"><label>From</label><input type="date" id="accLvFrom"></div>
-    <div class="fg"><label>To</label><input type="date" id="accLvTo"></div>
-  </div>
-  <div class="g2">
-    <div class="fg" style="display:flex;align-items:center;gap:8px;padding-top:22px;"><input type="checkbox" id="accLvHalf" style="width:16px;height:16px;"> <label style="margin:0;">Half day</label></div>
-    <div class="fg"><label>Reason</label><input type="text" id="accLvReason" placeholder="Optional"></div>
-  </div>
-  <button class="btn btn-primary" onclick="applyLeaveSubmit('accounts')"><i class="fas fa-paper-plane"></i> Submit Application</button>
-</div>
-<div class="sdiv">📋 My Leave History</div>
-<div id="accLvHistory"></div>
-<div class="sdiv" style="margin-top:20px;">👥 Team Leave — Monthly Overview <input type="month" id="accLvMonth" style="margin-left:auto;padding:5px 9px;border-radius:7px;border:1.5px solid var(--bd);font-size:.85em;" onchange="changeLeaveMonth('acc')"></div>
-<div id="accLvTeam"></div>
 </div>
 
 <!-- ════ ACCOUNTS: STOCK PORTAL ════ -->
@@ -3375,8 +3285,6 @@ let D = {
   fy_archives:[],    // archived financial year data snapshots
   hsn_learned_map:{}, // {materialNameLower: hsnCode} — remembers HSN codes once confirmed for a material
   amc_contracts:[],  // {id,contractNo,custName,custAddress,custGstin,systemLocation,agreementType,periodLabel,fromDate,toDate,items:[{model,qty,description,charges}],cgstPct,sgstPct,notes,createdAt,createdBy,notifiedStage}
-  leaves:[],         // {id,no,empName,empRole,leaveType,from,to,halfDay,days,reason,status,appliedAt,approvedBy,approvedAt,rejectedBy,rejectedReason,rejectedAt,cancelledAt}
-  leavePolicy:{Casual:12,Sick:12,Earned:15}, // annual quota (days/year) per leave type — editable by Management
   users:[]
 };
 let selMat=null,editBillId=null,editInvId=null,invRC=0,billRC=0,ordRC=0,editOrdId=null,convRC=0;
@@ -3421,7 +3329,7 @@ function _initFirestore(){
                     'ac_invoices','ac_payments','ac_advances','ac_customers',
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
                     'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns',
-                    'salary_advances','hsn_learned_map','amc_contracts','fy_archives','doc_seq','leaves','leavePolicy'];
+                    'salary_advances','hsn_learned_map','amc_contracts','fy_archives','doc_seq'];
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
       // Keep our "last known synced state" current so the next saveData() call
       // compares this tab's edits against the freshest server data, not a
@@ -3555,8 +3463,6 @@ async function loadData(){
   D.stock_items       = J(localStorage.getItem('ac_stock_items'))  || [];
   D.stock_txns        = J(localStorage.getItem('ac_stock_txns'))   || [];
   D.hsn_learned_map   = J(localStorage.getItem('ac_hsn_map'))      || {};
-  D.leaves            = J(localStorage.getItem('ac_leaves'))       || [];
-  D.leavePolicy       = J(localStorage.getItem('ac_leave_policy')) || {Casual:12,Sick:12,Earned:15};
   D.doc_seq           = J(localStorage.getItem('ac_doc_seq'))      || {quotation:0,po:0};
   D.amc_contracts     = J(localStorage.getItem('ac_amc_contracts'))|| [];
 
@@ -3569,7 +3475,7 @@ async function loadData(){
         const keys = ['pl_bills','pl_ledger','pl_customers','pl_materials',
                       'ac_invoices','ac_payments','ac_advances','ac_customers',
                       'orders','svc_calls','svc_conveyance','svc_conv_advances',
-                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','doc_seq','amc_contracts','fy_archives','leaves','leavePolicy'];
+                      'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns','salary_advances','hsn_learned_map','doc_seq','amc_contracts'];
         keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
         // Remember exactly what the server had at load time. saveData() compares
         // against this "baseline" later to figure out what *this tab* actually
@@ -3612,7 +3518,7 @@ const ID_ARRAY_KEYS = ['pl_bills','pl_ledger','pl_customers','pl_materials',
   'ac_invoices','ac_payments','ac_advances','ac_customers','orders','svc_calls',
   'svc_conveyance','svc_conv_advances','svc_incentives','mkt_sent_reports',
   'messages','stock_items','stock_txns','salary_advances','fy_archives',
-  'amc_contracts','users','leaves'];
+  'amc_contracts','users'];
 
 function _deepClone(obj){ try{ return obj===undefined?undefined:JSON.parse(JSON.stringify(obj)); }catch(e){ return obj; } }
 
@@ -3708,8 +3614,6 @@ async function saveData(notifyType){
   localStorage.setItem('ac_stock_items',JSON.stringify(D.stock_items||[]));
   localStorage.setItem('ac_stock_txns', JSON.stringify(D.stock_txns||[]));
   localStorage.setItem('ac_hsn_map',    JSON.stringify(D.hsn_learned_map||{}));
-  localStorage.setItem('ac_leaves',     JSON.stringify(D.leaves||[]));
-  localStorage.setItem('ac_leave_policy', JSON.stringify(D.leavePolicy||{}));
   localStorage.setItem('ac_doc_seq',    JSON.stringify(D.doc_seq||{quotation:0,po:0}));
   localStorage.setItem('ac_amc_contracts', JSON.stringify(D.amc_contracts||[]));
 
@@ -3729,7 +3633,6 @@ async function saveData(notifyType){
           merged[k] = mergeArrayField(remote[k], baseline[k], D[k]);
         });
         merged.hsn_learned_map = mergeMapField(remote.hsn_learned_map, baseline.hsn_learned_map, D.hsn_learned_map);
-        merged.leavePolicy     = mergeMapField(remote.leavePolicy, baseline.leavePolicy, D.leavePolicy);
         merged.doc_seq         = mergeDocSeq(remote.doc_seq, D.doc_seq);
         merged._lastNotify = notifyType || 'sync';
         merged._savedAt    = new Date().toISOString();
@@ -3741,7 +3644,6 @@ async function saveData(notifyType){
       if(merged){
         ID_ARRAY_KEYS.forEach(k=>{ D[k] = merged[k]; });
         D.hsn_learned_map = merged.hsn_learned_map;
-        D.leavePolicy = merged.leavePolicy;
         D.doc_seq         = merged.doc_seq;
         window._syncedSnapshot = _deepClone(merged);
         window._lastSyncedAt = new Date();
@@ -3788,7 +3690,7 @@ async function manualSyncNow(btn){
                     'ac_invoices','ac_payments','ac_advances','ac_customers',
                     'orders','svc_calls','svc_conveyance','svc_conv_advances',
                     'svc_incentives','mkt_sent_reports','users','messages','stock_items','stock_txns',
-                    'salary_advances','hsn_learned_map','amc_contracts','fy_archives','doc_seq','leaves','leavePolicy'];
+                    'salary_advances','hsn_learned_map','amc_contracts','fy_archives','doc_seq'];
       keys.forEach(k => { if(remote[k] !== undefined) D[k] = remote[k]; });
       window._syncedSnapshot = _deepClone(remote);
       window._lastSyncedAt = new Date();
@@ -3877,9 +3779,9 @@ function refreshUI(){
   const r=D.currentUser?.role;
   if(!r) return;
   renderInvoices();renderPayments();renderAdvances();renderAccCusts();renderUsers();renderAccOrders();
-  if(r==='management'){renderMgmt();updateMgmtIncBadge();updateMgmtViewBadge();updateLeaveBadge();if(g('page-mgmt-leave')?.classList.contains('on'))renderLeavePage('management');}
-  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccDashboard();updatePendInboxBadge();if(g('page-acc-leave')?.classList.contains('on'))renderLeavePage('accounts');}
-  if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();renderSvcOutstanding();if(g('page-svc-leave')?.classList.contains('on'))renderLeavePage('service');}
+  if(r==='management'){renderMgmt();updateMgmtIncBadge();updateMgmtViewBadge();}
+  if(r==='accounts'){renderAccReports();renderAdvStats();renderAccConveyance();renderAccIncentives();updateAccIncBadge();renderStock();renderAccDashboard();updatePendInboxBadge();}
+  if(r==='service'){renderSvcCalls();renderConveyance();renderSvcOrders();renderSvcIncentives();renderSvcOutstanding();}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3981,7 +3883,6 @@ function bootApp(){
   const def={management:'overview',accounts:'acc-dashboard',service:'svc-calls'};
   goPage(def[u.role]||'overview');
   if(u.role==='accounts'){ try{updateAmcExpiryBadge();setTimeout(showAmcExpiryToast,900);}catch(e){} }
-  if(u.role==='management'){ try{updateLeaveBadge();}catch(e){} }
 }
 
 function checkSession(){
@@ -3998,7 +3899,6 @@ const NAVS = {
   management:[
     {id:'overview',icon:'fa-eye',label:'Overview'},
     {id:'mgmt-view',icon:'fa-table-list',label:'Detail Info',color:'var(--svc)',hasBadge:true,badgeId:'mgmt-view-badge'},
-    {id:'mgmt-leave',icon:'fa-calendar-days',label:'Leave',color:'var(--mgmt)',hasBadge:true,badgeId:'mgmt-lv-badge'},
     {id:'mgmt-reports',icon:'fa-chart-pie',label:'Reports',color:'var(--mgmt)'},
     {id:'users',icon:'fa-users-gear',label:'Users'},
     {id:'setup',icon:'fa-server',label:'Setup'}
@@ -4011,7 +3911,6 @@ const NAVS = {
     {id:'advances',icon:'fa-hand-holding-dollar',label:'Advances'},
     {id:'acc-conveyance',icon:'fa-car-side',label:'Conveyance',color:'var(--svc)',hasBadge:true,badgeId:'conv-badge'},
     {id:'acc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'acc-inc-badge'},
-    {id:'acc-leave',icon:'fa-calendar-days',label:'Leave',color:'var(--acc)'},
     {id:'acc-cust',icon:'fa-users',label:'Customers'},
     {id:'acc-amc',icon:'fa-file-contract',label:'AMC Contracts',color:'var(--acc)',hasBadge:true,badgeId:'amc-exp-badge'},
     {id:'acc-stock',icon:'fa-boxes-stacked',label:'Stock',color:'var(--green)'},
@@ -4023,7 +3922,6 @@ const NAVS = {
     {id:'svc-orders',icon:'fa-clipboard-list',label:'Order Checklist',color:'var(--orange)',hasBadge:true,badgeId:'svc-ord-badge'},
     {id:'svc-outstanding',icon:'fa-phone-volume',label:'Outstanding',color:'var(--red)'},
     {id:'svc-incentives',icon:'fa-gift',label:'Incentives',color:'#7c3aed',hasBadge:true,badgeId:'svc-inc-badge'},
-    {id:'svc-leave',icon:'fa-calendar-days',label:'Leave'},
     {id:'svc-reports',icon:'fa-chart-bar',label:'Reports',color:'var(--svc)'},
     {id:'svc-stock',icon:'fa-boxes-stacked',label:'Stock',color:'var(--green)'}
   ]
@@ -4101,9 +3999,6 @@ function goPage(p){
   if(p==='acc-incentives') renderAccIncentives();
   if(p==='mgmt-view') renderMgmtView();
   if(p==='mgmt-reports') renderMgmtReports();
-  if(p==='svc-leave') renderLeavePage('service');
-  if(p==='acc-leave') renderLeavePage('accounts');
-  if(p==='mgmt-leave'){renderLeavePage('management');updateLeaveBadge();}
   if(p==='acc-stock') renderStock();
   if(p==='acc-amc'){renderAmcContracts();updateAmcExpiryBadge();}
   if(p==='acc-rpt-hub'){renderRptOutstanding();renderRptCollection();renderRptIncentive();renderAccFinancialRpt();renderRptConveyance();renderRptAdvances();populateConvRptDropdowns();renderSentMktHistory();renderRptGstHsn();}
@@ -4585,6 +4480,7 @@ function orderAccCard(o,showConfirm){
       ${o.notes?`<div style="font-size:.79em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
       ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:8px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
       ${o.modified?`<div style="font-size:.78em;background:#fff7ed;border-left:3px solid #fb923c;padding:8px 12px;border-radius:8px;margin-top:8px;color:#c2410c;"><i class="fas fa-rotate-right" style="margin-right:5px;"></i><strong>Order was modified</strong> by ${esc(o.modifiedBy||'Service')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN',''):''} — please review updated items &amp; amounts above</div>`:''}
+      ${o.receivedToStock?`<div style="font-size:.79em;background:#ecfdf5;border-left:3px solid #34d399;padding:8px 12px;border-radius:8px;margin-top:8px;color:#065f46;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Received to Stock on ${new Date(o.receivedToStockAt).toLocaleDateString('en-IN')} by ${esc(o.receivedToStockBy||'')}${o.receivedToStockItems?.length?' — '+o.receivedToStockItems.map(it=>esc(it.material)+' ×'+it.qty).join(', '):''}</div>`:''}
       ${o.status==='stock_only'?`<div style="display:flex;align-items:center;gap:8px;font-size:.82em;color:#166534;margin-top:10px;font-weight:600;background:#f0fdf4;padding:10px 14px;border-radius:8px;border:1px solid #86efac;"><i class="fas fa-boxes-stacked" style="color:#16a34a;"></i><span>Stock Purpose Only — No billing required.</span></div>`:showConfirm&&!o.stockOnly?`
       <div class="confirm-bill-panel">
         <h4><i class="fas fa-file-invoice" style="margin-right:6px;"></i>Confirm Bill Number</h4>
@@ -6527,7 +6423,7 @@ function getFY(){
   const d=new Date(),m=d.getMonth()+1,y=d.getFullYear();
   return m>=4?`${y}-${String(y+1).slice(2)}`:`${y-1}-${String(y).slice(2)}`;
 }
-function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports','hsn_learned_map','doc_seq','leaves','leavePolicy'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
+function importFullBackup(e){const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);['pl_bills','pl_ledger','pl_customers','pl_materials','ac_invoices','ac_payments','ac_advances','ac_customers','orders','users','svc_calls','svc_conveyance','svc_conv_advances','svc_incentives','messages','stock_items','stock_txns','salary_advances','fy_archives','mkt_sent_reports','hsn_learned_map','doc_seq'].forEach(k=>{if(d[k])D[k]=d[k];});saveData();refreshUI();alert('✓ Imported successfully!');}catch(err){alert('Import Error: '+err.message);}g('masterImp').value='';};r.readAsText(e.target.files[0]);}
 function exportPLCSV(){let csv='Date,BillNo,Customer,Material,Purchase,Sales,Expense,Profit\n';D.pl_ledger.forEach(e=>{csv+=`${e.d},${e.billNo||''},${e.c},${e.m},${e.pb.toFixed(2)},${e.sb.toFixed(2)},${(e.expense||0).toFixed(2)},${e.profit.toFixed(2)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_pl_${today()}.csv`;a.click();}
 function exportAccCSV(){let csv='InvoiceNo,Customer,Date,DueDate,Total,Paid,Outstanding,Status\n';D.ac_invoices.forEach(i=>{csv+=`${i.no},${i.custName},${i.date},${i.dueDate||''},${i.total.toFixed(2)},${getPaid(i.id).toFixed(2)},${getOut(i.id).toFixed(2)},${getSt(i.id)}\n`;});const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`acenet_acc_${today()}.csv`;a.click();}
 
@@ -9700,6 +9596,7 @@ function editSvcOrder(id){
   if(g('svOrdOralConf'))g('svOrdOralConf').checked=o.oralConf||false;
   if(g('svOrdWriteConf'))g('svOrdWriteConf').checked=o.writeConf||false;
   if(g('svOrdUrgent'))g('svOrdUrgent').checked=o.urgent||false;
+  if(g('svOrdStockOnly')){g('svOrdStockOnly').checked=o.stockOnly||false;updateStockOnlyUI();}
   if(g('svOrdAddIncentive')){
     const already=!!o.addedToIncentive;
     g('svOrdAddIncentive').checked=already;
@@ -10203,10 +10100,11 @@ function renderSvcOrders(){
         ${o.notes?`<div style="font-size:.8em;color:var(--ink3);margin-top:8px;"><i class="fas fa-sticky-note" style="margin-right:5px;"></i>${esc(o.notes)}</div>`:''}
         ${o.status==='billed'?`<div style="font-size:.82em;color:var(--green);margin-top:8px;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Billed as ${esc(o.invoiceNo)} on ${o.billedDate}</div>`:''}
         ${o.stockOnly?`<div style="font-size:.8em;background:#f0fdf4;border-left:3px solid #86efac;padding:6px 10px;border-radius:8px;margin-top:7px;color:#166534;font-weight:600;"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Stock Purpose Only — no billing required</div>`:''}
+        ${o.receivedToStock?`<div style="font-size:.8em;background:#ecfdf5;border-left:3px solid #34d399;padding:6px 10px;border-radius:8px;margin-top:7px;color:#065f46;font-weight:600;"><i class="fas fa-check-circle" style="margin-right:5px;"></i>Received to Stock on ${new Date(o.receivedToStockAt).toLocaleDateString('en-IN')} by ${esc(o.receivedToStockBy||'')}${o.receivedToStockItems?.length?' — '+o.receivedToStockItems.map(it=>esc(it.material)+' ×'+it.qty).join(', '):''}</div>`:''}
         ${o.convLegs?.length?`<div style="background:#f0fdfa;border:1px solid #5eead4;border-radius:8px;padding:9px 12px;margin-top:9px;font-size:.82em;"><div style="font-weight:700;color:var(--svc);margin-bottom:6px;"><i class="fas fa-car-side" style="margin-right:5px;"></i>Conveyance Legs</div>${o.convLegs.map((l,i)=>`<div style="display:flex;flex-wrap:wrap;gap:10px;padding:4px 0;border-bottom:1px dashed #b2f5ea;font-size:.92em;"><span style="color:var(--ink3);">Leg ${i+1}:</span><span>${esc(l.from||'—')} → ${esc(l.to||'—')}</span><span>${esc(l.mode||'')}</span><span>${l.km} km × ₹${l.rate} = <strong>₹${(l.km*l.rate).toFixed(2)}</strong></span>${l.food?`<span>Food: ₹${l.food}</span>`:''}</div>`).join('')}</div>`:''}
         ${o.modifiedCount?`<div style="font-size:.74em;color:var(--amber);margin-top:4px;"><i class="fas fa-history" style="margin-right:4px;"></i>Modified ${o.modifiedCount}x — last by ${esc(o.modifiedBy||'')} on ${o.modifiedAt?new Date(o.modifiedAt).toLocaleDateString('en-IN'):''}</div>`:''}
         <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-          <button class="btn" style="background:var(--green);color:#fff;font-size:.77em;padding:5px 12px;" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>Receive to Stock</button>
+          <button class="btn ${o.receivedToStock?'btn-outline':''}" style="${o.receivedToStock?'':'background:var(--green);color:#fff;'}font-size:.77em;padding:5px 12px;${o.receivedToStock?'border-color:var(--ink4);color:var(--ink3);':''}" onclick="receiveOrderToStock('${o.id}')"><i class="fas fa-boxes-stacked" style="margin-right:5px;"></i>${o.receivedToStock?'Receive to Stock Again':'Receive to Stock'}</button>
           ${o.status==='pending'||o.status==='stock_only'?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;" onclick="editSvcOrder('${o.id}')"><i class="fas fa-edit" style="color:var(--orange);margin-right:4px;"></i>Edit &amp; Resend</button>`:''}
           ${o.dcDispatched?`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:var(--amber);color:var(--amber);" onclick="undispatchOrder('${o.id}')"><i class="fas fa-rotate-left" style="margin-right:4px;"></i>Undo Dispatch / Re-link Stock Out</button>`:''}
           ${o.addedToIncentive?`<span style="font-size:.77em;padding:5px 12px;background:#faf5ff;color:#7c3aed;border:1.5px solid #ddd6fe;border-radius:8px;font-weight:600;"><i class="fas fa-gift" style="margin-right:4px;"></i>Added to Incentive (${esc(o.incentiveRef||'')})</span>`:`<button class="btn btn-outline btn-sm" style="font-size:.77em;padding:5px 12px;border-color:#c4b5fd;color:#7c3aed;" onclick="addOrderToIncentiveManually('${o.id}')"><i class="fas fa-gift" style="margin-right:4px;"></i>Add to Incentive</button>`}
@@ -10569,7 +10467,11 @@ function receiveOrderToStock(ordId){
   if(!ord){return;}
   if(!ord.items||!ord.items.length){alert('No items in this order');return;}
   var itemList=ord.items.map(function(it,i){return (i+1)+'. '+(it.material||it.name||'Item')+' x '+(it.qty||1);}).join('\n');
-  if(!confirm('Receive materials to Stock?\nOrder: '+ord.orderNo+'\n\n'+itemList+'\n\nNew items will be created in stock if not already there.'))return;
+  if(ord.receivedToStock){
+    if(!confirm('⚠ This order was already received to stock on '+(ord.receivedToStockAt?new Date(ord.receivedToStockAt).toLocaleDateString('en-IN'):'')+' by '+(ord.receivedToStockBy||'')+'.\n\nReceiving again will ADD these quantities to stock a SECOND time:\n\n'+itemList+'\n\nAre you sure you want to continue?'))return;
+  } else {
+    if(!confirm('Receive materials to Stock?\nOrder: '+ord.orderNo+'\n\n'+itemList+'\n\nNew items will be created in stock if not already there.'))return;
+  }
   var date=today(),ref=ord.orderNo,by=(D.currentUser&&D.currentUser.name)||'Service';
   if(!D.stock_txns)D.stock_txns=[];
   var newItems=0,updItems=0;
@@ -10579,11 +10481,19 @@ function receiveOrderToStock(ordId){
     var si=D.stock_items.find(function(s){return s.name.toLowerCase()===name.toLowerCase();});
     if(!si){si={id:uid(),name:name,category:'Spare Parts',unit:'Nos',reorder:0,qty:0,stockType:ord.callType||'General',lastMovement:date,createdAt:Date.now()};D.stock_items.push(si);newItems++;}
     si.qty=(si.qty||0)+qty;si.lastMovement=date;
-    D.stock_txns.push({id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,ref:'Order: '+ref,notes:'Received from '+ord.orderNo,by:by});
+    D.stock_txns.push({id:uid(),date:date,itemName:name,itemId:si.id,type:'in',qty:qty,ref:'Order: '+ref,notes:'Received from '+ord.orderNo+(ord.customer?' ('+ord.customer+')':''),by:by});
     updItems++;
   });
+  // Record on the order itself so both Service and Accounts can see, at a glance,
+  // that this order's materials have already been added to stock — instead of the
+  // "Receive to Stock" button just sitting there with no memory of being clicked.
+  ord.receivedToStock=true;
+  ord.receivedToStockAt=new Date().toISOString();
+  ord.receivedToStockBy=by;
+  ord.receivedToStockItems=ord.items.map(function(it){return{material:it.material||it.name||'Item',qty:it.qty||1};});
   saveData();
   if(typeof renderSvcStockView==='function')renderSvcStockView();
+  if(typeof renderSvcOrders==='function')renderSvcOrders();
   showSuccessToast(updItems+' item(s) received to stock'+(newItems?' ('+newItems+' new)':''), 'var(--green)');
 }
 
@@ -11043,222 +10953,6 @@ function renderAccIncentives(){
     const body=card.querySelector('.inc-body');if(body)body.style.display='block';
   });
   updateAccIncBadge();
-}
-
-// ════════════════════════════════════════════════════════════════
-// LEAVE APPLICATION & MONTHLY TRACKING
-// Self-service leave requests for every role, single-point approval by
-// Management, and a monthly team view for Management/Accounts.
-// ════════════════════════════════════════════════════════════════
-function genLeaveNo(){return 'LV-'+new Date().getFullYear()+'-'+String((D.leaves||[]).length+1).padStart(4,'0');}
-function lvPrefix(role){return role==='service'?'svc':role==='accounts'?'acc':'mgmt';}
-
-function calcLeaveDays(from,to,half){
-  if(!from||!to) return 0;
-  if(half) return 0.5;
-  const d1=new Date(from+'T00:00:00'), d2=new Date(to+'T00:00:00');
-  const diff=Math.round((d2-d1)/86400000)+1;
-  return diff>0?diff:0;
-}
-
-function leaveStatusBadge(st){
-  const map={pending:['#fffbeb','#92400e','fa-hourglass-half','Pending'],approved:['#f0fdf4','#065f46','fa-check-circle','Approved'],rejected:['#fef2f2','#991b1b','fa-times-circle','Rejected'],cancelled:['#f1f5f9','#475569','fa-ban','Cancelled']};
-  const row=map[st]||map.pending;
-  return `<span style="background:${row[0]};color:${row[1]};padding:3px 9px;border-radius:20px;font-size:.72em;font-weight:700;white-space:nowrap;"><i class="fas ${row[2]}"></i> ${row[3]}</span>`;
-}
-
-// The Apr–Mar financial-year window containing refDate (defaults to today) — same
-// convention as getFY() used everywhere else in the app (FY Reset, GST reports, etc.)
-function leaveFYBounds(refDate){
-  const d = refDate ? new Date(refDate+'T00:00:00') : new Date();
-  const m=d.getMonth()+1, y=d.getFullYear();
-  const startY = m>=4 ? y : y-1;
-  return {label:`FY ${startY}-${String(startY+1).slice(2)}`, start:`${startY}-04-01`, end:`${startY+1}-03-31`};
-}
-
-// Remaining balance per leave type for one employee, for the current financial year (Apr–Mar).
-function getLeaveBalance(empName){
-  const fy=leaveFYBounds();
-  const policy=D.leavePolicy||{Casual:12,Sick:12,Earned:15};
-  const used={};
-  (D.leaves||[]).filter(l=>l.status==='approved' && l.empName===empName && l.from>=fy.start && l.from<=fy.end)
-    .forEach(l=>{ used[l.leaveType]=(used[l.leaveType]||0)+(l.days||0); });
-  const types=Array.from(new Set([...Object.keys(policy),...Object.keys(used)]));
-  return types.map(t=>({type:t,total:policy[t]||0,used:used[t]||0,remaining:(policy[t]||0)-(used[t]||0)}));
-}
-
-function leaveBalanceCardsHtml(empName){
-  const fy=leaveFYBounds();
-  const bal=getLeaveBalance(empName);
-  if(!bal.length) return emptyMsg('No leave policy configured yet.');
-  const colors={Casual:'s-teal2',Sick:'s-red',Earned:'s-green'};
-  return `<div style="font-size:.72em;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">${fy.label} Leave Balance <span style="font-weight:400;text-transform:none;">(${fy.start} → ${fy.end})</span></div><div class="stats" style="margin-bottom:14px;">${bal.map(b=>`<div class="stat ${colors[b.type]||'s-amber'}"><div class="stat-bar"></div><div class="stat-label">${esc(b.type)}</div><div class="stat-value">${b.remaining}<span style="font-size:.5em;color:var(--ink3);font-weight:500;"> / ${b.total}</span></div></div>`).join('')}</div>`;
-}
-
-function leaveCardHtml(l,opts){
-  opts=opts||{};
-  const canCancel=opts.mine && l.status==='pending';
-  const canApprove=opts.approver && l.status==='pending';
-  return `<div class="acc-action-card">
-    <div class="acc-action-icon" style="background:#eef2ff;color:#4338ca;"><i class="fas fa-calendar-day"></i></div>
-    <div class="acc-action-info">
-      <div class="acc-action-title">${esc(l.no)} &nbsp;<span style="font-size:.8em;font-weight:400;color:var(--ink3);">${esc(l.leaveType)}${l.halfDay?' · Half day':''}</span>${opts.showName?` &nbsp;<strong>${esc(l.empName)}</strong>`:''}</div>
-      <div class="acc-action-sub">${l.from===l.to?l.from:`${l.from} → ${l.to}`} &nbsp;·&nbsp; ${l.days} day${l.days==1?'':'s'}${l.reason?' — '+esc(l.reason):''}</div>
-      ${l.status==='rejected'&&l.rejectedReason?`<div style="font-size:.78em;color:#991b1b;margin-top:3px;"><i class="fas fa-comment"></i> ${esc(l.rejectedReason)}</div>`:''}
-      ${l.status==='approved'&&l.approvedBy?`<div style="font-size:.75em;color:var(--ink3);margin-top:3px;">Approved by ${esc(l.approvedBy)}${l.approvedAt?' on '+l.approvedAt.slice(0,10):''}</div>`:''}
-    </div>
-    <div class="acc-action-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-      ${leaveStatusBadge(l.status)}
-      ${canApprove?`<div style="display:flex;gap:6px;"><button class="btn btn-sm" style="background:var(--green);color:#fff;" onclick="approveLeaveApp('${l.id}')" title="Approve"><i class="fas fa-check"></i></button><button class="btn btn-sm" style="background:var(--red);color:#fff;" onclick="rejectLeaveApp('${l.id}')" title="Reject"><i class="fas fa-times"></i></button></div>`:''}
-      ${canCancel?`<button class="btn btn-sm btn-outline" onclick="cancelLeaveApp('${l.id}')"><i class="fas fa-ban"></i> Cancel</button>`:''}
-    </div>
-  </div>`;
-}
-
-function applyLeaveSubmit(role){
-  const p=lvPrefix(role);
-  const type=g(p+'LvType')?.value;
-  const from=g(p+'LvFrom')?.value;
-  const half=g(p+'LvHalf')?.checked||false;
-  const to=half?from:(g(p+'LvTo')?.value||from);
-  const reason=(g(p+'LvReason')?.value||'').trim();
-  if(!type){showSuccessToast('Please pick a leave type','var(--red)');return;}
-  if(!from){showSuccessToast('Please pick a From date','var(--red)');return;}
-  if(!half && to && new Date(to)<new Date(from)){showSuccessToast('To date cannot be before From date','var(--red)');return;}
-  const days=calcLeaveDays(from,to,half);
-  if(!D.leaves)D.leaves=[];
-  const obj={
-    id:uid(),no:genLeaveNo(),
-    empName:D.currentUser?.name||'',empRole:D.currentUser?.role||'',
-    leaveType:type,from,to,halfDay:half,days,reason,
-    status:'pending',appliedAt:new Date().toISOString()
-  };
-  D.leaves.push(obj);
-  saveData();
-  showSuccessToast(`✓ Leave application ${obj.no} submitted`,'var(--green)');
-  ['LvFrom','LvTo','LvReason'].forEach(f=>{const el=g(p+f);if(el)el.value='';});
-  const halfEl=g(p+'LvHalf');if(halfEl)halfEl.checked=false;
-  renderLeavePage(role);
-  updateLeaveBadge();
-}
-
-function cancelLeaveApp(id){
-  const l=(D.leaves||[]).find(x=>x.id===id);
-  if(!l) return;
-  if(!confirm(`Cancel leave application ${l.no}?`))return;
-  l.status='cancelled';l.cancelledAt=new Date().toISOString();
-  saveData();
-  showSuccessToast('Leave application cancelled','var(--ink3)');
-  renderLeavePage(D.currentUser.role);
-  updateLeaveBadge();
-}
-
-function approveLeaveApp(id){
-  const l=(D.leaves||[]).find(x=>x.id===id);
-  if(!l) return;
-  l.status='approved';l.approvedBy=D.currentUser?.name||'';l.approvedAt=new Date().toISOString();
-  saveData();
-  showSuccessToast(`✓ ${l.no} approved for ${l.empName}`,'var(--green)');
-  renderLeavePage('management');
-  updateLeaveBadge();
-}
-
-function rejectLeaveApp(id){
-  const l=(D.leaves||[]).find(x=>x.id===id);
-  if(!l) return;
-  const reason=prompt('Reason for rejecting this leave request (shown to the employee):');
-  if(reason===null) return;
-  l.status='rejected';l.rejectedBy=D.currentUser?.name||'';l.rejectedAt=new Date().toISOString();l.rejectedReason=reason.trim();
-  saveData();
-  showSuccessToast(`${l.no} rejected`,'var(--red)');
-  renderLeavePage('management');
-  updateLeaveBadge();
-}
-
-function updateLeavePolicyField(type,val){
-  if(!D.leavePolicy)D.leavePolicy={};
-  D.leavePolicy[type]=parseFloat(val)||0;
-  saveData();
-  showSuccessToast('Leave policy updated','var(--mgmt)');
-  renderLeavePage('management');
-}
-
-function addLeaveType(){
-  const name=prompt('New leave type name (e.g. Maternity, Paternity, Compensatory):');
-  if(!name||!name.trim())return;
-  const key=name.trim();
-  if(!D.leavePolicy)D.leavePolicy={};
-  if(D.leavePolicy[key]!==undefined){showSuccessToast('That leave type already exists','var(--red)');return;}
-  D.leavePolicy[key]=0;
-  saveData();
-  renderLeavePage('management');
-}
-
-function updateLeaveBadge(){
-  const cnt=(D.leaves||[]).filter(l=>l.status==='pending').length;
-  const badge=g('mgmt-lv-badge');
-  if(!badge)return;
-  if(cnt>0){badge.style.display='inline';badge.textContent=cnt;badge.classList.add('alert');}
-  else{badge.style.display='none';badge.classList.remove('alert');}
-  syncMobBadges();
-}
-
-// Approved leaves overlapping the selected calendar month, across everyone —
-// the "monthly leave tracking" view for Management/Accounts.
-function leaveTeamMonthHtml(monthStr){
-  monthStr=monthStr||new Date().toISOString().slice(0,7); // yyyy-mm
-  const parts=monthStr.split('-').map(Number);
-  const monthStart=new Date(parts[0],parts[1]-1,1), monthEnd=new Date(parts[0],parts[1],0);
-  const rows=(D.leaves||[]).filter(l=>{
-    if(l.status!=='approved')return false;
-    const f=new Date(l.from+'T00:00:00'), t=new Date((l.to||l.from)+'T00:00:00');
-    return f<=monthEnd && t>=monthStart;
-  }).sort((a,b)=>(a.from||'').localeCompare(b.from||''));
-  if(!rows.length) return emptyMsg('No approved leave in this month.');
-  return `<div style="overflow-x:auto;"><table class="rpt-table">
-    <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th></tr></thead>
-    <tbody>${rows.map(l=>`<tr><td><strong>${esc(l.empName)}</strong></td><td>${esc(l.leaveType)}${l.halfDay?' (half day)':''}</td><td>${l.from}</td><td>${l.to}</td><td class="num">${l.days}</td></tr>`).join('')}</tbody>
-  </table></div>`;
-}
-
-function changeLeaveMonth(prefix){
-  const val=g(prefix+'LvMonth')?.value;
-  const el=g(prefix+'LvTeam');
-  if(el) el.innerHTML=leaveTeamMonthHtml(val);
-}
-
-function renderLeavePage(role){
-  const p=lvPrefix(role);
-  const me=D.currentUser?.name||'';
-  // Populate the Leave Type dropdown from the current policy (types can be added by Management)
-  const typeSel=g(p+'LvType');
-  if(typeSel){
-    const prevVal=typeSel.value;
-    const types=Object.keys(D.leavePolicy||{Casual:0,Sick:0,Earned:0});
-    typeSel.innerHTML=types.map(t=>`<option>${esc(t)}</option>`).join('');
-    if(types.includes(prevVal)) typeSel.value=prevVal;
-  }
-  const balEl=g(p+'LvBalance'); if(balEl) balEl.innerHTML=leaveBalanceCardsHtml(me);
-  const mine=(D.leaves||[]).filter(l=>l.empName===me).sort((a,b)=>(b.appliedAt||'').localeCompare(a.appliedAt||''));
-  const histEl=g(p+'LvHistory');
-  if(histEl) histEl.innerHTML=!mine.length?emptyMsg('No leave applications yet.'):mine.map(l=>leaveCardHtml(l,{mine:true})).join('');
-
-  if(role==='management'){
-    const pending=(D.leaves||[]).filter(l=>l.status==='pending').sort((a,b)=>(a.appliedAt||'').localeCompare(b.appliedAt||''));
-    const pendEl=g('mgmtLvPending');
-    if(pendEl) pendEl.innerHTML=!pending.length?emptyMsg('No pending leave requests.'):pending.map(l=>leaveCardHtml(l,{approver:true,showName:true})).join('');
-    const polEl=g('mgmtLvPolicy');
-    if(polEl){
-      const policy=D.leavePolicy||{};
-      polEl.innerHTML=Object.keys(policy).map(t=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;"><span style="flex:1;font-weight:600;font-size:.85em;">${esc(t)}</span><input type="number" value="${policy[t]}" min="0" style="width:70px;padding:5px 7px;border-radius:6px;border:1.5px solid var(--bd);font-size:.82em;" onchange="updateLeavePolicyField('${esc(t).replace(/'/g,"\\'")}',this.value)"><span style="font-size:.75em;color:var(--ink3);">days/yr</span></div>`).join('');
-    }
-    const teamEl=g('mgmtLvTeam');
-    if(teamEl) teamEl.innerHTML=leaveTeamMonthHtml(g('mgmtLvMonth')?.value);
-  }
-  if(role==='accounts'){
-    const teamEl=g('accLvTeam');
-    if(teamEl) teamEl.innerHTML=leaveTeamMonthHtml(g('accLvMonth')?.value);
-  }
 }
 
 function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.95em;">${t}</div>`;}
