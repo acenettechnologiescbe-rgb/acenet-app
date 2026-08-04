@@ -2022,6 +2022,7 @@ tbody tr:last-child td{border-bottom:none;}
     <span>→</span>
     <input type="date" id="mvTo" onchange="renderMgmtView()">
   </div>
+  <button class="btn btn-outline btn-sm" onclick="printMgmtView()"><i class="fas fa-print"></i> Print PDF</button>
   <button class="btn btn-outline btn-sm" onclick="exportMgmtView()" style="margin-left:auto;"><i class="fas fa-file-excel"></i> Export</button>
 </div>
 <div id="mgmtViewBody"></div>
@@ -2381,6 +2382,7 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="page" id="page-acc-incentives">
   <div class="ph">
     <div><h2><span class="phi" style="background:#7c3aed"><i class="fas fa-gift"></i></span><span class="sora">Incentive Management</span></h2><p>View, review and forward incentive entries to Management for approval</p></div>
+    <button class="btn btn-outline btn-sm" onclick="printAccIncentives()"><i class="fas fa-print"></i> Print PDF</button>
     <button class="btn btn-outline btn-sm" onclick="exportIncReport()"><i class="fas fa-file-excel"></i> Export</button>
   </div>
   <div class="stats" id="accIncStats"></div>
@@ -10956,6 +10958,44 @@ function renderAccIncentives(){
 }
 
 function emptyMsg(t){return `<div style="text-align:center;padding:14px;color:var(--ink3);font-size:.95em;">${t}</div>`;}
+function printAccIncentives(){
+  let entries=(D.svc_incentives||[]).filter(e=>e.status!=='draft');
+  const engF=g('accIncEngFilter')?.value||'';
+  const statF=g('accIncStatusFilter')?.value||'';
+  const from=g('accIncFrom')?.value||'';
+  const to=g('accIncTo')?.value||'';
+  if(engF) entries=entries.filter(e=>e.engineerName===engF);
+  if(statF) entries=entries.filter(e=>e.status===statF);
+  if(from) entries=entries.filter(e=>e.date>=from);
+  if(to) entries=entries.filter(e=>e.date<=to);
+  const filtLabel=[engF?'Engineer: '+engF:'',statF?'Status: '+statF:'',from?'From: '+from:'',to?'To: '+to:''].filter(Boolean).join(' · ')||'All records';
+  const sections=[
+    {label:'Pending — Awaiting Review',list:entries.filter(e=>e.status==='pending')},
+    {label:'Sent to Management',list:entries.filter(e=>e.status==='mgmt-review')},
+    {label:'Approved — Ready to Settle',list:entries.filter(e=>e.status==='approved')},
+    {label:'Settled / Paid',list:entries.filter(e=>e.status==='settled')},
+    {label:'Rejected',list:entries.filter(e=>e.status==='rejected')}
+  ];
+  const rowsHtml=(list)=>list.map(e=>`<tr><td>${esc(e.no)}</td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td>${esc(e.customer)}</td><td style="font-size:8px;">${esc(e.product||'')}</td><td>${fmt(e.saleAmt)}</td><td>${fmt(e.purchaseAmt)}</td><td>${e.expType?esc(e.expType)+' ':''}${fmt(e.expAmt||0)}</td><td>${fmt(e.profit)}</td><td>${fmt(e.netProfit!=null?e.netProfit:e.profit)}</td><td>${e.approvedAmt?fmt(e.approvedAmt):'—'}</td></tr>`).join('');
+  const subtotal=(list)=>{const s={sale:0,purch:0,exp:0,pl:0,netpl:0,inc:0};list.forEach(e=>{s.sale+=parseFloat(e.saleAmt)||0;s.purch+=parseFloat(e.purchaseAmt)||0;s.exp+=parseFloat(e.expAmt)||0;s.pl+=parseFloat(e.profit)||0;s.netpl+=parseFloat(e.netProfit!=null?e.netProfit:e.profit)||0;s.inc+=parseFloat(e.approvedAmt)||0;});return s;};
+  let body='';
+  const gt={sale:0,purch:0,exp:0,pl:0,netpl:0,inc:0};
+  sections.forEach(sec=>{
+    if(!sec.list.length) return;
+    const s=subtotal(sec.list);
+    gt.sale+=s.sale;gt.purch+=s.purch;gt.exp+=s.exp;gt.pl+=s.pl;gt.netpl+=s.netpl;gt.inc+=s.inc;
+    body+=`<h2>${esc(sec.label)} (${sec.list.length})</h2><table><thead><tr><th>No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>Expense</th><th>P/L</th><th>Net P/L</th><th>Incentive</th></tr></thead><tbody>
+      ${rowsHtml(sec.list)}
+      <tr style="font-weight:800;background:#f8faff;"><td colspan="5">Subtotal</td><td>${fmt(s.sale)}</td><td>${fmt(s.purch)}</td><td>${fmt(s.exp)}</td><td>${fmt(s.pl)}</td><td>${fmt(s.netpl)}</td><td>${fmt(s.inc)}</td></tr>
+    </tbody></table>`;
+  });
+  if(!body) body='<p style="text-align:center;color:#64748b;">No incentive entries match the current filter.</p>';
+  body+=`<table style="margin-top:6px;"><tbody>
+    <tr style="font-weight:800;background:#eef2ff;"><td colspan="5">GRAND TOTAL — ${entries.length} entries</td><td>${fmt(gt.sale)}</td><td>${fmt(gt.purch)}</td><td>${fmt(gt.exp)}</td><td>${fmt(gt.pl)}</td><td>${fmt(gt.netpl)}</td><td>${fmt(gt.inc)}</td></tr>
+  </tbody></table>`;
+  openPrintWindow('Incentive Management Report — '+filtLabel, body);
+}
+function exportIncReport(){ exportIncentiveExcel(); }
 
 // Itemized conveyance-leg breakdown for an incentive that was auto-created from an
 // Order Checklist order — shown to Accounts/Management so the Expense figure isn't
@@ -12120,6 +12160,101 @@ function renderMgmtView(){
   }
 }
 
+function printMgmtView(){
+  const eng=g('mvEng')?.value||'',statF=g('mvStat')?.value||'',from=g('mvFrom')?.value||'',to=g('mvTo')?.value||'';
+  const filtLabel=[eng?'Engineer: '+eng:'',statF?'Status: '+statF:'',from?'From: '+from:'',to?'To: '+to:''].filter(Boolean).join(' · ')||'All records';
+  if(_mvTab==='sales'){
+    let invs=[...D.ac_invoices];
+    if(from) invs=invs.filter(i=>(i.date||'')>=from);
+    if(to) invs=invs.filter(i=>(i.date||'')<=to);
+    const rows=[];
+    invs.forEach(inv=>{
+      const ord=inv.fromOrderId?D.orders.find(o=>o.id===inv.fromOrderId):null;
+      if(!ord) return;
+      const isServiceOrd=ord.source==='service'||String(ord.orderNo||'').startsWith('SORD-');
+      if(!isServiceOrd) return;
+      rows.push({engineer:ord.createdBy||'Unassigned',tagged:!!ord.createdBy,customer:inv.custName||'(no customer)',amount:inv.total||0,paid:getPaid(inv.id),out:getOut(inv.id)});
+    });
+    const filteredRows=eng?rows.filter(r=>r.engineer===eng||!r.tagged):rows;
+    const byEng={};filteredRows.forEach(r=>{if(!byEng[r.engineer])byEng[r.engineer]={engineer:r.engineer,amount:0,paid:0,out:0,invCount:0};byEng[r.engineer].amount+=r.amount;byEng[r.engineer].paid+=r.paid;byEng[r.engineer].out+=r.out;byEng[r.engineer].invCount++;});
+    const engArr=Object.values(byEng).sort((a,b)=>b.amount-a.amount);
+    const gt={amount:0,paid:0,out:0,invCount:0};engArr.forEach(r=>{gt.amount+=r.amount;gt.paid+=r.paid;gt.out+=r.out;gt.invCount+=r.invCount;});
+    const body=`<h2>Sales by Engineer</h2><table><thead><tr><th>Engineer</th><th>Invoices</th><th>Total Billed</th><th>Collected</th><th>Outstanding</th></tr></thead><tbody>
+      ${engArr.map(r=>`<tr><td>${esc(r.engineer)}</td><td>${r.invCount}</td><td>${fmt(r.amount)}</td><td>${fmt(r.paid)}</td><td>${fmt(r.out)}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;">No data</td></tr>'}
+      <tr style="font-weight:800;background:#eef2ff;"><td>GRAND TOTAL</td><td>${gt.invCount}</td><td>${fmt(gt.amount)}</td><td>${fmt(gt.paid)}</td><td>${fmt(gt.out)}</td></tr>
+    </tbody></table>`;
+    openPrintWindow('Sales Report — '+filtLabel, body);
+    return;
+  }
+  if(_mvTab==='amc'){
+    const valOf=c=>{const sub=(c.items||[]).reduce((a,i)=>a+(parseFloat(i.charges)||0),0);return sub*(1+((c.cgstPct||0)+(c.sgstPct||0))/100);};
+    const list=(D.amc_contracts||[]);
+    const gt=list.reduce((s,c)=>s+valOf(c),0);
+    const body=`<table><thead><tr><th>Contract No</th><th>Customer</th><th>Type</th><th>From</th><th>To</th><th>Value (₹)</th><th>Billed</th></tr></thead><tbody>
+      ${list.map(c=>`<tr><td>${esc(amcDisplayNo(c))}</td><td>${esc(c.custName||'')}</td><td>${esc(c.agreementType||'')}</td><td>${c.fromDate||''}</td><td>${c.toDate||''}</td><td>${fmt(valOf(c))}</td><td>${c.billed?'Yes':'No'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;">No data</td></tr>'}
+      <tr style="font-weight:800;background:#eef2ff;"><td colspan="5">GRAND TOTAL</td><td>${fmt(gt)}</td><td></td></tr>
+    </tbody></table>`;
+    openPrintWindow('AMC Contracts Report — '+filtLabel, body);
+    return;
+  }
+  if(_mvTab==='conv'){
+    let list=[...D.svc_conveyance];
+    if(eng) list=list.filter(c=>c.engineer===eng);
+    if(statF) list=list.filter(c=>c.status===statF);
+    if(from) list=list.filter(c=>(c.date||'')>=from);
+    if(to) list=list.filter(c=>(c.date||'')<=to);
+    const gt={travel:0,food:0,other:0,total:0};list.forEach(c=>{gt.travel+=parseFloat(c.travelAmt)||0;gt.food+=parseFloat(c.foodAmt)||0;gt.other+=parseFloat(c.otherAmt)||0;gt.total+=parseFloat(c.totalAmt)||0;});
+    const body=`<table><thead><tr><th>No</th><th>Date</th><th>Engineer</th><th>Call Ref</th><th>Location</th><th>Travel</th><th>Food</th><th>Other</th><th>Total</th><th>Status</th></tr></thead><tbody>
+      ${list.map(c=>`<tr><td>${esc(c.no)}</td><td>${c.date}</td><td>${esc(c.engineer)}</td><td>${esc(c.callRef||'')}</td><td>${esc(c.location||'')}</td><td>${fmt(c.travelAmt)}</td><td>${fmt(c.foodAmt)}</td><td>${fmt(c.otherAmt)}</td><td>${fmt(c.totalAmt)}</td><td>${c.status}</td></tr>`).join('')||'<tr><td colspan="10" style="text-align:center;">No data</td></tr>'}
+      <tr style="font-weight:800;background:#eef2ff;"><td colspan="5">GRAND TOTAL</td><td>${fmt(gt.travel)}</td><td>${fmt(gt.food)}</td><td>${fmt(gt.other)}</td><td>${fmt(gt.total)}</td><td></td></tr>
+    </tbody></table>`;
+    openPrintWindow('Conveyance Claims Report — '+filtLabel, body);
+    return;
+  }
+  if(_mvTab==='adv'){
+    let list=[...D.svc_conv_advances];
+    if(eng) list=list.filter(a=>a.engineer===eng);
+    if(statF) list=list.filter(a=>a.status===statF);
+    if(from) list=list.filter(a=>(a.date||'')>=from);
+    if(to) list=list.filter(a=>(a.date||'')<=to);
+    const gt=list.reduce((s,a)=>s+(parseFloat(a.amount)||0),0);
+    const body=`<table><thead><tr><th>No</th><th>Date</th><th>Engineer</th><th>Purpose</th><th>Call Ref</th><th>Amount</th><th>Mode</th><th>Status</th></tr></thead><tbody>
+      ${list.map(a=>`<tr><td>${esc(a.no)}</td><td>${a.date}</td><td>${esc(a.engineer)}</td><td>${esc(a.purpose||'')}</td><td>${esc(a.callRef||'')}</td><td>${fmt(a.amount)}</td><td>${esc(a.mode||'')}</td><td>${a.status}</td></tr>`).join('')||'<tr><td colspan="8" style="text-align:center;">No data</td></tr>'}
+      <tr style="font-weight:800;background:#eef2ff;"><td colspan="5">GRAND TOTAL</td><td>${fmt(gt)}</td><td colspan="2"></td></tr>
+    </tbody></table>`;
+    openPrintWindow('Conveyance Advances Report — '+filtLabel, body);
+    return;
+  }
+  if(_mvTab==='inc'){
+    let list=(D.svc_incentives||[]).filter(e=>e.status!=='draft');
+    if(eng) list=list.filter(e=>e.engineerName===eng);
+    if(statF) list=list.filter(e=>e.status===statF);
+    if(from) list=list.filter(e=>(e.date||'')>=from);
+    if(to) list=list.filter(e=>(e.date||'')<=to);
+    const gt={sale:0,purch:0,exp:0,pl:0,netpl:0,inc:0};
+    list.forEach(e=>{gt.sale+=parseFloat(e.saleAmt)||0;gt.purch+=parseFloat(e.purchaseAmt)||0;gt.exp+=parseFloat(e.expAmt)||0;gt.pl+=parseFloat(e.profit)||0;gt.netpl+=parseFloat(e.netProfit!=null?e.netProfit:e.profit)||0;gt.inc+=parseFloat(e.approvedAmt)||0;});
+    const body=`<table><thead><tr><th>No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>Expense</th><th>P/L</th><th>Net P/L</th><th>Incentive</th><th>Status</th></tr></thead><tbody>
+      ${list.map(e=>`<tr><td>${esc(e.no)}</td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td>${esc(e.customer)}</td><td style="font-size:8px;">${esc(e.product||'')}</td><td>${fmt(e.saleAmt)}</td><td>${fmt(e.purchaseAmt)}</td><td>${e.expType?esc(e.expType)+' ':''}${fmt(e.expAmt||0)}</td><td>${fmt(e.profit)}</td><td>${fmt(e.netProfit!=null?e.netProfit:e.profit)}</td><td>${fmt(e.approvedAmt||0)}</td><td>${e.status}</td></tr>`).join('')||'<tr><td colspan="12" style="text-align:center;">No data</td></tr>'}
+      <tr style="font-weight:800;background:#eef2ff;"><td colspan="5">GRAND TOTAL</td><td>${fmt(gt.sale)}</td><td>${fmt(gt.purch)}</td><td>${fmt(gt.exp)}</td><td>${fmt(gt.pl)}</td><td>${fmt(gt.netpl)}</td><td>${fmt(gt.inc)}</td><td></td></tr>
+    </tbody></table>`;
+    openPrintWindow('Incentives Report — '+filtLabel, body);
+    return;
+  }
+  if(_mvTab==='svc'){
+    let list=[...D.svc_calls];
+    if(eng) list=list.filter(c=>c.engineer===eng);
+    if(statF) list=list.filter(c=>c.status===statF);
+    if(from) list=list.filter(c=>(c.date||c.datetime?.slice(0,10)||'')>=from);
+    if(to) list=list.filter(c=>(c.date||c.datetime?.slice(0,10)||'')<=to);
+    const gt=list.reduce((s,c)=>s+(c.convRows?.reduce((a,r)=>a+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0)),0);
+    const body=`<table><thead><tr><th>Call No</th><th>Date</th><th>Customer</th><th>Engineer</th><th>Type</th><th>Issue</th><th>Priority</th><th>Status</th><th>Conv.Amt</th></tr></thead><tbody>
+      ${list.map(c=>{const ca=c.convRows?.reduce((a,r)=>a+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0);return `<tr><td>${esc(c.no)}</td><td>${c.date||c.datetime?.slice(0,10)||''}</td><td>${esc(c.customer)}</td><td>${esc(c.engineer||'Unassigned')}</td><td>${esc(c.callType||'')}</td><td style="font-size:8px;">${esc(c.issue||'')}</td><td>${c.priority||''}</td><td>${c.status}</td><td>${fmt(ca)}</td></tr>`;}).join('')||'<tr><td colspan="9" style="text-align:center;">No data</td></tr>'}
+      <tr style="font-weight:800;background:#eef2ff;"><td colspan="8">GRAND TOTAL</td><td>${fmt(gt)}</td></tr>
+    </tbody></table>`;
+    openPrintWindow('Service Calls Report — '+filtLabel, body);
+    return;
+  }
+}
 function exportMgmtView(){
   if(_mvTab==='sales'){
     const eng=g('mvEng')?.value||'',from=g('mvFrom')?.value||'',to=g('mvTo')?.value||'';
@@ -12387,7 +12522,6 @@ function exportIncentiveExcel(){
   xlsxExport([{name:'Incentive Report',rows}],'acenet_incentive_rpt_'+today());
 }
 // Alias — used by both management and accounts export buttons
-function exportIncReport(){ exportIncentiveExcel(); }
 
 // ── Stock Report ───────────────────────────────────────────────
 function renderStockReport(){
