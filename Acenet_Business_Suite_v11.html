@@ -1505,7 +1505,7 @@ tbody tr:last-child td{border-bottom:none;}
 
     <div class="sdiv" style="margin-top:0;">Systems / Items Covered</div>
     <div class="tw"><table>
-      <thead><tr><th style="width:140px;">Model</th><th style="width:110px;">Qty</th><th>Description</th><th style="width:130px;">Charges (₹)</th><th style="width:40px;"></th></tr></thead>
+      <thead><tr><th style="width:140px;">Model</th><th style="width:110px;">Qty</th><th>Description</th><th style="width:120px;">Rate/Unit (₹)</th><th style="width:130px;">Charges (₹)</th><th style="width:40px;"></th></tr></thead>
       <tbody id="amcItemsBody"></tbody>
     </table></div>
     <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addAmcItemRow()"><i class="fas fa-plus"></i> Add Row</button>
@@ -2347,7 +2347,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="filt-sep"></div>
     <span id="svcIncEngWrap"><select id="svcIncEngFilter" onchange="renderSvcIncentives()"><option value="">All Engineers</option></select></span>
     <select id="svcIncStatusFilter" onchange="renderSvcIncentives()">
-      <option value="">All Status</option><option value="pending">Pending</option><option value="mgmt-review">Mgmt Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option>
+      <option value="">All Status (Active)</option><option value="pending">Pending</option><option value="mgmt-review">Mgmt Review</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="settled">Settled</option>
     </select>
     <div class="filt-date-grp">
       <i class="fas fa-calendar-alt" style="font-size:.7em;color:var(--ink4);"></i>
@@ -2357,6 +2357,15 @@ tbody tr:last-child td{border-bottom:none;}
     </div>
   </div>
   <div id="svcIncList"></div>
+
+  <!-- Settled entries move here once paid, so the list above stays focused on what still
+       needs attention. Collapsed by default; expand to see payment history. -->
+  <div id="svcIncSettledWrap" style="margin-top:16px;display:none;">
+    <div class="sdiv" style="cursor:pointer;user-select:none;" onclick="const b=g('svcIncSettledList');const open=b.style.display!=='none';b.style.display=open?'none':'block';g('svcIncSettledCaret').style.transform=open?'rotate(-90deg)':'rotate(0deg)';">
+      <i id="svcIncSettledCaret" class="fas fa-chevron-down" style="font-size:.75em;margin-right:6px;transition:transform .15s;"></i>✅ Settled / Paid History <span id="svcIncSettledCountBadge" style="background:#0369a1;color:#fff;border-radius:20px;padding:1px 9px;font-size:.75em;font-weight:700;margin-left:6px;"></span>
+    </div>
+    <div id="svcIncSettledList" style="display:none;"></div>
+  </div>
 </div>
 
 <!-- ════ ACCOUNTS: INCENTIVES ════ -->
@@ -5265,11 +5274,21 @@ function amcItemRowHtml(it){
   it=it||{};
   return `<tr id="amci-${n}">
     <td><input type="text" class="amcm" value="${esc(it.model||'')}" placeholder="Model" style="width:100%;"></td>
-    <td><input type="number" class="amcq" value="${it.qty!=null?it.qty:1}" min="0" style="width:100%;" oninput="recalcAmcTotals()"></td>
+    <td><input type="number" class="amcq" value="${it.qty!=null?it.qty:1}" min="0" style="width:100%;" oninput="_amcRowRecalc(this);recalcAmcTotals()"></td>
     <td><input type="text" class="amcd" value="${esc(it.description||'')}" placeholder="e.g. SERVER, CLIENT" style="width:100%;"></td>
+    <td><input type="number" class="amcr" value="${it.rate!=null?it.rate:''}" min="0" step="0.01" placeholder="0.00" style="width:100%;" title="Rate per unit — entering this auto-fills Charges as Qty × Rate" oninput="_amcRowRecalc(this);recalcAmcTotals()"></td>
     <td><input type="number" class="amcc" value="${it.charges!=null?it.charges:''}" min="0" step="0.01" placeholder="0.00" style="width:100%;" oninput="recalcAmcTotals()"></td>
     <td><button class="btn btn-ghost btn-sm" onclick="removeAmcItemRow(${n})"><i class="fas fa-trash" style="color:var(--red)"></i></button></td>
   </tr>`;
+}
+// When Qty or Rate/Unit change, auto-fill Charges as their product — still leaves Charges
+// itself editable afterward, for line items priced as a lump sum rather than qty x rate.
+function _amcRowRecalc(el){
+  const tr=el.closest('tr');if(!tr)return;
+  const q=parseFloat(tr.querySelector('.amcq')?.value)||0;
+  const rEl=tr.querySelector('.amcr');
+  const r=parseFloat(rEl?.value)||0;
+  if(rEl && rEl.value!=='') tr.querySelector('.amcc').value=(q*r).toFixed(2);
 }
 function addAmcItemRow(it){ const tb=g('amcItemsBody'); if(!tb) return; tb.insertAdjacentHTML('beforeend', amcItemRowHtml(it)); recalcAmcTotals(); }
 function removeAmcItemRow(n){ const r=g('amci-'+n); if(r){r.remove(); recalcAmcTotals();} }
@@ -5300,9 +5319,11 @@ function collectAmcItems(){
     const model=r.querySelector('.amcm')?.value.trim()||'';
     const description=r.querySelector('.amcd')?.value.trim()||'';
     const qty=parseFloat(r.querySelector('.amcq')?.value)||0;
+    const rateVal=r.querySelector('.amcr')?.value;
+    const rate=rateVal!==''&&rateVal!=null?parseFloat(rateVal)||0:null;
     const charges=parseFloat(r.querySelector('.amcc')?.value)||0;
     if(!model && !description && !charges) return;
-    items.push({model,description,qty,charges});
+    items.push({model,description,qty,rate,charges});
   });
   return items;
 }
@@ -5590,7 +5611,7 @@ function printAmcContract(id){
   const cgstAmt=sub*(c.cgstPct||0)/100, sgstAmt=sub*(c.sgstPct||0)/100;
   const grand=sub+cgstAmt+sgstAmt;
   const df=(iso)=>{ if(!iso) return ''; const d=new Date(iso+'T00:00:00'); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); };
-  const rows=items.map(it=>`<tr><td style="text-align:center;">${it.qty||''}</td><td>${esc(it.model||'')}</td><td>${esc(it.description||'')}</td><td style="text-align:right;">${(parseFloat(it.charges)||0).toFixed(2)}</td></tr>`).join('');
+  const rows=items.map(it=>`<tr><td style="text-align:center;">${it.qty||''}</td><td>${esc(it.model||'')}</td><td>${esc(it.description||'')}</td><td style="text-align:right;">${it.rate!=null?(parseFloat(it.rate)||0).toFixed(2):'—'}</td><td style="text-align:right;">${(parseFloat(it.charges)||0).toFixed(2)}</td></tr>`).join('');
   const sectionLabel = c.agreementType==='Non Comprehensive' ? 'ANNUAL SERVICE CONTRACT (NON-COMPREHENSIVE)' : 'ANNUAL MAINTENANCE CONTRACT (COMPREHENSIVE)';
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${amcDocTitle(c)} — ${esc(amcDisplayNo(c))}</title>
   <style>
@@ -5634,14 +5655,14 @@ function printAmcContract(id){
     <strong>Agreement Period:</strong> From ${df(c.fromDate)} &nbsp;To&nbsp; ${df(c.toDate)}
   </div>
   <table>
-    <thead><tr><th style="width:60px;">Qty</th><th style="width:140px;">Model</th><th>Description</th><th style="width:110px;">Charges (₹)</th></tr></thead>
+    <thead><tr><th style="width:50px;">Qty</th><th style="width:120px;">Model</th><th>Description</th><th style="width:100px;">Rate/Unit (₹)</th><th style="width:100px;">Charges (₹)</th></tr></thead>
     <tbody>
-      <tr class="sec-hdr"><td colspan="4">${sectionLabel}</td></tr>
+      <tr class="sec-hdr"><td colspan="5">${sectionLabel}</td></tr>
       ${rows}
-      <tr class="tot-row"><td colspan="3" style="text-align:right;">Subtotal</td><td style="text-align:right;">${sub.toFixed(2)}</td></tr>
-      <tr><td colspan="3" style="text-align:right;">ADD : CGST @${c.cgstPct||0}%</td><td style="text-align:right;">${cgstAmt.toFixed(2)}</td></tr>
-      <tr><td colspan="3" style="text-align:right;">ADD : SGST @${c.sgstPct||0}%</td><td style="text-align:right;">${sgstAmt.toFixed(2)}</td></tr>
-      <tr class="tot-row"><td colspan="3" style="text-align:right;">TOTAL</td><td style="text-align:right;">${grand.toFixed(2)}</td></tr>
+      <tr class="tot-row"><td colspan="4" style="text-align:right;">Subtotal</td><td style="text-align:right;">${sub.toFixed(2)}</td></tr>
+      <tr><td colspan="4" style="text-align:right;">ADD : CGST @${c.cgstPct||0}%</td><td style="text-align:right;">${cgstAmt.toFixed(2)}</td></tr>
+      <tr><td colspan="4" style="text-align:right;">ADD : SGST @${c.sgstPct||0}%</td><td style="text-align:right;">${sgstAmt.toFixed(2)}</td></tr>
+      <tr class="tot-row"><td colspan="4" style="text-align:right;">TOTAL</td><td style="text-align:right;">${grand.toFixed(2)}</td></tr>
     </tbody>
   </table>
   <div class="words">Rupees in Words: <strong>${amcNumToWords(grand)} ONLY</strong></div>
@@ -5657,7 +5678,7 @@ function printAmcContract(id){
   </div>
   <div class="sign">
     <div>Authorised Signatory Name: _______________________<br>Designation: _______________________<br>Signature</div>
-    <div style="text-align:right;">For ${esc(ACENET_CO.name)}<br><br>Authorised Signatory</div>
+    <div style="text-align:right;">For ${esc(ACENET_CO.name)}<div style="min-height:60px;"></div>Authorised Signatory</div>
   </div>
   <div class="bm-page">${AMC_BACK_MATTER_HTML}</div>
   <script>window.onload=function(){window.focus();window.print();}<\/script>
@@ -10740,32 +10761,44 @@ function renderSvcIncentives(){
   }
 
   // Sent entries with filters
-  let sent=all.filter(e=>e.status!=='draft');
+  let sentBase=all.filter(e=>e.status!=='draft');
   const engF=g('svcIncEngFilter')?.value||'';
   const statF=g('svcIncStatusFilter')?.value||'';
   const from=g('svcIncFrom')?.value||'';
   const to=g('svcIncTo')?.value||'';
-  if(engF) sent=sent.filter(e=>e.engineerName===engF);
-  if(statF) sent=sent.filter(e=>e.status===statF);
-  if(from) sent=sent.filter(e=>e.date>=from);
-  if(to) sent=sent.filter(e=>e.date<=to);
+  if(engF) sentBase=sentBase.filter(e=>e.engineerName===engF);
+  if(from) sentBase=sentBase.filter(e=>e.date>=from);
+  if(to) sentBase=sentBase.filter(e=>e.date<=to);
+  // With no explicit status chosen, keep the main list focused on what still needs
+  // attention — settled (already paid) entries move to their own history section below
+  // instead of cluttering the active list. Picking a specific status (including "Settled"
+  // itself) shows exactly that status in the main list as normal.
+  let sent, settledSent=[];
+  if(statF){
+    sent=sentBase.filter(e=>e.status===statF);
+  }else{
+    sent=sentBase.filter(e=>e.status!=='settled');
+    settledSent=sentBase.filter(e=>e.status==='settled');
+  }
   sent=[...sent].reverse();
+  settledSent=[...settledSent].reverse();
 
-  // Stats for sent
-  const totSale=sent.reduce((a,e)=>a+e.saleAmt,0),totPur=sent.reduce((a,e)=>a+e.purchaseAmt,0),totProfit=sent.reduce((a,e)=>a+e.profit,0),totApproved=sent.filter(e=>e.status==='approved'||e.status==='settled').reduce((a,e)=>a+(e.approvedAmt||0),0);
+  // Stats — based on everything matching the filters (active + settled combined), so figures
+  // like "Incentive Approved" still include settled entries even though the main list below
+  // now hides them by default.
+  const totSale=sentBase.reduce((a,e)=>a+e.saleAmt,0),totPur=sentBase.reduce((a,e)=>a+e.purchaseAmt,0),totProfit=sentBase.reduce((a,e)=>a+e.profit,0),totApproved=sentBase.filter(e=>e.status==='approved'||e.status==='settled').reduce((a,e)=>a+(e.approvedAmt||0),0);
   // Estimated Incentive — 20% of each entry's Net Profit (same formula used in the entry detail view),
   // shown next to what management has actually approved so the engineer can compare the two at a glance.
-  const totEstIncentive=sent.reduce((a,e)=>{const np=e.netProfit!=null?e.netProfit:e.profit;return a+Math.max(0,np)*0.20;},0);
+  const totEstIncentive=sentBase.reduce((a,e)=>{const np=e.netProfit!=null?e.netProfit:e.profit;return a+Math.max(0,np)*0.20;},0);
   const estVsApprovedDiff=totEstIncentive-totApproved;
   const stats=g('svcIncStats');
-  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sent.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber" title="20% of Net Profit across all sent entries — compare against what management actually allowed"><div class="stat-bar"></div><div class="stat-label">Estimated Incentive (20%)</div><div class="stat-value">${fmt(totEstIncentive)}${sent.filter(e=>e.status==='approved'||e.status==='settled').length?`<div style="font-size:.42em;font-weight:600;margin-top:3px;color:${estVsApprovedDiff>0.5?'var(--red)':'var(--green)'};">${estVsApprovedDiff>0.5?'▼ '+fmt(estVsApprovedDiff)+' below estimate':'✓ matches / exceeds estimate'}</div>`:''}</div></div>`;
+  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sentBase.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber" title="20% of Net Profit across all sent entries — compare against what management actually allowed"><div class="stat-bar"></div><div class="stat-label">Estimated Incentive (20%)</div><div class="stat-value">${fmt(totEstIncentive)}${sentBase.filter(e=>e.status==='approved'||e.status==='settled').length?`<div style="font-size:.42em;font-weight:600;margin-top:3px;color:${estVsApprovedDiff>0.5?'var(--red)':'var(--green)'};">${estVsApprovedDiff>0.5?'▼ '+fmt(estVsApprovedDiff)+' below estimate':'✓ matches / exceeds estimate'}</div>`:''}</div></div>`;
 
   const el=g('svcIncList');if(!el)return;
   // Remember which cards are currently expanded, since re-renders (filters, live sync) can happen mid-click
   const expandedIds=new Set();
-  el.querySelectorAll('.inc-card.expanded').forEach(c=>expandedIds.add(c.id));
-  if(!sent.length){el.innerHTML='<div class="empty"><i class="fas fa-inbox"></i><p>No sent entries match the filter.</p></div>';return;}
-  el.innerHTML=sent.map(e=>{
+  document.querySelectorAll('.inc-card.expanded').forEach(c=>expandedIds.add(c.id));
+  const _incCard=(e)=>{
     const stClass=e.status==='approved'?'inc-status-approved':e.status==='rejected'?'inc-status-rejected':e.status==='settled'?'inc-status-approved':e.status==='mgmt-review'?'inc-status-pending':'inc-status-pending';
     const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
     const profColor=e.profit>=0?'var(--green)':'var(--red)';
@@ -10797,7 +10830,23 @@ function renderSvcIncentives(){
         ${e.purchaseEditedBy?`<div style="font-size:.87em;color:#7c3aed;margin-top:8px;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by ${esc(e.purchaseEditedBy)}</div>`:''}
       </div>
     </div>`;
-  }).join('');
+  };
+  if(!sent.length){el.innerHTML=`<div class="empty"><i class="fas fa-inbox"></i><p>${statF?'No entries match the filter.':'No active entries — everything sent so far has been settled. Check Settled / Paid History below.'}</p></div>`;}
+  else el.innerHTML=sent.map(_incCard).join('');
+
+  // Settled / Paid history section — only relevant (and shown) when no explicit status
+  // filter narrows the main list down already.
+  const settledWrap=g('svcIncSettledWrap');
+  if(settledWrap){
+    if(statF || !settledSent.length){ settledWrap.style.display='none'; }
+    else{
+      settledWrap.style.display='block';
+      const badge=g('svcIncSettledCountBadge'); if(badge) badge.textContent=settledSent.length;
+      const settledEl=g('svcIncSettledList');
+      if(settledEl) settledEl.innerHTML=settledSent.map(_incCard).join('');
+    }
+  }
+
   // Restore whatever was expanded before this re-render
   expandedIds.forEach(id=>{
     const card=g(id);if(!card)return;
