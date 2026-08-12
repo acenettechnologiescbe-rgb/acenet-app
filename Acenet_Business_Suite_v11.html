@@ -2300,22 +2300,16 @@ tbody tr:last-child td{border-bottom:none;}
         <input type="text" id="incProfitDisplay" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00">
       </div>
     </div>
+    <div class="fg" style="margin-bottom:11px;">
+      <label>Expenses <span style="font-size:.76em;color:var(--ink3);">— add a row for each expense leg (travel, food, courier, etc.)</span></label>
+      <div id="incExpLegsWrap"></div>
+      <button type="button" class="btn btn-outline btn-sm" style="margin-top:4px;" onclick="addIncExpLeg()"><i class="fas fa-plus"></i> Add Another Leg</button>
+      <input type="hidden" id="incExpType" value="">
+    </div>
     <div class="g3" style="margin-bottom:11px;">
       <div class="fg">
-        <label>Expense Type</label>
-        <select id="incExpType" onchange="calcIncProfit()">
-          <option value="">-- No Expense --</option>
-          <option value="Travel">Travel</option>
-          <option value="Food">Food / Allowance</option>
-          <option value="Stationery">Stationery</option>
-          <option value="Courier">Courier / Shipping</option>
-          <option value="Tools">Tools / Equipment</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Expense Amount (₹)</label>
-        <input type="number" id="incExpAmt" placeholder="0.00" step="0.01" value="0" oninput="calcIncProfit()">
+        <label>Total Expense (₹) <span style="font-size:.76em;color:var(--ink3);">— Auto (sum of legs)</span></label>
+        <input type="number" id="incExpAmt" readonly style="background:var(--bg);font-weight:700;" value="0">
       </div>
       <div class="fg">
         <label>Net Profit (after expense) <span style="font-size:.76em;color:var(--ink3);">— Auto</span></label>
@@ -10561,6 +10555,7 @@ function showSvcIncForm(){
   if(D.currentUser?.role==='service') g('incEngineer').value=D.currentUser.name;
   g('incCust').value='';g('incProduct').value='';g('incRef').value='';
   g('incSaleAmt').value='';g('incPurchaseAmt').value='';g('incNotes').value='';
+  setIncExpLegs([]);
   if(g('incExpType'))g('incExpType').value='';
   if(g('incExpAmt'))g('incExpAmt').value=0;
   if(g('incNetProfit'))g('incNetProfit').value='₹0.00';
@@ -10590,7 +10585,7 @@ function saveSvcIncDraft(){
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
-  const expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
+  const expLegs=getIncExpLegs(),expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
   // gstAmt/netSale are informational (what the customer pays incl. tax) — profit is
@@ -10602,7 +10597,7 @@ function saveSvcIncDraft(){
   const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,expLegs,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
   if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
   else D.svc_incentives.push(obj);
   hideSvcIncForm();saveData();renderSvcIncentives();
@@ -10614,7 +10609,7 @@ function sendSvcIncToAccounts(){
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
-  const expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
+  const expLegs=getIncExpLegs(),expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   if(sale<=0&&purchase<=0){alert('Enter at least Sale or Purchase amount');return;}
   const gstType2=g('incGST')?.value||'none';
@@ -10634,7 +10629,7 @@ function sendSvcIncToAccounts(){
     onOk:()=>{
       const editId=g('incEditId').value;
       if(!D.svc_incentives)D.svc_incentives=[];
-      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+      const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,expLegs,gstType:gstType2,gstAmt:gstAmt2,netSale:netSale2,notes,status:'pending',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
       if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
       else D.svc_incentives.push(obj);
       hideSvcIncForm();saveData('new_inc');renderSvcIncentives();updateAccIncBadge();
@@ -10668,8 +10663,7 @@ function editDraftInc(id){
   g('incPurchaseAmt').value=e.purchaseAmt||'';g('incNotes').value=e.notes||'';
   g('incEditId').value=e.id;
   const gEl=g('incGST');if(gEl)gEl.value=e.gstType||'none';
-  if(g('incExpType'))g('incExpType').value=e.expType||'';
-  if(g('incExpAmt'))g('incExpAmt').value=e.expAmt||0;
+  setIncExpLegs(e.expLegs&&e.expLegs.length?e.expLegs:(e.expType?[{type:e.expType,amt:e.expAmt||0}]:[]));
   g('svcIncFormTitle').textContent='Edit Draft Entry';
   calcIncProfit();
   g('svcIncForm').style.display='block';
@@ -10787,12 +10781,8 @@ function renderSvcIncentives(){
   // like "Incentive Approved" still include settled entries even though the main list below
   // now hides them by default.
   const totSale=sentBase.reduce((a,e)=>a+e.saleAmt,0),totPur=sentBase.reduce((a,e)=>a+e.purchaseAmt,0),totProfit=sentBase.reduce((a,e)=>a+e.profit,0),totApproved=sentBase.filter(e=>e.status==='approved'||e.status==='settled').reduce((a,e)=>a+(e.approvedAmt||0),0);
-  // Estimated Incentive — 20% of each entry's Net Profit (same formula used in the entry detail view),
-  // shown next to what management has actually approved so the engineer can compare the two at a glance.
-  const totEstIncentive=sentBase.reduce((a,e)=>{const np=e.netProfit!=null?e.netProfit:e.profit;return a+Math.max(0,np)*0.20;},0);
-  const estVsApprovedDiff=totEstIncentive-totApproved;
   const stats=g('svcIncStats');
-  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sentBase.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div><div class="stat s-amber" title="20% of Net Profit across all sent entries — compare against what management actually allowed"><div class="stat-bar"></div><div class="stat-label">Estimated Incentive (20%)</div><div class="stat-value">${fmt(totEstIncentive)}${sentBase.filter(e=>e.status==='approved'||e.status==='settled').length?`<div style="font-size:.42em;font-weight:600;margin-top:3px;color:${estVsApprovedDiff>0.5?'var(--red)':'var(--green)'};">${estVsApprovedDiff>0.5?'▼ '+fmt(estVsApprovedDiff)+' below estimate':'✓ matches / exceeds estimate'}</div>`:''}</div></div>`;
+  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sentBase.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div>`;
 
   const el=g('svcIncList');if(!el)return;
   // Remember which cards are currently expanded, since re-renders (filters, live sync) can happen mid-click
@@ -10859,7 +10849,6 @@ function viewSvcInc(id){
   const e=D.svc_incentives.find(x=>x.id===id);if(!e)return;
   const expAmt=parseFloat(e.expAmt)||0;
   const netProfit=(e.netProfit!=null?e.netProfit:e.profit-expAmt);
-  const estIncentive=Math.max(0,netProfit)*0.20;
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const netProfColor=netProfit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Mgmt Review':e.status==='draft'?'Draft':e.status.charAt(0).toUpperCase()+e.status.slice(1);
@@ -10892,10 +10881,6 @@ function viewSvcInc(id){
         </div>
         ${incExpenseBreakdownHtml(e)}
         ${e.purchaseEditedBy?`<div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 14px;margin-bottom:10px;margin-top:10px;font-size:.87em;color:#6d28d9;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by <strong>${esc(e.purchaseEditedBy)}</strong>${e.purchaseEditedAt?' on '+e.purchaseEditedAt.slice(0,10):''} — figures above already reflect this.</div>`:''}
-        <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
-          <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
-          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}${netProfit<0?' <span style="font-size:.7em;color:var(--red);font-weight:600;">(no incentive — this entry is a loss)</span>':''}</div>
-        </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive Approved</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
         ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
         ${(e.status==='draft'||e.status==='pending')?`<div style="display:flex;gap:8px;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--line);">
@@ -10914,6 +10899,7 @@ function saveSvcIncDraftAndAddAnother(){
     cust=g('incCust').value.trim(),product=g('incProduct').value.trim(),
     ref=g('incRef').value.trim(),sale=parseFloat(g('incSaleAmt').value)||0,
     purchase=parseFloat(g('incPurchaseAmt').value)||0,notes=g('incNotes').value.trim();
+  const expLegs=getIncExpLegs(),expType=g('incExpType')?.value||'',expAmt=parseFloat(g('incExpAmt')?.value)||0;
   if(!date||!eng||!cust){alert('Fill Date, Engineer and Customer');return;}
   const gstType=g('incGST')?.value||'none';
   // gstAmt/netSale are informational only — profit is computed off the pre-GST sale amount.
@@ -10921,9 +10907,10 @@ function saveSvcIncDraftAndAddAnother(){
   if(gstType==='exclusive'){gstAmt=sale*GST_R;netSale=sale+gstAmt;}
   else if(gstType==='inclusive'){gstAmt=sale-sale/(1+GST_R);netSale=sale;}
   const profit=sale-netPurchase;
+  const netProfit=profit-expAmt;
   const editId=g('incEditId').value;
   if(!D.svc_incentives)D.svc_incentives=[];
-  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit:profit,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
+  const obj={id:editId||uid(),no,date,engineerName:eng,customer:cust,product,ref,saleAmt:sale,purchaseAmt:purchase,profit,netProfit,expType,expAmt,expLegs,gstType,gstAmt,netSale,notes,status:'draft',approvedAmt:0,approvedBy:'',approvedAt:'',rejectedReason:'',createdAt:new Date().toISOString()};
   if(editId) D.svc_incentives=D.svc_incentives.map(x=>x.id===editId?obj:x);
   else D.svc_incentives.push(obj);
   saveData();renderSvcIncentives();
@@ -11050,19 +11037,34 @@ function exportIncReport(){ exportIncentiveExcel(); }
 // Order Checklist order — shown to Accounts/Management so the Expense figure isn't
 // just a lump number they have to take on faith.
 function incExpenseBreakdownHtml(e){
-  if(!e.convLegs||!e.convLegs.length) return '';
-  const rows=e.convLegs.map(r=>{
-    const route=(r.from||r.to)?`${esc(r.from||'?')} → ${esc(r.to||'?')}`:'';
-    const modeBit=r.mode?esc(r.mode):'';
-    const kmBit=(parseFloat(r.km)>0)?`${r.km}km × ₹${r.rate}`:(parseFloat(r.rate)>0?'Flat fare':'');
-    const label=[route,modeBit,kmBit].filter(Boolean).join(' · ')||'Leg';
-    const amt=(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0);
-    return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed #fecaca;font-size:.78em;"><span style="color:var(--ink3);">${label}</span><span style="font-weight:700;color:var(--red);">${fmt(amt)}</span></div>`;
-  }).join('');
-  return `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:9px 12px;margin-top:8px;">
-    <div style="font-size:.7em;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:4px;"><i class="fas fa-car-side"></i> Conveyance Expense — from Order Checklist</div>
-    ${rows}
-  </div>`;
+  let out='';
+  if(e.convLegs&&e.convLegs.length){
+    const rows=e.convLegs.map(r=>{
+      const route=(r.from||r.to)?`${esc(r.from||'?')} → ${esc(r.to||'?')}`:'';
+      const modeBit=r.mode?esc(r.mode):'';
+      const kmBit=(parseFloat(r.km)>0)?`${r.km}km × ₹${r.rate}`:(parseFloat(r.rate)>0?'Flat fare':'');
+      const label=[route,modeBit,kmBit].filter(Boolean).join(' · ')||'Leg';
+      const amt=(parseFloat(r.travel)||0)+(parseFloat(r.food)||0)+(parseFloat(r.other)||0);
+      return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed #fecaca;font-size:.78em;"><span style="color:var(--ink3);">${label}</span><span style="font-weight:700;color:var(--red);">${fmt(amt)}</span></div>`;
+    }).join('');
+    out+=`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:9px 12px;margin-top:8px;">
+      <div style="font-size:.7em;font-weight:700;color:var(--red);text-transform:uppercase;margin-bottom:4px;"><i class="fas fa-car-side"></i> Conveyance Expense — from Order Checklist</div>
+      ${rows}
+    </div>`;
+  }
+  // Manually entered expense legs (added via "Add Another Leg" on the incentive form) —
+  // shown as one combined, itemized breakdown so Accounts/Management see exactly what
+  // makes up the total expense figure instead of a single lump number.
+  if(e.expLegs&&e.expLegs.length){
+    const rows=e.expLegs.filter(l=>l.type||parseFloat(l.amt)>0).map(l=>{
+      return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed #fde68a;font-size:.78em;"><span style="color:var(--ink3);">${esc(l.type||'Other')}</span><span style="font-weight:700;color:var(--amber);">${fmt(parseFloat(l.amt)||0)}</span></div>`;
+    }).join('');
+    if(rows) out+=`<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:9px;padding:9px 12px;margin-top:8px;">
+      <div style="font-size:.7em;font-weight:700;color:#92400e;text-transform:uppercase;margin-bottom:4px;"><i class="fas fa-receipt"></i> Expense Legs — combined</div>
+      ${rows}
+    </div>`;
+  }
+  return out;
 }
 
 function incAccCard(e,context){
@@ -11071,14 +11073,14 @@ function incAccCard(e,context){
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   let actions='';
   if(context==='pending'){
-    // Pre-fill uses Net Profit (after expenses) — same base as the "Estimated Incentive" figure
-    // shown in the View drawer, so the two numbers always agree.
-    const npBase=e.netProfit!=null?e.netProfit:e.profit;
+    // No auto-calculated default here — Accounts decides the incentive % for each
+    // entry themselves; entering a % (or a ₹ amount directly) is what drives the
+    // calculation, nothing is pre-filled for them.
     actions=`<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-      <label style="font-size:.87em;color:var(--ink3);">Incentive % or ₹</label>
+      <label style="font-size:.87em;color:var(--ink3);">Incentive % or ₹ <span style="font-weight:600;">— you decide</span></label>
       <div style="display:flex;align-items:center;gap:5px;">
         <input type="number" id="inc-pct-${e.id}" placeholder="%" step="0.1" min="0" max="100" style="width:70px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" oninput="calcIncAmt('${e.id}')" title="Enter %">
-        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;" value="${npBase>0?(npBase*0.2).toFixed(2):''}">
+        <input type="number" id="inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:90px;padding:6px 7px;border:1.5px solid #c4b5fd;border-radius:7px;font-size:.95em;">
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
         <button class="btn btn-outline btn-sm" style="border-color:#c4b5fd;color:#7c3aed;" onclick="editIncPurchaseAcc('${e.id}')"><i class="fas fa-pen-to-square"></i> Edit Purchase</button>
@@ -11211,8 +11213,8 @@ function acctApproveIncentive(id){
   const e=(D.svc_incentives||[]).find(x=>x.id===id);if(!e)return;
   const pct=parseFloat(g('inc-pct-'+id)?.value)||0;
   const inp=g('inc-amt-'+id);
-  const npBase=e.netProfit!=null?e.netProfit:e.profit;
-  const amt=parseFloat(inp?.value)||(npBase>0?npBase*0.2:0);
+  const amt=parseFloat(inp?.value)||0;
+  if(amt<=0){alert('Enter an incentive % or ₹ amount before approving.');return;}
   showConfirm({
     icon:'ci-send',iconClass:'fa-check-circle',
     title:'Approve Incentive from Accounts?',
@@ -11233,21 +11235,25 @@ function acctApproveIncentive(id){
 function bulkApproveAllIncentives(){
   const pending=(D.svc_incentives||[]).filter(e=>e.status==='pending');
   if(!pending.length){showSuccessToast('No pending incentive entries to approve.','var(--ink3)');return;}
+  // Only entries where Accounts has actually entered a % or ₹ amount get approved —
+  // there is no automatic 20% fallback anymore, so anything left blank is skipped.
+  const withAmt=pending.filter(e=>(parseFloat(g('inc-amt-'+e.id)?.value)||0)>0);
+  const skipped=pending.length-withAmt.length;
+  if(!withAmt.length){alert('Enter an incentive % or ₹ amount for at least one entry before bulk-approving.');return;}
   showConfirm({
     icon:'ci-send',iconClass:'fa-check-double',
     title:'Approve All Pending Incentives?',
-    msg:`This will approve all ${pending.length} pending incentive entr${pending.length>1?'ies':'y'} in one go, using the amounts entered (or 20% of profit if left blank).`,
+    msg:`This will approve ${withAmt.length} pending incentive entr${withAmt.length>1?'ies':'y'} using the amounts entered.${skipped?` ${skipped} entr${skipped>1?'ies':'y'} without an amount entered will be skipped.`:''}`,
     btnLabel:'Approve All',btnColor:'var(--green)',
     onOk:()=>{
       let total=0;
-      pending.forEach(e=>{
-        const npBase=e.netProfit!=null?e.netProfit:e.profit;
-        const amt=parseFloat(g('inc-amt-'+e.id)?.value)||(npBase>0?npBase*0.2:0);
+      withAmt.forEach(e=>{
+        const amt=parseFloat(g('inc-amt-'+e.id)?.value)||0;
         e.status='approved';e.approvedAmt=amt;e.approvedBy=D.currentUser?.name||'Accounts';e.approvedByRole='accounts';e.approvedAt=new Date().toISOString();
         total+=amt;
       });
       saveData();renderAccIncentives();updateMgmtIncBadge();
-      showSuccessToast(`✓ ${pending.length} incentive entries approved — Total: ${fmt(total)}`,'var(--green)');
+      showSuccessToast(`✓ ${withAmt.length} incentive entries approved — Total: ${fmt(total)}`,'var(--green)');
     }
   });
 }
@@ -12105,12 +12111,25 @@ function renderMgmtView(){
       </tbody></table></div>`;
 
   } else if(_mvTab==='inc'){
-    const incs=filter(D.svc_incentives||[],'date','engineerName');
-    body.innerHTML=!incs.length?'<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries found</p></div>':
-      `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Expense</th><th>Net P/L</th><th>Incentive</th><th>Status</th><th></th></tr></thead><tbody>
+    // Management never needs to see draft incentive entries — those are still sitting
+    // in Service's own workspace and haven't even been sent to Accounts yet. Everything
+    // from "Pending" (with Accounts) onward is shown.
+    const incs=filter((D.svc_incentives||[]).filter(e=>e.status!=='draft'),'date','engineerName');
+    const totSale=incs.reduce((s,e)=>s+(e.saleAmt||0),0),totPurch=incs.reduce((s,e)=>s+(e.purchaseAmt||0),0),
+      totExp=incs.reduce((s,e)=>s+(parseFloat(e.expAmt)||0),0),
+      totIncentive=incs.reduce((s,e)=>s+((e.status==='approved'||e.status==='settled')?(e.approvedAmt||0):0),0);
+    const kpi=(icon,bg,color,lbl,val)=>`<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;display:flex;align-items:center;gap:11px;"><div style="width:32px;height:32px;background:${bg};border-radius:8px;display:flex;align-items:center;justify-content:center;color:${color};font-size:.85em;flex-shrink:0;">${icon}</div><div><div style="font-family:'Sora',sans-serif;font-size:1.2em;font-weight:800;color:${color};line-height:1;">${val}</div><div style="font-size:.67em;color:var(--ink3);font-weight:600;text-transform:uppercase;">${lbl}</div></div></div>`;
+    const kpiRow=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px;">
+      ${kpi('<i class="fas fa-indian-rupee-sign"></i>','#eef2ff','var(--acc)','Total Sale',fmt(totSale))}
+      ${kpi('<i class="fas fa-cart-shopping"></i>','#fffbeb','var(--amber)','Total Purchase',fmt(totPurch))}
+      ${kpi('<i class="fas fa-receipt"></i>','#fef2f2','var(--red)','Total Expense',fmt(totExp))}
+      ${kpi('<i class="fas fa-hand-holding-dollar"></i>','#f3e8ff','#7c3aed','Total Commission / Incentive (Approved)',fmt(totIncentive))}
+    </div>`;
+    body.innerHTML=(!incs.length?kpiRow+'<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries found</p></div>':
+      kpiRow+`<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Expense</th><th>Net P/L</th><th>Incentive</th><th>Status</th><th></th></tr></thead><tbody>
       ${incs.map(e=>`<tr><td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.95em;">${esc(e.customer)}</td><td style="font-size:.8em;">${esc(e.product||'—')}</td><td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td><td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td><td class="amt" style="font-size:.8em;">${e.expType?esc(e.expType)+' '+fmt(e.expAmt||0):'—'}</td><td class="amt" style="font-weight:700;color:${(e.netProfit||e.profit)>=0?'var(--green)':'var(--red)'};">${fmt(e.netProfit||e.profit)}</td><td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td><td>${sbg(e.status)}</td><td><div style="display:flex;gap:4px;">${(e.status==='mgmt-review'||e.status==='pending')?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 7px;font-size:.97em;" onclick="mgmtApproveInc('${e.id}')" title="Approve"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" style="padding:3px 7px;font-size:.97em;" onclick="rejectIncentive('${e.id}')" title="Reject"><i class="fas fa-times"></i></button>`:''}<button class="btn btn-outline btn-sm" style="font-size:.97em;padding:3px 7px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i></button></div></td></tr>`).join('')}
-      <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.saleAmt,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.purchaseAmt,0))}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td><td></td><td></td><td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(incs.reduce((s,e)=>s+(e.approvedAmt||0),0))}</td><td colspan="2"></td></tr>
-      </tbody></table></div>`;
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td><td class="amt" style="padding:9px 12px;">${fmt(totSale)}</td><td class="amt" style="padding:9px 12px;">${fmt(totPurch)}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td><td class="amt" style="padding:9px 12px;color:var(--red);">${fmt(totExp)}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+(e.netProfit!=null?e.netProfit:e.profit),0))}</td><td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(totIncentive)}</td><td colspan="2"></td></tr>
+      </tbody></table></div>`);
 
   } else if(_mvTab==='svc'){
     let calls=[...D.svc_calls];
@@ -12337,7 +12356,7 @@ function exportMgmtView(){
   }
   if(_mvTab==='conv'){D.svc_conveyance.forEach(c=>rows.push({'No':c.no,'Date':c.date,'Engineer':c.engineer,'Call Ref':c.callRef||'','Location':c.location||'','Travel':c.travelAmt,'Food':c.foodAmt,'Other':c.otherAmt,'Total':c.totalAmt,'Status':c.status}));}
   else if(_mvTab==='adv'){D.svc_conv_advances.forEach(a=>rows.push({'No':a.no,'Date':a.date,'Engineer':a.engineer,'Purpose':a.purpose||'','Call Ref':a.callRef||'','Amount':a.amount,'Mode':a.mode||'','Status':a.status}));}
-  else if(_mvTab==='inc'){(D.svc_incentives||[]).forEach(e=>rows.push({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt,'Purchase':e.purchaseAmt,'Expense Type':e.expType||'','Expense':e.expAmt||0,'P/L':e.profit,'Net P/L':e.netProfit||e.profit,'Incentive':e.approvedAmt||0,'Status':e.status}));}
+  else if(_mvTab==='inc'){(D.svc_incentives||[]).filter(e=>e.status!=='draft').forEach(e=>rows.push({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt,'Purchase':e.purchaseAmt,'Expense Type':e.expType||'','Expense':e.expAmt||0,'P/L':e.profit,'Net P/L':e.netProfit||e.profit,'Incentive':e.approvedAmt||0,'Status':e.status}));}
   else if(_mvTab==='svc'){D.svc_calls.forEach(c=>{const ca=c.convRows?.reduce((a,r)=>a+(r.amt||0)+(r.food||0)+(r.other||0),0)||(c.convAmt||0);rows.push({'Call No':c.no,'Date':c.date||c.datetime?.slice(0,10)||'','Customer':c.customer,'Engineer':c.engineer||'','Type':c.callType||'','Issue':c.issue||'','Product':c.product||'','Priority':c.priority||'','Status':c.status,'Conv.Amt':ca,'Resolution':c.resolution||''});});}
   if(!rows.length){alert('No data to export');return;}
   xlsxExport([{name:'Detail Info',rows}],`acenet_mgmt_${_mvTab}_${today()}`);
@@ -12567,7 +12586,7 @@ function renderRptIncentive(){
     }).join('');
 }
 function exportIncentiveExcel(){
-  const rows=(D.svc_incentives||[]).map(e=>({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt.toFixed(2),'Purchase':e.purchaseAmt.toFixed(2),'Profit':e.profit.toFixed(2),'Incentive':(e.approvedAmt||0).toFixed(2),'Status':e.status}));
+  const rows=(D.svc_incentives||[]).filter(e=>e.status!=='draft').map(e=>({'No':e.no,'Date':e.date,'Engineer':e.engineerName,'Customer':e.customer,'Product':e.product||'','Sale':e.saleAmt.toFixed(2),'Purchase':e.purchaseAmt.toFixed(2),'P/L':e.profit.toFixed(2),'Expense Type':e.expType||'','Expense':(parseFloat(e.expAmt)||0).toFixed(2),'Net P/L':(e.netProfit!=null?e.netProfit:e.profit).toFixed(2),'Incentive':(e.approvedAmt||0).toFixed(2),'Status':e.status}));
   xlsxExport([{name:'Incentive Report',rows}],'acenet_incentive_rpt_'+today());
 }
 // Alias — used by both management and accounts export buttons
@@ -13957,10 +13976,50 @@ function generateConvFromSelected(){
 // ═══════════════════════════════════════════════════════════════
 // UPDATED calcIncProfit WITH GST
 // ═══════════════════════════════════════════════════════════════
+// ── Service Incentive — multi-leg expense entries ──────────────────────
+// Lets the engineer break a single incentive entry's expense into several legs
+// (e.g. Travel + Courier + Food), the same way conveyance claims already support
+// multiple legs. incExpType/incExpAmt stay in sync (combined label / sum) so every
+// other part of the app that reads those two fields keeps working unchanged.
+const INC_EXP_TYPE_OPTS='<option value="">-- No Expense --</option><option value="Travel">Travel</option><option value="Food">Food / Allowance</option><option value="Stationery">Stationery</option><option value="Courier">Courier / Shipping</option><option value="Tools">Tools / Equipment</option><option value="Commission">Commission (paid to others for the order)</option><option value="Other">Other</option>';
+function addIncExpLeg(type,amt){
+  const wrap=g('incExpLegsWrap');if(!wrap)return;
+  const div=document.createElement('div');
+  div.className='inc-exp-leg';
+  div.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;';
+  div.innerHTML=`<select class="inc-exp-leg-type" onchange="calcIncProfit()" style="flex:1;">${INC_EXP_TYPE_OPTS}</select><input type="number" class="inc-exp-leg-amt" placeholder="0.00" step="0.01" style="width:120px;" oninput="calcIncProfit()"><button type="button" class="btn btn-outline btn-sm" title="Remove leg" onclick="removeIncExpLeg(this)"><i class="fas fa-trash"></i></button>`;
+  wrap.appendChild(div);
+  if(type) div.querySelector('.inc-exp-leg-type').value=type;
+  if(amt) div.querySelector('.inc-exp-leg-amt').value=amt;
+  calcIncProfit();
+}
+function removeIncExpLeg(btn){
+  const row=btn.closest('.inc-exp-leg');if(!row)return;
+  const wrap=row.parentElement;
+  row.remove();
+  if(wrap&&!wrap.children.length){addIncExpLeg();return;}
+  calcIncProfit();
+}
+function getIncExpLegs(){
+  const wrap=g('incExpLegsWrap');if(!wrap)return[];
+  return[...wrap.querySelectorAll('.inc-exp-leg')].map(row=>({
+    type:row.querySelector('.inc-exp-leg-type')?.value||'',
+    amt:parseFloat(row.querySelector('.inc-exp-leg-amt')?.value)||0
+  })).filter(l=>l.type||l.amt>0);
+}
+function setIncExpLegs(legs){
+  const wrap=g('incExpLegsWrap');if(!wrap)return;
+  wrap.innerHTML='';
+  if(legs&&legs.length) legs.forEach(l=>addIncExpLeg(l.type,l.amt));
+  else addIncExpLeg();
+}
 function calcIncProfit(){
   const s=parseFloat(g('incSaleAmt')?.value)||0;
   const p=parseFloat(g('incPurchaseAmt')?.value)||0;
-  const exp=parseFloat(g('incExpAmt')?.value)||0;
+  const legs=getIncExpLegs();
+  const exp=legs.reduce((a,l)=>a+l.amt,0);
+  if(g('incExpAmt')) g('incExpAmt').value=exp;
+  if(g('incExpType')) g('incExpType').value=[...new Set(legs.filter(l=>l.type).map(l=>l.type))].join(', ');
   const gType=g('incGST')?.value||'none';
   // netSale/gstAmt are informational only (what the customer pays incl. tax) —
   // gross profit is computed off the pre-GST sale amount so collected GST (owed
