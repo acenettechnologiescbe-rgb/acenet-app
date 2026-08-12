@@ -2300,10 +2300,10 @@ tbody tr:last-child td{border-bottom:none;}
         <input type="text" id="incProfitDisplay" readonly style="background:var(--bg);font-weight:700;" placeholder="₹0.00">
       </div>
     </div>
-    <div class="fg" style="margin-bottom:11px;">
+    <div class="fg" style="margin-bottom:11px;max-width:460px;">
       <label>Expenses <span style="font-size:.76em;color:var(--ink3);">— add a row for each expense leg (travel, food, courier, etc.)</span></label>
-      <div id="incExpLegsWrap"></div>
-      <button type="button" class="btn btn-outline btn-sm" style="margin-top:4px;" onclick="addIncExpLeg()"><i class="fas fa-plus"></i> Add Another Leg</button>
+      <div id="incExpLegsWrap" style="display:flex;flex-direction:column;gap:6px;margin-top:2px;"></div>
+      <button type="button" class="btn btn-outline btn-sm" style="margin-top:6px;padding:5px 10px;font-size:.78em;" onclick="addIncExpLeg()"><i class="fas fa-plus"></i> Add Another Leg</button>
       <input type="hidden" id="incExpType" value="">
     </div>
     <div class="g3" style="margin-bottom:11px;">
@@ -9447,7 +9447,6 @@ function viewAccInc(id){
   const isMgmt=D.currentUser?.role==='management';
   const expAmt=parseFloat(e.expAmt)||0;
   const netProfit=(e.netProfit!=null?e.netProfit:e.profit-expAmt);
-  const estIncentive=Math.max(0,netProfit)*0.20;
   const profColor=e.profit>=0?'var(--green)':'var(--red)';
   const netProfColor=netProfit>=0?'var(--green)':'var(--red)';
   const stLabel=e.status==='mgmt-review'?'Sent to Mgmt':e.status==='settled'?'Settled':e.status.charAt(0).toUpperCase()+e.status.slice(1);
@@ -9480,10 +9479,6 @@ function viewAccInc(id){
         </div>
         ${incExpenseBreakdownHtml(e)}
         ${e.purchaseEditedBy?`<div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:10px 14px;margin-bottom:10px;margin-top:10px;font-size:.87em;color:#6d28d9;"><i class="fas fa-pen-to-square"></i> Purchase amount corrected by <strong>${esc(e.purchaseEditedBy)}</strong>${e.purchaseEditedAt?' on '+e.purchaseEditedAt.slice(0,10):''} — figures above already reflect this.</div>`:''}
-        <div style="background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
-          <div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#6d28d9;"><i class="fas fa-calculator" style="margin-right:5px;"></i>Estimated Incentive <span style="font-weight:600;text-transform:none;">— 20% of Net Profit</span></div></div>
-          <div style="font-weight:800;color:#7c3aed;font-size:1.3em;">${fmt(estIncentive)}${netProfit<0?' <span style="font-size:.7em;color:var(--red);font-weight:600;">(no incentive — this entry is a loss)</span>':''}</div>
-        </div>
         ${e.approvedAmt?`<div style="background:#f0fdf4;border-radius:10px;padding:14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;"><div><div style="font-size:.9em;font-weight:700;text-transform:uppercase;color:#065f46;">Incentive ${e.status==='settled'?'Settled':'Approved'}</div><div style="font-weight:800;color:var(--green);font-size:1.25em;">${fmt(e.approvedAmt)}</div></div>${e.approvedBy?`<div style="font-size:.95em;color:var(--green);"><i class="fas fa-check-circle"></i> by ${esc(e.approvedBy)}</div>`:''}</div>`:''}
         ${e.settledBy?`<div style="background:#e0f2fe;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:#0369a1;"><i class="fas fa-wallet"></i> Settled by <strong>${esc(e.settledBy)}</strong> on ${e.settledAt?e.settledAt.slice(0,10):''}</div>`:''}
         ${e.rejectedReason?`<div style="background:#fef2f2;border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:.97em;color:var(--red);"><i class="fas fa-times-circle"></i> ${esc(e.rejectedReason)}</div>`:''}
@@ -13986,8 +13981,8 @@ function addIncExpLeg(type,amt){
   const wrap=g('incExpLegsWrap');if(!wrap)return;
   const div=document.createElement('div');
   div.className='inc-exp-leg';
-  div.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:6px;';
-  div.innerHTML=`<select class="inc-exp-leg-type" onchange="calcIncProfit()" style="flex:1;">${INC_EXP_TYPE_OPTS}</select><input type="number" class="inc-exp-leg-amt" placeholder="0.00" step="0.01" style="width:120px;" oninput="calcIncProfit()"><button type="button" class="btn btn-outline btn-sm" title="Remove leg" onclick="removeIncExpLeg(this)"><i class="fas fa-trash"></i></button>`;
+  div.style.cssText='display:flex;gap:6px;align-items:center;';
+  div.innerHTML=`<select class="inc-exp-leg-type" onchange="calcIncProfit()" style="flex:1;min-width:0;padding:6px 8px;font-size:.83em;border:1.5px solid var(--line);border-radius:8px;">${INC_EXP_TYPE_OPTS}</select><input type="number" class="inc-exp-leg-amt" placeholder="0.00" step="0.01" style="width:88px;flex-shrink:0;padding:6px 8px;font-size:.83em;border:1.5px solid var(--line);border-radius:8px;" oninput="calcIncProfit()"><button type="button" class="btn btn-outline btn-sm" title="Remove leg" style="padding:5px 8px;flex-shrink:0;" onclick="removeIncExpLeg(this)"><i class="fas fa-trash" style="font-size:.85em;"></i></button>`;
   wrap.appendChild(div);
   if(type) div.querySelector('.inc-exp-leg-type').value=type;
   if(amt) div.querySelector('.inc-exp-leg-amt').value=amt;
