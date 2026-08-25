@@ -3423,6 +3423,24 @@ function g(x){return document.getElementById(x);}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function uid(){return 'x'+Date.now()+Math.random().toString(36).slice(2,6);}
 function today(){return new Date().toISOString().split('T')[0];}
+// ── MONTH HELPERS (for This Month / Last Month incentive comparisons) ──
+function ymKey(d){if(!d)return '';return String(d).slice(0,7);} // 'YYYY-MM-DD...' -> 'YYYY-MM'
+function ymNow(){return ymKey(new Date().toISOString());}
+function ymPrev(ym){const[y,m]=(ym||ymNow()).split('-').map(Number);const dt=new Date(y,m-2,1);return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');}
+function ymLabel(ym){if(!ym)return '';const[y,m]=ym.split('-').map(Number);const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return names[m-1]+' '+y;}
+// Sums incentive amounts for entries settled/approved within a given YYYY-MM, using settledAt (falls back to approvedAt, then date)
+function monthIncentiveTotal(entries,ym){
+  return entries.filter(e=>(e.status==='approved'||e.status==='settled')&&ymKey(e.settledAt||e.approvedAt||e.date)===ym).reduce((a,e)=>a+(e.approvedAmt||0),0);
+}
+function monthSaleTotal(entries,ym){
+  return entries.filter(e=>ymKey(e.date)===ym).reduce((a,e)=>a+(e.saleAmt||0),0);
+}
+function monthCompareStatCards(entries){
+  const cur=ymNow(),prev=ymPrev(cur);
+  const curInc=monthIncentiveTotal(entries,cur),prevInc=monthIncentiveTotal(entries,prev);
+  const curSale=monthSaleTotal(entries,cur),prevSale=monthSaleTotal(entries,prev);
+  return `<div class="stat s-teal2" title="Sale: ${fmt(curSale)}"><div class="stat-bar"></div><div class="stat-label">This Month (${esc(ymLabel(cur))})</div><div class="stat-value">${fmt(curInc)}</div><div class="stat-sub">Sale: ${fmt(curSale)}</div></div><div class="stat s-orange" title="Sale: ${fmt(prevSale)}"><div class="stat-bar"></div><div class="stat-label">Last Month (${esc(ymLabel(prev))})</div><div class="stat-value">${fmt(prevInc)}</div><div class="stat-sub">Sale: ${fmt(prevSale)}</div></div>`;
+}
 function fmt(n){return '₹'+Math.abs(n||0).toFixed(2);}
 function J(v){try{return v?JSON.parse(v):null;}catch{return null;}}
 function closeEl(id){const e=g(id);if(e)e.style.display='none';}
@@ -10777,7 +10795,7 @@ function renderSvcIncentives(){
   // now hides them by default.
   const totSale=sentBase.reduce((a,e)=>a+e.saleAmt,0),totPur=sentBase.reduce((a,e)=>a+e.purchaseAmt,0),totProfit=sentBase.reduce((a,e)=>a+e.profit,0),totApproved=sentBase.filter(e=>e.status==='approved'||e.status==='settled').reduce((a,e)=>a+(e.approvedAmt||0),0);
   const stats=g('svcIncStats');
-  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sentBase.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div>`;
+  if(stats) stats.innerHTML=`<div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent Entries</div><div class="stat-value">${sentBase.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Total Sale</div><div class="stat-value">${fmt(totSale)}</div></div><div class="stat ${totProfit>=0?'s-green':'s-red'}"><div class="stat-bar"></div><div class="stat-label">Net Profit</div><div class="stat-value">${fmt(totProfit)}</div></div><div class="stat s-purple2"><div class="stat-bar"></div><div class="stat-label">Incentive Approved</div><div class="stat-value">${fmt(totApproved)}</div></div>${monthCompareStatCards(sentBase)}`;
 
   const el=g('svcIncList');if(!el)return;
   // Remember which cards are currently expanded, since re-renders (filters, live sync) can happen mid-click
@@ -10968,7 +10986,7 @@ function renderAccIncentives(){
   const settled=entries.filter(e=>e.status==='settled');
 
   const el=g('accIncStats');
-  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent to Mgmt</div><div class="stat-value">${mgmtReview.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>`;
+  if(el) el.innerHTML=`<div class="stat s-amber"><div class="stat-bar"></div><div class="stat-label">Pending</div><div class="stat-value">${pending.length}</div></div><div class="stat s-blue"><div class="stat-bar"></div><div class="stat-label">Sent to Mgmt</div><div class="stat-value">${mgmtReview.length}</div></div><div class="stat s-green"><div class="stat-bar"></div><div class="stat-label">Approved</div><div class="stat-value">${approved.length}</div></div><div class="stat s-teal"><div class="stat-bar"></div><div class="stat-label">Settled / Paid</div><div class="stat-value">${fmt(settled.reduce((a,e)=>a+(e.approvedAmt||0),0))}</div></div>${monthCompareStatCards(entries)}`;
 
   const pEl=g('accIncPending'),mEl=g('accIncMgmtReview'),aEl=g('accIncApproved'),rEl=g('accIncRejected'),sEl=g('accIncSettled');
   // Remember which cards are currently expanded, since re-renders (filters, live sync) can happen mid-click
@@ -12114,17 +12132,53 @@ function renderMgmtView(){
       totExp=incs.reduce((s,e)=>s+(parseFloat(e.expAmt)||0),0),
       totIncentive=incs.reduce((s,e)=>s+((e.status==='approved'||e.status==='settled')?(e.approvedAmt||0):0),0);
     const kpi=(icon,bg,color,lbl,val)=>`<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 15px;display:flex;align-items:center;gap:11px;"><div style="width:32px;height:32px;background:${bg};border-radius:8px;display:flex;align-items:center;justify-content:center;color:${color};font-size:.85em;flex-shrink:0;">${icon}</div><div><div style="font-family:'Sora',sans-serif;font-size:1.2em;font-weight:800;color:${color};line-height:1;">${val}</div><div style="font-size:.67em;color:var(--ink3);font-weight:600;text-transform:uppercase;">${lbl}</div></div></div>`;
+    const curYM=ymNow(),prevYM=ymPrev(curYM);
+    const curMInc=monthIncentiveTotal(incs,curYM),prevMInc=monthIncentiveTotal(incs,prevYM);
     const kpiRow=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px;">
       ${kpi('<i class="fas fa-indian-rupee-sign"></i>','#eef2ff','var(--acc)','Total Sale',fmt(totSale))}
+      ${kpi('<i class="fas fa-calendar-check"></i>','#ecfeff','#0e7490','This Month ('+ymLabel(curYM)+')',fmt(curMInc))}
+      ${kpi('<i class="fas fa-calendar-minus"></i>','#fff7ed','#c2410c','Last Month ('+ymLabel(prevYM)+')',fmt(prevMInc))}
       ${kpi('<i class="fas fa-cart-shopping"></i>','#fffbeb','var(--amber)','Total Purchase',fmt(totPurch))}
       ${kpi('<i class="fas fa-receipt"></i>','#fef2f2','var(--red)','Total Expense',fmt(totExp))}
       ${kpi('<i class="fas fa-hand-holding-dollar"></i>','#f3e8ff','#7c3aed','Total Commission / Incentive (Approved)',fmt(totIncentive))}
     </div>`;
+    // Per-engineer, per-month Sale & Incentive summary — lets Management compare
+    // engineer performance across months at a glance (incentives are settled monthly).
+    const monthEngMap={};
+    incs.forEach(e=>{
+      const ym=ymKey(e.date)||'—',eng=e.engineerName||'—';
+      const k=ym+'|'+eng;
+      if(!monthEngMap[k])monthEngMap[k]={ym,eng,count:0,sale:0,incentive:0};
+      monthEngMap[k].count++;monthEngMap[k].sale+=(e.saleAmt||0);
+      if(e.status==='approved'||e.status==='settled')monthEngMap[k].incentive+=(e.approvedAmt||0);
+    });
+    const monthEngRows=Object.values(monthEngMap).sort((a,b)=>b.ym.localeCompare(a.ym)||a.eng.localeCompare(b.eng));
+    const monthlyTable=!monthEngRows.length?'':`
+      <div class="sdiv"><i class="fas fa-calendar-days"></i> Monthly Sale & Incentive by Engineer</div>
+      <div class="tw" style="margin-bottom:18px;"><table><thead><tr><th>Month</th><th>Engineer</th><th>Entries</th><th>Total Sale</th><th>Total Incentive</th></tr></thead><tbody>
+      ${monthEngRows.map(r=>`<tr><td style="font-weight:700;">${esc(ymLabel(r.ym)||r.ym)}</td><td>${esc(r.eng)}</td><td>${r.count}</td><td class="amt">${fmt(r.sale)}</td><td class="amt" style="color:#7c3aed;font-weight:700;">${fmt(r.incentive)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+
+    const mvIncRow=(e)=>`<tr><td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.95em;">${esc(e.customer)}</td><td style="font-size:.8em;">${esc(e.product||'—')}</td><td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td><td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td><td class="amt" style="font-size:.8em;">${e.expType?esc(e.expType)+' '+fmt(e.expAmt||0):'—'}</td><td class="amt" style="font-weight:700;color:${(e.netProfit||e.profit)>=0?'var(--green)':'var(--red)'};">${fmt(e.netProfit||e.profit)}</td><td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td><td>${sbg(e.status)}</td><td><div style="display:flex;gap:4px;">${(e.status==='mgmt-review'||e.status==='pending')?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 7px;font-size:.97em;" onclick="mgmtApproveInc('${e.id}')" title="Approve"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" style="padding:3px 7px;font-size:.97em;" onclick="rejectIncentive('${e.id}')" title="Reject"><i class="fas fa-times"></i></button>`:''}<button class="btn btn-outline btn-sm" style="font-size:.97em;padding:3px 7px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i></button></div></td></tr>`;
+    const mvIncTable=(rows)=>!rows.length?'<div class="empty" style="padding:18px;"><p style="font-size:.85em;">None</p></div>':
+      `<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Expense</th><th>Net P/L</th><th>Incentive</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map(mvIncRow).join('')}
+      <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Subtotal</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,e)=>s+(e.saleAmt||0),0))}</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,e)=>s+(e.purchaseAmt||0),0))}</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,e)=>s+e.profit,0))}</td><td class="amt" style="padding:9px 12px;color:var(--red);">${fmt(rows.reduce((s,e)=>s+(parseFloat(e.expAmt)||0),0))}</td><td class="amt" style="padding:9px 12px;">${fmt(rows.reduce((s,e)=>s+(e.netProfit!=null?e.netProfit:e.profit),0))}</td><td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(rows.reduce((s,e)=>s+((e.status==='approved'||e.status==='settled')?(e.approvedAmt||0):0),0))}</td><td colspan="2"></td></tr>
+      </tbody></table></div>`;
+
+    // Separate into the same lifecycle sections Accounts uses, so Management isn't
+    // looking at settled (already paid) and pending (awaiting approval) rows mixed together.
+    const reviewRows=incs.filter(e=>e.status==='pending'||e.status==='mgmt-review');
+    const approvedRows=incs.filter(e=>e.status==='approved');
+    const settledRows=incs.filter(e=>e.status==='settled');
+    const rejectedRows=incs.filter(e=>e.status==='rejected');
+
     body.innerHTML=(!incs.length?kpiRow+'<div class="empty"><i class="fas fa-gift"></i><p>No incentive entries found</p></div>':
-      kpiRow+`<div class="tw"><table><thead><tr><th>Entry No</th><th>Date</th><th>Engineer</th><th>Customer</th><th>Product</th><th>Sale</th><th>Purchase</th><th>P/L</th><th>Expense</th><th>Net P/L</th><th>Incentive</th><th>Status</th><th></th></tr></thead><tbody>
-      ${incs.map(e=>`<tr><td><strong style="color:#6d28d9;">${esc(e.no)}</strong></td><td>${e.date}</td><td>${esc(e.engineerName)}</td><td style="font-size:.95em;">${esc(e.customer)}</td><td style="font-size:.8em;">${esc(e.product||'—')}</td><td class="amt">${fmt(e.saleAmt)}</td><td class="amt">${fmt(e.purchaseAmt)}</td><td class="amt" style="font-weight:700;color:${e.profit>=0?'var(--green)':'var(--red)'};">${fmt(e.profit)}</td><td class="amt" style="font-size:.8em;">${e.expType?esc(e.expType)+' '+fmt(e.expAmt||0):'—'}</td><td class="amt" style="font-weight:700;color:${(e.netProfit||e.profit)>=0?'var(--green)':'var(--red)'};">${fmt(e.netProfit||e.profit)}</td><td class="amt" style="color:#6d28d9;">${e.status==='approved'||e.status==='settled'?fmt(e.approvedAmt||0):`<input type="number" id="mv-inc-amt-${e.id}" placeholder="₹" step="0.01" style="width:80px;padding:3px 6px;border:1.5px solid #c4b5fd;border-radius:6px;font-size:.8em;" value="${e.suggestedAmt||e.approvedAmt||''}">`}</td><td>${sbg(e.status)}</td><td><div style="display:flex;gap:4px;">${(e.status==='mgmt-review'||e.status==='pending')?`<button class="btn btn-sm" style="background:var(--green);color:#fff;padding:3px 7px;font-size:.97em;" onclick="mgmtApproveInc('${e.id}')" title="Approve"><i class="fas fa-check"></i></button><button class="btn btn-danger btn-sm" style="padding:3px 7px;font-size:.97em;" onclick="rejectIncentive('${e.id}')" title="Reject"><i class="fas fa-times"></i></button>`:''}<button class="btn btn-outline btn-sm" style="font-size:.97em;padding:3px 7px;" onclick="viewAccInc('${e.id}')"><i class="fas fa-eye"></i></button></div></td></tr>`).join('')}
-      <tr style="background:var(--bg);font-weight:700;"><td colspan="5" style="text-align:right;padding:9px 12px;">Totals</td><td class="amt" style="padding:9px 12px;">${fmt(totSale)}</td><td class="amt" style="padding:9px 12px;">${fmt(totPurch)}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+e.profit,0))}</td><td class="amt" style="padding:9px 12px;color:var(--red);">${fmt(totExp)}</td><td class="amt" style="padding:9px 12px;">${fmt(incs.reduce((s,e)=>s+(e.netProfit!=null?e.netProfit:e.profit),0))}</td><td class="amt" style="padding:9px 12px;color:#6d28d9;">${fmt(totIncentive)}</td><td colspan="2"></td></tr>
-      </tbody></table></div>`);
+      kpiRow+monthlyTable+
+      `<div class="sdiv"><i class="fas fa-hourglass-half"></i> Awaiting Approval (${reviewRows.length})</div>${mvIncTable(reviewRows)}`+
+      `<div class="sdiv"><i class="fas fa-check-circle"></i> Approved — Ready to Settle (${approvedRows.length})</div>${mvIncTable(approvedRows)}`+
+      `<div class="sdiv"><i class="fas fa-wallet"></i> Settled / Paid (${settledRows.length})</div>${mvIncTable(settledRows)}`+
+      (rejectedRows.length?`<div class="sdiv"><i class="fas fa-times-circle"></i> Rejected (${rejectedRows.length})</div>${mvIncTable(rejectedRows)}`:''));
 
   } else if(_mvTab==='svc'){
     let calls=[...D.svc_calls];
