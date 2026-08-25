@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Acenet Business Suite v7 — Acenet Technologies India Pvt. Ltd.</title>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{
@@ -100,31 +100,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ink);min-he
 .acc-kpi-glow{position:absolute;right:-18px;top:-18px;width:76px;height:76px;border-radius:50%;opacity:.18;}
 .acc-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-radius:12px 12px 0 0;margin-top:18px;}
 .acc-section-body{background:#fff;border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
-
-/* ── RICH DASHBOARD UPGRADE (Accounts Dashboard + Management Overview only) ── */
-.rich-title{font-family:'Fraunces',serif;font-weight:700;letter-spacing:-.2px;
-  background:linear-gradient(100deg,var(--ink) 25%,#9333ea);-webkit-background-clip:text;background-clip:text;color:transparent;}
-.rich-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:.7em;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;
-  color:#B4832E;background:#FCF3DE;padding:4px 11px;border-radius:7px;margin-bottom:8px;}
-.acc-kpi{box-shadow:0 3px 10px -2px rgba(0,0,0,.18),0 10px 26px -10px rgba(0,0,0,.28);}
-.acc-kpi:hover{transform:translateY(-3px);box-shadow:0 6px 16px -3px rgba(0,0,0,.24),0 16px 34px -10px rgba(0,0,0,.32);}
-.acc-kpi::after{content:'';position:absolute;left:0;right:0;top:0;height:50%;
-  background:linear-gradient(180deg,rgba(255,255,255,.16),transparent);pointer-events:none;}
-.acc-kpi-icon{box-shadow:inset 0 1px 0 rgba(255,255,255,.3);}
-.acc-kpi-val{font-family:'IBM Plex Mono',monospace !important;font-variant-numeric:tabular-nums;letter-spacing:-.3px;}
-.moag-val{font-family:'IBM Plex Mono',monospace !important;font-variant-numeric:tabular-nums;}
-.mgmt-mini-kpi-val{font-family:'IBM Plex Mono',monospace !important;font-variant-numeric:tabular-nums;}
-.mgmt-mini-kpi{box-shadow:0 2px 8px -2px rgba(0,0,0,.08);}
-.mgmt-mini-kpi:hover{transform:translateY(-2px);box-shadow:0 8px 18px -6px rgba(0,0,0,.16);}
-.mgmt-sec-card{box-shadow:0 2px 10px -3px rgba(0,0,0,.08);transition:.2s;}
-.mgmt-sec-card:hover{box-shadow:0 10px 24px -8px rgba(0,0,0,.14);}
-.mgmt-ov-acc{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);
-  background:
-    radial-gradient(700px 160px at 6% -30%, rgba(147,51,234,.35) 0%, transparent 60%),
-    radial-gradient(650px 200px at 96% 130%, rgba(14,165,233,.30) 0%, transparent 55%),
-    linear-gradient(135deg,#0c4a6e,#0e7490);
-  border-bottom:3px solid transparent;border-image:linear-gradient(90deg,#B4832E,#F3DFA0,#B4832E) 1;}
-.moag-val{color:#fff;}
 .acc-action-card{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);gap:12px;transition:.15s;}
 .acc-action-card:last-child{border-bottom:none;}
 .acc-action-card:hover{background:#f8fafc;}
@@ -1059,7 +1034,7 @@ tbody tr:last-child td{border-bottom:none;}
 
 <!-- ════ MANAGEMENT OVERVIEW ════ -->
 <div class="page" id="page-overview">
-  <div class="ph"><div><div class="rich-eyebrow"><i class="fas fa-crown"></i> Management</div><h2><span class="phi" style="background:linear-gradient(135deg,var(--mgmt),#9333ea)"><i class="fas fa-eye"></i></span><span class="rich-title" style="font-size:1.15em;">Management Overview</span></h2><p>Live combined view — read only</p></div>
+  <div class="ph"><div><h2><span class="phi" style="background:linear-gradient(135deg,var(--mgmt),#9333ea)"><i class="fas fa-eye"></i></span><span class="sora">Management Overview</span></h2><p>Live combined view — read only</p></div>
   <div class="btn-row"><button class="btn btn-outline btn-sm" onclick="renderMgmt();"><i class="fas fa-sync"></i> Refresh</button><button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Print</button></div></div>
 
   <!-- Accounts Financial Panel -->
@@ -1875,7 +1850,7 @@ tbody tr:last-child td{border-bottom:none;}
 <!-- ════ ACCOUNTS: PENDING INBOX ════ -->
 <div class="page" id="page-acc-dashboard">
 <div class="ph">
-  <div><div class="rich-eyebrow"><i class="fas fa-building-columns"></i> Accounts</div><h2><span class="phi" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9)"><i class="fas fa-gauge-high"></i></span><span class="rich-title" style="font-size:1.15em;">Accounts Dashboard</span></h2><p>Pending actions from Service — awaiting your review</p></div>
+  <div><h2><span class="phi" style="background:linear-gradient(135deg,#0c4a6e,#0ea5e9)"><i class="fas fa-gauge-high"></i></span><span class="sora">Accounts Dashboard</span></h2><p>Pending actions from Service — awaiting your review</p></div>
   <button class="btn btn-outline btn-sm" onclick="renderAccDashboard()"><i class="fas fa-sync"></i> Refresh</button>
 </div>
 
