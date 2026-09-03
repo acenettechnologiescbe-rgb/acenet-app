@@ -7776,7 +7776,14 @@ function openReminder(name,phone,amt){
 // ════════════════════════════════════════════════════════════════
 // SERVICE DESK — CALLS
 // ════════════════════════════════════════════════════════════════
-function genSvcNo(){const n=D.svc_calls.length+1;return 'SVC-'+String(n).padStart(4,'0');}
+function genSvcNo(){
+  // Base the next number on the highest existing SVC number, not on array length —
+  // length breaks as soon as any call is deleted (numbers stop matching count) and can
+  // regenerate a number that already exists, which silently blocked new saves.
+  const nums=D.svc_calls.map(c=>parseInt((c.no||'').replace(/\D/g,''),10)).filter(n=>!isNaN(n));
+  const max=nums.length?Math.max(...nums):0;
+  return 'SVC-'+String(max+1).padStart(4,'0');
+}
 
 function setCallType(type){
   g('scCallType').value=type;
@@ -7895,7 +7902,13 @@ function saveSvcCall(){
     convOther:firstRow.other||0,convRemarks:firstRow.remarks||''
   };
   if(g('scEditId').value) D.svc_calls=D.svc_calls.map(c=>c.id===obj.id?obj:c);
-  else{if(!D.svc_calls.find(c=>c.no===no))D.svc_calls.push(obj);}
+  else{
+    // Never silently drop a new entry: if the generated number happens to collide
+    // (e.g. another call was saved from another device a moment ago), regenerate a
+    // fresh unique number instead of discarding the engineer's work.
+    if(D.svc_calls.find(c=>c.no===no)) obj.no=genSvcNo();
+    D.svc_calls.push(obj);
+  }
   hideSvcCallForm();saveData();renderSvcCalls();updateSvcBadge();
 }
 
