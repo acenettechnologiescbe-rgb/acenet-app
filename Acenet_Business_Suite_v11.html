@@ -7874,7 +7874,15 @@ function hideSvcCallForm(){g('svcCallForm').style.display='none';}
 
 function saveSvcCall(){
   const no=g('scNo').value,dt=g('scDate').value,cust=g('scCust').value.trim(),issue=g('scIssue').value.trim();
-  if(!cust||!issue){alert('Customer and issue are required');return;}
+  // Reset any previous invalid-field highlight before re-checking.
+  g('scCust').style.borderColor='';g('scIssue').style.borderColor='';
+  if(!cust||!issue){
+    if(!cust) g('scCust').style.borderColor='var(--red)';
+    if(!issue) g('scIssue').style.borderColor='var(--red)';
+    (!cust?g('scCust'):g('scIssue')).focus();
+    showFormError('Customer and Issue are required before saving.');
+    return;
+  }
   const convRows=getConvRows();
   const convAmt=convRows.reduce((a,r)=>a+r.amt+r.food+r.other,0);
   // Build attended/completed datetimes
@@ -7910,6 +7918,7 @@ function saveSvcCall(){
     D.svc_calls.push(obj);
   }
   hideSvcCallForm();saveData();renderSvcCalls();updateSvcBadge();
+  showSuccessToast('Service call '+obj.no+' saved.');
 }
 
 function deleteSvcCall(id){if(!confirm('Delete this call?'))return;D.svc_calls=D.svc_calls.filter(c=>c.id!==id);saveData();renderSvcCalls();}
@@ -13531,6 +13540,20 @@ function showSuccessToast(msg, color){
   t.innerHTML=`<i class="fas fa-check-circle" style="color:${color||'var(--green)'};font-size:1.1em;flex-shrink:0;"></i><span>${esc(msg)}</span>`;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),3500);
+}
+// Same visual style as showSuccessToast, but for validation/error messages — and,
+// critically, NOT built on window.alert(). If a browser tab has ever had its native
+// dialogs silenced (Chrome's "Prevent this page from creating additional dialogs"
+// checkbox, which appears after alert() fires a few times), alert() calls do nothing
+// at all — no popup, no console error — so a required-field check can fail completely
+// silently and look exactly like "the save button does nothing". This toast always
+// renders regardless of that setting.
+function showFormError(msg){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;top:76px;right:18px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--red);border-radius:12px;padding:13px 18px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:1500;max-width:320px;display:flex;align-items:center;gap:10px;font-size:.84em;font-weight:600;color:var(--ink);animation:slideIn .3s ease;`;
+  t.innerHTML=`<i class="fas fa-triangle-exclamation" style="color:var(--red);font-size:1.1em;flex-shrink:0;"></i><span>${esc(msg)}</span>`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),4200);
 }
 
 // ════════════════════════════════════════════════════════════════
